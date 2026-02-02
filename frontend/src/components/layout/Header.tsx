@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,7 +8,11 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 
-export const Header = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export const Header = ({ onMenuClick }: HeaderProps) => {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -19,8 +23,20 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-6">
-      {/* Search */}
-      <div className="relative w-full max-w-md">
+      {/* Mobile Menu Button - Left */}
+      <div className="flex items-center gap-4 md:hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuClick}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Search - Hidden on mobile initially or full width if needed, kept simple for now */}
+      <div className="relative w-full max-w-md hidden md:block">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
@@ -30,7 +46,7 @@ export const Header = () => {
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-auto md:ml-0">
         {/* Static User Avatar (AD) */}
         <div className="flex items-center gap-2 px-2">
           <Avatar className="h-8 w-8">

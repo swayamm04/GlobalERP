@@ -20,20 +20,20 @@ export const TopProducts = () => {
           {products.map((product, index) => (
             <div
               key={product.name}
-              className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+              className="flex items-center gap-3 sm:gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{product.name}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-medium truncate text-sm sm:text-base">{product.name}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {product.sales} units sold
                 </p>
               </div>
-              <div className="text-right">
-                <p className="font-semibold">{product.revenue}</p>
-                <p className="text-xs text-muted-foreground">Revenue</p>
+              <div className="text-right shrink-0">
+                <p className="font-semibold text-sm sm:text-base">{product.revenue}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Revenue</p>
               </div>
             </div>
           ))}

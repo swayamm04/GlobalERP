@@ -72,7 +72,7 @@ export const RecentOrders = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
+              <TableHead className="hidden sm:table-cell">Order ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Product</TableHead>
               <TableHead>Amount</TableHead>
@@ -82,11 +82,11 @@ export const RecentOrders = () => {
           <TableBody>
             {orders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.customer}</TableCell>
-                <TableCell>{order.product}</TableCell>
-                <TableCell>{order.amount}</TableCell>
-                <TableCell>
+                <TableCell className="font-medium hidden sm:table-cell">{order.id}</TableCell>
+                <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                <TableCell className="whitespace-nowrap">{order.product}</TableCell>
+                <TableCell className="whitespace-nowrap">{order.amount}</TableCell>
+                <TableCell className="whitespace-nowrap">
                   <Badge variant={getStatusVariant(order.status)}>
                     {order.status}
                   </Badge>

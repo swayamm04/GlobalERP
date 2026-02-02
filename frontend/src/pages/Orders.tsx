@@ -71,10 +71,10 @@ const Orders = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
+                  <TableHead className="hidden sm:table-cell">Order ID</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Items</TableHead>
+                  <TableHead className="hidden md:table-cell">Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -82,12 +82,12 @@ const Orders = () => {
               <TableBody>
                 {orders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell>{order.date}</TableCell>
-                    <TableCell>{order.items}</TableCell>
-                    <TableCell>{order.total}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium hidden sm:table-cell">{order.id}</TableCell>
+                    <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                    <TableCell className="hidden md:table-cell whitespace-nowrap">{order.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{order.items}</TableCell>
+                    <TableCell className="whitespace-nowrap">{order.total}</TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <Badge variant={getStatusVariant(order.status)}>
                         {order.status}
                       </Badge>

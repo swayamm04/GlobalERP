@@ -48,9 +48,9 @@ const Customers = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Orders</TableHead>
-                  <TableHead>Total Spent</TableHead>
+                  <TableHead className="hidden md:table-cell">Contact</TableHead>
+                  <TableHead className="hidden lg:table-cell">Orders</TableHead>
+                  <TableHead className="hidden sm:table-cell">Total Spent</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -65,25 +65,25 @@ const Customers = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{customer.name}</p>
-                          <p className="text-sm text-muted-foreground">{customer.id}</p>
+                          <p className="font-medium whitespace-nowrap">{customer.name}</p>
+                          <p className="text-sm text-muted-foreground hidden sm:block">{customer.id}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-sm whitespace-nowrap">
                           <Mail className="h-3 w-3 text-muted-foreground" />
                           {customer.email}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap">
                           <Phone className="h-3 w-3" />
                           {customer.phone}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{customer.orders}</TableCell>
-                    <TableCell className="font-medium">{customer.totalSpent}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{customer.orders}</TableCell>
+                    <TableCell className="font-medium hidden sm:table-cell whitespace-nowrap">{customer.totalSpent}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm">View</Button>
                     </TableCell>
