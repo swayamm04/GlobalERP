@@ -9,43 +9,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const orders = [
-  {
-    id: "ORD-001",
-    customer: "John Smith",
-    product: "Wireless Keyboard",
-    amount: "₹129.99",
-    status: "Completed",
-  },
-  {
-    id: "ORD-002",
-    customer: "Sarah Johnson",
-    product: "USB-C Hub",
-    amount: "₹79.99",
-    status: "Processing",
-  },
-  {
-    id: "ORD-003",
-    customer: "Mike Williams",
-    product: "Monitor Stand",
-    amount: "₹199.99",
-    status: "Pending",
-  },
-  {
-    id: "ORD-004",
-    customer: "Emily Brown",
-    product: "Webcam HD",
-    amount: "₹89.99",
-    status: "Completed",
-  },
-  {
-    id: "ORD-005",
-    customer: "David Lee",
-    product: "Desk Lamp",
-    amount: "₹49.99",
-    status: "Shipped",
-  },
-];
+interface Order {
+  id: string;
+  customer: string;
+  product: string;
+  amount: number;
+  status: string;
+}
+
+interface RecentOrdersProps {
+  orders: Order[];
+}
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -62,39 +36,49 @@ const getStatusVariant = (status: string) => {
   }
 };
 
-export const RecentOrders = () => {
+export const RecentOrders = ({ orders }: RecentOrdersProps) => {
   return (
     <Card className="animate-fade-in">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="hidden sm:table-cell">Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium hidden sm:table-cell">{order.id}</TableCell>
-                <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
-                <TableCell className="whitespace-nowrap">{order.product}</TableCell>
-                <TableCell className="whitespace-nowrap">{order.amount}</TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge variant={getStatusVariant(order.status)}>
-                    {order.status}
-                  </Badge>
-                </TableCell>
+        <div className="overflow-x-auto md:overflow-visible">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="hidden sm:table-cell">Order ID</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {orders && orders.length > 0 ? (
+                orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium hidden sm:table-cell">
+                      {order.id.substring(0, 8)}...
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                    <TableCell className="whitespace-nowrap">{order.product}</TableCell>
+                    <TableCell className="whitespace-nowrap">₹{order.amount}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Badge variant={getStatusVariant(order.status)}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">No recent orders found</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

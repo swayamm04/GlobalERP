@@ -15,6 +15,8 @@ app.use(express.json());
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)

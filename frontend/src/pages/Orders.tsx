@@ -12,15 +12,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, Filter, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
-const orders = [
-  { id: "ORD-001", customer: "John Smith", date: "2024-01-15", items: 3, total: "₹289.97", status: "Completed" },
-  { id: "ORD-002", customer: "Sarah Johnson", date: "2024-01-15", items: 1, total: "₹79.99", status: "Processing" },
-  { id: "ORD-003", customer: "Mike Williams", date: "2024-01-14", items: 5, total: "₹449.95", status: "Shipped" },
-  { id: "ORD-004", customer: "Emily Brown", date: "2024-01-14", items: 2, total: "₹159.98", status: "Pending" },
-  { id: "ORD-005", customer: "David Lee", date: "2024-01-13", items: 4, total: "₹319.96", status: "Completed" },
-  { id: "ORD-006", customer: "Lisa Chen", date: "2024-01-13", items: 1, total: "₹89.99", status: "Cancelled" },
-];
+interface Order {
+  id: string;
+  customer: string;
+  date: string;
+  items: number;
+  product: string;
+  amount: number;
+  status: string;
+}
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -40,6 +45,25 @@ const getStatusVariant = (status: string) => {
 };
 
 const Orders = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const { data } = await api.get("/api/orders");
+        setOrders(data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        toast.error("Failed to load orders");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -74,26 +98,40 @@ const Orders = () => {
                   <TableHead className="hidden sm:table-cell">Order ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead className="hidden sm:table-cell">Items</TableHead>
+                  <TableHead>Product</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium hidden sm:table-cell">{order.id}</TableCell>
-                    <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
-                    <TableCell className="hidden md:table-cell whitespace-nowrap">{order.date}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{order.items}</TableCell>
-                    <TableCell className="whitespace-nowrap">{order.total}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <Badge variant={getStatusVariant(order.status)}>
-                        {order.status}
-                      </Badge>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">Loading orders...</TableCell>
                   </TableRow>
-                ))}
+                ) : orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">No orders found</TableCell>
+                  </TableRow>
+                ) : (
+                  orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium hidden sm:table-cell">
+                        {order.id.substring(0, 8)}...
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">
+                        {format(new Date(order.date), 'MMM dd, yyyy')}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{order.product}</TableCell>
+                      <TableCell className="whitespace-nowrap">₹{order.amount}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={getStatusVariant(order.status)}>
+                          {order.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

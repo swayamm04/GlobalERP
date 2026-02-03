@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,6 +16,8 @@ import {
   Truck,
   Warehouse,
   ClipboardList,
+  Tags,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +33,10 @@ interface SidebarProps {
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Package, label: "Products", path: "/products" },
+  { icon: Package, label: "Product Catalog", path: "/product-catalog" },
+  { icon: Tags, label: "Manage Products", path: "/products" },
   { icon: Warehouse, label: "Inventory", path: "/inventory" },
+  { icon: PlusCircle, label: "Create Order", path: "/create-order" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Truck, label: "Suppliers", path: "/suppliers" },
   { icon: Users, label: "Customers", path: "/customers" },
