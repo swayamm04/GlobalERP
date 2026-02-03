@@ -313,7 +313,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose })=>{
                                 className: "flex h-8 w-8 items-center justify-center rounded-lg bg-primary",
                                 children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
                                     className: "text-sm font-bold text-primary-foreground",
-                                    children: "OS"
+                                    children: "VM"
                                 }, void 0, false, {
                                     fileName: "<[project]/src/components/layout/Sidebar.tsx>",
                                     lineNumber: 91,
@@ -326,7 +326,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose })=>{
                             }, this),
                             !collapsed && /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
                                 className: "text-lg font-semibold text-primary",
-                                children: "INVENTORY"
+                                children: "Vasantha Metal Industry"
                             }, void 0, false, {
                                 fileName: "<[project]/src/components/layout/Sidebar.tsx>",
                                 lineNumber: 94,
@@ -1083,58 +1083,71 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$DashboardLayout$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/components/layout/DashboardLayout.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/components/ui/card.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/components/dashboard/StatsCard.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$progress$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/components/ui/progress.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$package$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__Package$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/package.js [app-client] (ecmascript) {export default as Package}");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__AlertTriangle$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-client] (ecmascript) {export default as AlertTriangle}");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2d$big$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__CheckCircle$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/circle-check-big.js [app-client] (ecmascript) {export default as CheckCircle}");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__TrendingDown$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/trending-down.js [app-client] (ecmascript) {export default as TrendingDown}");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/lib/api.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/sonner/dist/index.mjs [app-client] (ecmascript)");
 "__TURBOPACK__ecmascript__hoisting__location__";
 ;
+var _s = __turbopack_refresh__.signature();
 ;
 ;
 ;
 ;
 ;
-const warehouseData = [
-    {
-        name: "Warehouse A",
-        capacity: 85,
-        items: 1250
-    },
-    {
-        name: "Warehouse B",
-        capacity: 62,
-        items: 890
-    },
-    {
-        name: "Warehouse C",
-        capacity: 45,
-        items: 450
-    }
-];
-const lowStockItems = [
-    {
-        name: "USB-C Hub",
-        stock: 12,
-        threshold: 50
-    },
-    {
-        name: "Monitor Stand",
-        stock: 0,
-        threshold: 20
-    },
-    {
-        name: "Wireless Charger",
-        stock: 8,
-        threshold: 30
-    },
-    {
-        name: "Cable Organizer",
-        stock: 15,
-        threshold: 40
-    }
-];
+;
+;
 const Inventory = ()=>{
+    _s();
+    const [loading, setLoading] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](true);
+    const [stats, setStats] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]({
+        totalItems: 0,
+        lowStockCount: 0,
+        inStockCount: 0,
+        outOfStockCount: 0
+    });
+    const [lowStockItems, setLowStockItems] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]([]);
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        const fetchInventoryData = async ()=>{
+            try {
+                const { data } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("/api/products");
+                // Calculate stats
+                let totalItems = 0;
+                let lowStockCount = 0;
+                let inStockCount = 0;
+                let outOfStockCount = 0;
+                let lowStockList = [];
+                data.forEach((product)=>{
+                    totalItems += product.stock;
+                    if (product.status === "Low Stock") {
+                        lowStockCount++;
+                        lowStockList.push(product);
+                    } else if (product.status === "Out of Stock") {
+                        outOfStockCount++;
+                        lowStockList.push(product);
+                    } else {
+                        inStockCount++;
+                    }
+                });
+                setStats({
+                    totalItems,
+                    lowStockCount,
+                    inStockCount,
+                    outOfStockCount
+                });
+                setLowStockItems(lowStockList);
+            } catch (error) {
+                console.error("Error fetching inventory data:", error);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["toast"].error("Failed to load inventory data");
+            } finally{
+                setLoading(false);
+            }
+        };
+        fetchInventoryData();
+    }, []);
     return /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$DashboardLayout$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DashboardLayout"], {
         children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
             className: "space-y-6",
@@ -1146,7 +1159,7 @@ const Inventory = ()=>{
                             children: "Inventory"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 25,
+                            lineNumber: 67,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
@@ -1154,13 +1167,13 @@ const Inventory = ()=>{
                             children: "Monitor and manage your stock levels"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 26,
+                            lineNumber: 68,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                    lineNumber: 24,
+                    lineNumber: 66,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
@@ -1168,255 +1181,185 @@ const Inventory = ()=>{
                     children: [
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["StatsCard"], {
                             title: "Total Items",
-                            value: "2,590",
+                            value: stats.totalItems.toLocaleString(),
                             icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$package$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__Package$7d$__["Package"],
                             iconColor: "bg-primary/10 text-primary"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 30,
+                            lineNumber: 72,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["StatsCard"], {
                             title: "Low Stock Items",
-                            value: "23",
+                            value: stats.lowStockCount.toString(),
                             icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__AlertTriangle$7d$__["AlertTriangle"],
                             iconColor: "bg-warning/10 text-warning"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 36,
+                            lineNumber: 78,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["StatsCard"], {
                             title: "In Stock",
-                            value: "2,456",
+                            value: stats.inStockCount.toString(),
                             icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2d$big$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__CheckCircle$7d$__["CheckCircle"],
                             iconColor: "bg-success/10 text-success"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 42,
+                            lineNumber: 84,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["StatsCard"], {
                             title: "Out of Stock",
-                            value: "111",
+                            value: stats.outOfStockCount.toString(),
                             icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__TrendingDown$7d$__["TrendingDown"],
                             iconColor: "bg-destructive/10 text-destructive"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 48,
+                            lineNumber: 90,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                    lineNumber: 29,
+                    lineNumber: 71,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                    className: "grid gap-6 lg:grid-cols-2",
-                    children: [
-                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                            children: [
-                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                    children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                        children: "Warehouse Capacity"
+                    className: "grid gap-6",
+                    children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
+                        children: [
+                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardHeader"], {
+                                children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardTitle"], {
+                                    className: "flex items-center gap-2",
+                                    children: [
+                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__AlertTriangle$7d$__["AlertTriangle"], {
+                                            className: "h-5 w-5 text-warning"
+                                        }, void 0, false, {
+                                            fileName: "<[project]/src/pages/Inventory.tsx>",
+                                            lineNumber: 102,
+                                            columnNumber: 17
+                                        }, this),
+                                        "Low Stock Alerts"
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "<[project]/src/pages/Inventory.tsx>",
+                                    lineNumber: 101,
+                                    columnNumber: 15
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "<[project]/src/pages/Inventory.tsx>",
+                                lineNumber: 100,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
+                                children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
+                                    className: "space-y-4",
+                                    children: lowStockItems.length === 0 ? /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
+                                        className: "text-muted-foreground text-center py-4",
+                                        children: "No low stock alerts"
                                     }, void 0, false, {
                                         fileName: "<[project]/src/pages/Inventory.tsx>",
-                                        lineNumber: 59,
-                                        columnNumber: 15
-                                    }, this)
-                                }, void 0, false, {
-                                    fileName: "<[project]/src/pages/Inventory.tsx>",
-                                    lineNumber: 58,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
-                                    className: "space-y-6",
-                                    children: warehouseData.map((warehouse)=>/*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                            className: "space-y-2",
+                                        lineNumber: 109,
+                                        columnNumber: 19
+                                    }, this) : lowStockItems.map((item)=>/*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
+                                            className: "flex items-center justify-between rounded-lg border p-3",
                                             children: [
                                                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                                    className: "flex items-center justify-between",
                                                     children: [
-                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
+                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
                                                             className: "font-medium",
-                                                            children: warehouse.name
+                                                            children: item.name
                                                         }, void 0, false, {
                                                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                            lineNumber: 65,
-                                                            columnNumber: 21
+                                                            lineNumber: 117,
+                                                            columnNumber: 25
                                                         }, this),
-                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
+                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
                                                             className: "text-sm text-muted-foreground",
                                                             children: [
-                                                                warehouse.items,
-                                                                " items (",
-                                                                warehouse.capacity,
-                                                                "%)"
+                                                                "Category: ",
+                                                                item.category
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                            lineNumber: 66,
-                                                            columnNumber: 21
+                                                            lineNumber: 118,
+                                                            columnNumber: 25
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                    lineNumber: 64,
-                                                    columnNumber: 19
+                                                    lineNumber: 116,
+                                                    columnNumber: 23
                                                 }, this),
-                                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$progress$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Progress"], {
-                                                    value: warehouse.capacity,
-                                                    className: "h-3"
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
+                                                    className: "text-right",
+                                                    children: [
+                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
+                                                            className: `font-bold ${item.stock === 0 ? 'text-destructive' : 'text-warning'}`,
+                                                            children: [
+                                                                item.stock,
+                                                                " units"
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "<[project]/src/pages/Inventory.tsx>",
+                                                            lineNumber: 123,
+                                                            columnNumber: 25
+                                                        }, this),
+                                                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
+                                                            className: "text-xs text-muted-foreground",
+                                                            children: "remaining"
+                                                        }, void 0, false, {
+                                                            fileName: "<[project]/src/pages/Inventory.tsx>",
+                                                            lineNumber: 126,
+                                                            columnNumber: 25
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                    lineNumber: 70,
-                                                    columnNumber: 19
+                                                    lineNumber: 122,
+                                                    columnNumber: 23
                                                 }, this)
                                             ]
-                                        }, warehouse.name, true, {
+                                        }, item._id, true, {
                                             fileName: "<[project]/src/pages/Inventory.tsx>",
-                                            lineNumber: 63,
-                                            columnNumber: 17
+                                            lineNumber: 112,
+                                            columnNumber: 21
                                         }, this))
                                 }, void 0, false, {
                                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                                    lineNumber: 61,
-                                    columnNumber: 13
+                                    lineNumber: 107,
+                                    columnNumber: 15
                                 }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 57,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                            children: [
-                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardHeader"], {
-                                    children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardTitle"], {
-                                        className: "flex items-center gap-2",
-                                        children: [
-                                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$7b$export__default__as__AlertTriangle$7d$__["AlertTriangle"], {
-                                                className: "h-5 w-5 text-warning"
-                                            }, void 0, false, {
-                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                lineNumber: 79,
-                                                columnNumber: 17
-                                            }, this),
-                                            "Low Stock Alerts"
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "<[project]/src/pages/Inventory.tsx>",
-                                        lineNumber: 78,
-                                        columnNumber: 15
-                                    }, this)
-                                }, void 0, false, {
-                                    fileName: "<[project]/src/pages/Inventory.tsx>",
-                                    lineNumber: 77,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
-                                    children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                        className: "space-y-4",
-                                        children: lowStockItems.map((item)=>/*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                                className: "flex items-center justify-between rounded-lg border p-3",
-                                                children: [
-                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                                        children: [
-                                                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
-                                                                className: "font-medium",
-                                                                children: item.name
-                                                            }, void 0, false, {
-                                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                                lineNumber: 91,
-                                                                columnNumber: 23
-                                                            }, this),
-                                                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
-                                                                className: "text-sm text-muted-foreground",
-                                                                children: [
-                                                                    "Threshold: ",
-                                                                    item.threshold,
-                                                                    " units"
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                                lineNumber: 92,
-                                                                columnNumber: 23
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                        lineNumber: 90,
-                                                        columnNumber: 21
-                                                    }, this),
-                                                    /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
-                                                        className: "text-right",
-                                                        children: [
-                                                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
-                                                                className: `font-bold ${item.stock === 0 ? 'text-destructive' : 'text-warning'}`,
-                                                                children: [
-                                                                    item.stock,
-                                                                    " units"
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                                lineNumber: 97,
-                                                                columnNumber: 23
-                                                            }, this),
-                                                            /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
-                                                                className: "text-xs text-muted-foreground",
-                                                                children: "remaining"
-                                                            }, void 0, false, {
-                                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                                lineNumber: 100,
-                                                                columnNumber: 23
-                                                            }, this)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                        lineNumber: 96,
-                                                        columnNumber: 21
-                                                    }, this)
-                                                ]
-                                            }, item.name, true, {
-                                                fileName: "<[project]/src/pages/Inventory.tsx>",
-                                                lineNumber: 86,
-                                                columnNumber: 19
-                                            }, this))
-                                    }, void 0, false, {
-                                        fileName: "<[project]/src/pages/Inventory.tsx>",
-                                        lineNumber: 84,
-                                        columnNumber: 15
-                                    }, this)
-                                }, void 0, false, {
-                                    fileName: "<[project]/src/pages/Inventory.tsx>",
-                                    lineNumber: 83,
-                                    columnNumber: 13
-                                }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "<[project]/src/pages/Inventory.tsx>",
-                            lineNumber: 76,
-                            columnNumber: 11
-                        }, this)
-                    ]
-                }, void 0, true, {
+                            }, void 0, false, {
+                                fileName: "<[project]/src/pages/Inventory.tsx>",
+                                lineNumber: 106,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "<[project]/src/pages/Inventory.tsx>",
+                        lineNumber: 99,
+                        columnNumber: 11
+                    }, this)
+                }, void 0, false, {
                     fileName: "<[project]/src/pages/Inventory.tsx>",
-                    lineNumber: 56,
+                    lineNumber: 98,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "<[project]/src/pages/Inventory.tsx>",
-            lineNumber: 23,
+            lineNumber: 65,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "<[project]/src/pages/Inventory.tsx>",
-        lineNumber: 22,
+        lineNumber: 64,
         columnNumber: 5
     }, this);
 };
+_s(Inventory, "H6wcHUlBW23PbYhrKqBy6KGRrJU=");
 _c = Inventory;
 const __TURBOPACK__default__export__ = Inventory;
 var _c;

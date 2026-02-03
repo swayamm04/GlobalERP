@@ -88,10 +88,10 @@ export const Sidebar = ({
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">OS</span>
+            <span className="text-sm font-bold text-primary-foreground">VM</span>
           </div>
           {!collapsed && (
-            <span className="text-lg font-semibold text-primary">INVENTORY</span>
+            <span className="text-lg font-semibold text-primary">Vasantha Metal Industry</span>
           )}
         </Link>
       </div>

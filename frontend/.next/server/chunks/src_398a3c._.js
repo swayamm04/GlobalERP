@@ -1852,6 +1852,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$shopping$2d$cart$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$7b$export__default__as__ShoppingCart$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/shopping-cart.js [app-ssr] (ecmascript) {export default as ShoppingCart}");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$indian$2d$rupee$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$7b$export__default__as__IndianRupee$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/indian-rupee.js [app-ssr] (ecmascript) {export default as IndianRupee}");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$7b$export__default__as__Users$7d$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-ssr] (ecmascript) {export default as Users}");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/next/dist/server/future/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/src/lib/api.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/sonner/dist/index.mjs [app-ssr] (ecmascript)");
 "__TURBOPACK__ecmascript__hoisting__location__";
 ;
 ;
@@ -1861,7 +1864,23 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 ;
 ;
 ;
+;
+;
+;
 const Dashboard = ()=>{
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"](()=>{
+        const checkBackend = async ()=>{
+            try {
+                const { data } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get("/");
+                console.log("Backend Connected:", data);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"].success("Connected to Backend: " + data);
+            } catch (error) {
+                console.error("Backend Connection Error:", error);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$sonner$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["toast"].error("Failed to connect to Backend");
+            }
+        };
+        checkBackend();
+    }, []);
     return /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$DashboardLayout$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["DashboardLayout"], {
         children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
             className: "space-y-6",
@@ -1873,7 +1892,7 @@ const Dashboard = ()=>{
                             children: "Dashboard"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 22,
+                            lineNumber: 40,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"]("p", {
@@ -1881,13 +1900,13 @@ const Dashboard = ()=>{
                             children: "Welcome back! Here's what's happening with your inventory."
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 23,
+                            lineNumber: 41,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Index.tsx>",
-                    lineNumber: 21,
+                    lineNumber: 39,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
@@ -1902,7 +1921,7 @@ const Dashboard = ()=>{
                             iconColor: "bg-primary/10 text-primary"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 30,
+                            lineNumber: 48,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["StatsCard"], {
@@ -1914,7 +1933,7 @@ const Dashboard = ()=>{
                             iconColor: "bg-success/10 text-success"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 38,
+                            lineNumber: 56,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["StatsCard"], {
@@ -1926,7 +1945,7 @@ const Dashboard = ()=>{
                             iconColor: "bg-warning/10 text-warning"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 46,
+                            lineNumber: 64,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$StatsCard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["StatsCard"], {
@@ -1938,13 +1957,13 @@ const Dashboard = ()=>{
                             iconColor: "bg-info/10 text-info"
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 54,
+                            lineNumber: 72,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Index.tsx>",
-                    lineNumber: 29,
+                    lineNumber: 47,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
@@ -1954,23 +1973,23 @@ const Dashboard = ()=>{
                             className: "lg:col-span-2",
                             children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$SalesChart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["SalesChart"], {}, void 0, false, {
                                 fileName: "<[project]/src/pages/Index.tsx>",
-                                lineNumber: 67,
+                                lineNumber: 85,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 66,
+                            lineNumber: 84,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$InventoryStatus$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InventoryStatus"], {}, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 69,
+                            lineNumber: 87,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Index.tsx>",
-                    lineNumber: 65,
+                    lineNumber: 83,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"]("div", {
@@ -1978,29 +1997,29 @@ const Dashboard = ()=>{
                     children: [
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$RecentOrders$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["RecentOrders"], {}, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 74,
+                            lineNumber: 92,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"](__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$dashboard$2f$TopProducts$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TopProducts"], {}, void 0, false, {
                             fileName: "<[project]/src/pages/Index.tsx>",
-                            lineNumber: 75,
+                            lineNumber: 93,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "<[project]/src/pages/Index.tsx>",
-                    lineNumber: 73,
+                    lineNumber: 91,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "<[project]/src/pages/Index.tsx>",
-            lineNumber: 19,
+            lineNumber: 37,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "<[project]/src/pages/Index.tsx>",
-        lineNumber: 18,
+        lineNumber: 36,
         columnNumber: 5
     }, this);
 };

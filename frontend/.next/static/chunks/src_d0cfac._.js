@@ -313,7 +313,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose })=>{
                                 className: "flex h-8 w-8 items-center justify-center rounded-lg bg-primary",
                                 children: /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
                                     className: "text-sm font-bold text-primary-foreground",
-                                    children: "OS"
+                                    children: "VM"
                                 }, void 0, false, {
                                     fileName: "<[project]/src/components/layout/Sidebar.tsx>",
                                     lineNumber: 91,
@@ -326,7 +326,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose })=>{
                             }, this),
                             !collapsed && /*#__PURE__*/ __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"]("span", {
                                 className: "text-lg font-semibold text-primary",
-                                children: "INVENTORY"
+                                children: "Vasantha Metal Industry"
                             }, void 0, false, {
                                 fileName: "<[project]/src/components/layout/Sidebar.tsx>",
                                 lineNumber: 94,

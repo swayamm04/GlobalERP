@@ -13,7 +13,25 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+import { useEffect } from "react";
+import api from "@/lib/api";
+import { toast } from "sonner";
+
 const Dashboard = () => {
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const { data } = await api.get("/");
+        console.log("Backend Connected:", data);
+        toast.success("Connected to Backend: " + data);
+      } catch (error) {
+        console.error("Backend Connection Error:", error);
+        toast.error("Failed to connect to Backend");
+      }
+    };
+    checkBackend();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
+import api from "@/lib/api";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -22,19 +23,20 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate network delay for realism
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        try {
+            const { data } = await api.post("/api/users/login", { email, password });
 
-        if (email === "admin@metalindustries.com" && password === "vasantha") {
             // Set auth cookie
-            Cookies.set("auth_token", "valid_token", { expires: 1 }); // Expires in 1 day
+            Cookies.set("auth_token", data.token, { expires: 30 }); // Expires in 30 days
             toast.success("Login successful");
             router.push("/");
-        } else {
-            toast.error("Invalid email or password");
+        } catch (error: any) {
+            console.error("Login Error:", error);
+            const message = error.response?.data?.message || "Invalid email or password";
+            toast.error(message);
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
     };
 
     return (
