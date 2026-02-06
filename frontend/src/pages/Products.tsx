@@ -31,19 +31,6 @@ const getStatusVariant = (status: string) => {
   }
 };
 
-const getColorClass = (color: string) => {
-  switch (color) {
-    case "Red":
-      return "text-red-600 font-semibold";
-    case "Blue":
-      return "text-blue-600 font-semibold";
-    case "Green":
-      return "text-green-600 font-semibold";
-    default:
-      return "";
-  }
-};
-
 const Products = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -175,9 +162,22 @@ const Products = () => {
               <TableBody>
                 {filteredProducts.map((product) => (
                   <TableRow key={product._id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>
+                        {product.name}
+                        {product.customFields && product.customFields.length > 0 && (
+                          <div className="flex flex-wrap gap-x-2 mt-1">
+                            {product.customFields.map((f: any, i: number) => (
+                              <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
+                                {f.label}: {f.value}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell className={getColorClass(product.color)}>{product.color}</TableCell>
+                    <TableCell>{product.color}</TableCell>
                     <TableCell>{product.thickness ? `${product.thickness}mm` : "-"}</TableCell>
                     <TableCell>{product.length}</TableCell>
                     <TableCell>{product.hsnCode}</TableCell>

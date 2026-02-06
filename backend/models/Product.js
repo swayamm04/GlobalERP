@@ -12,8 +12,7 @@ const productSchema = mongoose.Schema({
     },
     category: {
         type: String,
-        required: [true, 'Please add a category'],
-        enum: ['Sheet', 'Ridge', 'Gutter', 'Flashing']
+        required: [true, 'Please add a category']
     },
     stock: {
         type: Number,
@@ -32,13 +31,11 @@ const productSchema = mongoose.Schema({
     },
     color: {
         type: String,
-        required: [true, 'Please add a color'],
-        enum: ['Red', 'Blue', 'Green']
+        required: [true, 'Please add a color']
     },
     length: {
         type: String,
-        required: [true, 'Please add a length'],
-        enum: ['10ft', '12ft', '20ft']
+        required: [true, 'Please add a length']
     },
     thickness: {
         type: String,
@@ -47,7 +44,13 @@ const productSchema = mongoose.Schema({
     hsnCode: {
         type: String,
         required: [true, 'Please add an HSN code']
-    }
+    },
+    customFields: [
+        {
+            label: String,
+            value: String
+        }
+    ]
 }, {
     timestamps: true
 });

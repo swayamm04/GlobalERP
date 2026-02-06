@@ -9,14 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { useState, useEffect } from "react";
+import { Plus, Trash2 } from "lucide-react";
 
 interface ProductDialogProps {
     open: boolean;
@@ -42,6 +36,7 @@ export function ProductDialog({
         thickness: "",
         hsnCode: "",
     });
+    const [customFields, setCustomFields] = useState<any[]>([]);
 
     useEffect(() => {
         if (product) {
@@ -55,6 +50,7 @@ export function ProductDialog({
                 thickness: product.thickness || "",
                 hsnCode: product.hsnCode || "",
             });
+            setCustomFields(product.customFields || []);
         } else {
             setFormData({
                 name: "",
@@ -66,8 +62,23 @@ export function ProductDialog({
                 thickness: "",
                 hsnCode: "",
             });
+            setCustomFields([]);
         }
     }, [product, open]);
+
+    const handleAddField = () => {
+        setCustomFields([...customFields, { label: "", value: "" }]);
+    };
+
+    const handleRemoveField = (index: number) => {
+        setCustomFields(customFields.filter((_, i) => i !== index));
+    };
+
+    const handleFieldChange = (index: number, field: string, value: string) => {
+        const newFields = [...customFields];
+        newFields[index] = { ...newFields[index], [field]: value };
+        setCustomFields(newFields);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,6 +88,7 @@ export function ProductDialog({
                 ...formData,
                 stock: Number(formData.stock),
                 price: Number(formData.price),
+                customFields
             });
             onOpenChange(false);
         } finally {
@@ -86,7 +98,7 @@ export function ProductDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{product ? "Edit Product" : "Add Product"}</DialogTitle>
                     <DialogDescription>
@@ -96,146 +108,146 @@ export function ProductDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">
-                                Name
-                            </Label>
-                            <Input
-                                id="name"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, name: e.target.value })
-                                }
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
+                    <div className="grid gap-6 py-4">
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium border-b pb-2">Basic Details</h3>
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input
+                                        id="name"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Category</Label>
+                                    <Input
+                                        id="category"
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                        placeholder="e.g. Sheet"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="stock">Stock</Label>
+                                        <Input
+                                            id="stock"
+                                            type="number"
+                                            value={formData.stock}
+                                            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="price">Price</Label>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            value={formData.price}
+                                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="hsnCode">HSN Code</Label>
+                                    <Input
+                                        id="hsnCode"
+                                        value={formData.hsnCode}
+                                        onChange={(e) => setFormData({ ...formData, hsnCode: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="category" className="text-right">
-                                Category
-                            </Label>
-                            <Select
-                                value={formData.category}
-                                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                                required
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Sheet">Sheet</SelectItem>
-                                    <SelectItem value="Ridge">Ridge</SelectItem>
-                                    <SelectItem value="Gutter">Gutter</SelectItem>
-                                    <SelectItem value="Flashing">Flashing</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium border-b pb-2">Physical Specs</h3>
+                                <div className="space-y-2">
+                                    <Label htmlFor="color">Color</Label>
+                                    <Input
+                                        id="color"
+                                        value={formData.color}
+                                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                        placeholder="e.g. Red"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="length">Length</Label>
+                                    <Input
+                                        id="length"
+                                        value={formData.length}
+                                        onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                                        placeholder="e.g. 12ft"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="thickness">Thickness (mm)</Label>
+                                    <Input
+                                        id="thickness"
+                                        value={formData.thickness}
+                                        onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
+                                        placeholder="Optional"
+                                    />
+                                </div>
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="color" className="text-right">
-                                Color
-                            </Label>
-                            <Select
-                                value={formData.color}
-                                onValueChange={(value) => setFormData({ ...formData, color: value })}
-                                required
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select color" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Red">Red</SelectItem>
-                                    <SelectItem value="Blue">Blue</SelectItem>
-                                    <SelectItem value="Green">Green</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="length" className="text-right">
-                                Length
-                            </Label>
-                            <Select
-                                value={formData.length}
-                                onValueChange={(value) => setFormData({ ...formData, length: value })}
-                                required
-                            >
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select length" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="10ft">10ft</SelectItem>
-                                    <SelectItem value="12ft">12ft</SelectItem>
-                                    <SelectItem value="20ft">20ft</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="thickness" className="text-right">
-                                Thickness (mm)
-                            </Label>
-                            <Input
-                                id="thickness"
-                                value={formData.thickness}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, thickness: e.target.value })
-                                }
-                                className="col-span-3"
-                                placeholder="Optional"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="hsnCode" className="text-right">
-                                HSN Code
-                            </Label>
-                            <Input
-                                id="hsnCode"
-                                value={formData.hsnCode}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, hsnCode: e.target.value })
-                                }
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="stock" className="text-right">
-                                Stock
-                            </Label>
-                            <Input
-                                id="stock"
-                                type="number"
-                                value={formData.stock}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, stock: e.target.value })
-                                }
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="price" className="text-right">
-                                Price
-                            </Label>
-                            <Input
-                                id="price"
-                                type="number"
-                                value={formData.price}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, price: e.target.value })
-                                }
-                                className="col-span-3"
-                                required
-                            />
+                                <div className="pt-4 space-y-4 border-t">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium">Extra Fields (Optional)</h3>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleAddField}
+                                            className="h-8"
+                                        >
+                                            <Plus className="h-4 w-4 mr-1" />
+                                            Add
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {customFields.map((field, index) => (
+                                            <div key={index} className="flex gap-2 items-center">
+                                                <Input
+                                                    placeholder="Label (e.g. Brand)"
+                                                    value={field.label}
+                                                    onChange={(e) => handleFieldChange(index, "label", e.target.value)}
+                                                    className="flex-1 h-8 text-xs"
+                                                />
+                                                <Input
+                                                    placeholder="Value"
+                                                    value={field.value}
+                                                    onChange={(e) => handleFieldChange(index, "value", e.target.value)}
+                                                    className="flex-1 h-8 text-xs"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleRemoveField(index)}
+                                                    className="h-8 w-8 text-destructive"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        {customFields.length === 0 && (
+                                            <p className="text-xs text-muted-foreground text-center italic">
+                                                No extra fields added
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button type="submit" disabled={loading}>
+                    <DialogFooter className="mt-6">
+                        <Button type="submit" disabled={loading} className="w-32">
                             {loading ? "Saving..." : "Save changes"}
                         </Button>
                     </DialogFooter>
