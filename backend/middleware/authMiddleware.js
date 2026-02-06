@@ -15,16 +15,25 @@ const protect = async (req, res, next) => {
             // Get user from the token
             req.user = await User.findById(decoded.id).select('-password');
 
-            next();
+            return next();
         } catch (error) {
             console.log(error);
-            res.status(401).json({ message: 'Not authorized' });
+            return res.status(401).json({ message: 'Not authorized' });
         }
     }
 
     if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+        return res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
 
-module.exports = { protect };
+const superAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'super_admin') {
+        next();
+    } else {
+        console.log(`Access denied for user role: ${req.user ? req.user.role : 'none'}`);
+        res.status(403).json({ message: 'Not authorized as a super admin' });
+    }
+};
+
+module.exports = { protect, superAdmin };

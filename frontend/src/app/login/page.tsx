@@ -26,8 +26,11 @@ export default function LoginPage() {
         try {
             const { data } = await api.post("/api/users/login", { email, password });
 
-            // Set auth cookie
-            Cookies.set("auth_token", data.token, { expires: 30 }); // Expires in 30 days
+            // Set auth cookies
+            Cookies.set("auth_token", data.token, { expires: 30, path: '/' }); // Expires in 30 days
+            Cookies.set("user_role", data.role, { expires: 30, path: '/' });
+            Cookies.set("user_name", data.name, { expires: 30, path: '/' });
+
             toast.success("Login successful");
             router.push("/");
         } catch (error: any) {

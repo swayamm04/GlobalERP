@@ -12,13 +12,16 @@ const seedAdmin = async () => {
         const existingAdmin = await User.findOne({ email: 'admin@metalindustries.com' });
 
         if (existingAdmin) {
-            console.log('Admin user already exists');
+            existingAdmin.name = 'Rakshith';
+            existingAdmin.role = 'super_admin';
+            await existingAdmin.save();
+            console.log('Admin user updated (Name: Rakshith, Role: super_admin)');
         } else {
             const adminUser = new User({
-                name: 'Admin User',
+                name: 'Rakshith',
                 email: 'admin@metalindustries.com',
                 password: 'vasantha',
-                role: 'admin'
+                role: 'super_admin'
             });
 
             await adminUser.save();

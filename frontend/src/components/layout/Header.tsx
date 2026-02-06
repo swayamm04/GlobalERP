@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { LogOut, Search, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,20 @@ interface HeaderProps {
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  const userName = Cookies.get("user_name") || "Admin User";
+  const userRole = Cookies.get("user_role") || "User";
+  const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
-    Cookies.remove("auth_token");
+    Cookies.remove("auth_token", { path: '/' });
+    Cookies.remove("user_role", { path: '/' });
+    Cookies.remove("user_name", { path: '/' });
     toast.success("Logged out successfully");
     router.push("/login");
   };
@@ -47,11 +59,19 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
       {/* Right section */}
       <div className="flex items-center gap-4 ml-auto md:ml-0">
-        {/* Static User Avatar (AD) */}
+        {mounted && (
+          <div className="hidden sm:flex flex-col items-end mr-2">
+            <span className="text-sm font-medium">{userName}</span>
+            <span className="text-xs text-muted-foreground capitalize">
+              {userRole.replace("_", " ")}
+            </span>
+          </div>
+        )}
+        {/* User Avatar */}
         <div className="flex items-center gap-2 px-2">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-primary text-primary-foreground text-sm cursor-default">
-              AD
+              {mounted ? userInitials : "AD"}
             </AvatarFallback>
           </Avatar>
         </div>

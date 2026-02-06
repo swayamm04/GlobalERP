@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -18,9 +18,11 @@ import {
   ClipboardList,
   Tags,
   PlusCircle,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import Cookies from "js-cookie";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { X } from "lucide-react";
 
@@ -44,6 +46,7 @@ const menuItems = [
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: UserPlus, label: "Create Admins", path: "/users", roles: ["super_admin"] },
 ];
 
 const SidebarNav = ({
@@ -54,32 +57,47 @@ const SidebarNav = ({
   collapsed: boolean;
   pathname: string;
   onItemClick?: () => void;
-}) => (
-  <nav className="mt-4 px-2">
-    <ul className="space-y-1">
-      {menuItems.map((item) => {
-        const isActive = pathname === item.path;
-        return (
-          <li key={item.path}>
-            <Link
-              href={item.path}
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-primary"
-                  : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0")} />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  </nav>
-);
+}) => {
+  const [mounted, setMounted] = useState(false);
+  const userRole = Cookies.get("user_role");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!item.roles) return true;
+    if (!mounted) return false;
+    return item.roles.includes(userRole || "");
+  });
+
+  return (
+    <nav className="mt-4 px-2">
+      <ul className="space-y-1">
+        {filteredMenuItems.map((item) => {
+          const isActive = pathname === item.path;
+          return (
+            <li key={item.path}>
+              <Link
+                href={item.path}
+                onClick={onItemClick}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-primary"
+                    : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 flex-shrink-0")} />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+};
 
 export const Sidebar = ({
   collapsed,

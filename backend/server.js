@@ -17,6 +17,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/company-settings', require('./routes/companySettingsRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)
