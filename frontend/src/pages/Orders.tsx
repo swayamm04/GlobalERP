@@ -98,7 +98,7 @@ const Orders = () => {
                   <TableHead className="hidden sm:table-cell">Order ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead>Product</TableHead>
+                  <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -116,14 +116,14 @@ const Orders = () => {
                   orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium hidden sm:table-cell">
-                        {order.id.substring(0, 8)}...
+                        #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
                       <TableCell className="hidden md:table-cell whitespace-nowrap">
                         {format(new Date(order.date), 'MMM dd, yyyy')}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{order.product}</TableCell>
-                      <TableCell className="whitespace-nowrap">₹{order.amount}</TableCell>
+                      <TableCell className="whitespace-nowrap">{order.items} Items</TableCell>
+                      <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={getStatusVariant(order.status)}>
                           {order.status}

@@ -12,20 +12,19 @@ const getDashboardStats = async (req, res) => {
 
         // Calculate total revenue
         const orders = await Order.find();
-        const totalRevenue = orders.reduce((acc, order) => acc + order.amount, 0);
+        const totalRevenue = orders.reduce((acc, order) => acc + (order.grandTotal || 0), 0);
 
-        const activeCustomers = await User.countDocuments(); // Simplified for now, can be real active customers logic later
+        const activeCustomers = await User.countDocuments();
 
         const recentOrders = await Order.find()
-            .populate('product', 'name')
             .sort({ createdAt: -1 })
             .limit(5);
 
         const formattedOrders = recentOrders.map(order => ({
             id: order._id,
             customer: order.customerName,
-            product: order.product ? order.product.name : 'Unknown Product',
-            amount: order.amount,
+            items: order.items.length,
+            amount: order.grandTotal || 0,
             status: order.status
         }));
 

@@ -14,7 +14,12 @@ interface HeaderProps {
 }
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
-  const router = useRouter();
+  let router: any = null;
+  try {
+    router = useRouter();
+  } catch (e) {
+    // Falls through to window.location fallback in functions
+  }
   const [mounted, setMounted] = useState(false);
 
   const userName = Cookies.get("user_name") || "Admin User";
@@ -30,7 +35,17 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
     Cookies.remove("user_role", { path: '/' });
     Cookies.remove("user_name", { path: '/' });
     toast.success("Logged out successfully");
-    router.push("/login");
+
+    // Safely attempt redirection
+    try {
+      if (router) {
+        router.push("/login");
+      } else {
+        window.location.href = "/login";
+      }
+    } catch (e) {
+      window.location.href = "/login";
+    }
   };
 
   return (

@@ -303,6 +303,7 @@ const CreateOrder = () => {
                 const product = availableProducts.find(p => p._id === item.productName);
                 return {
                     ...item,
+                    category: product ? product.category : item.category,
                     productName: product ? product.name : item.productName
                 };
             });
@@ -320,6 +321,9 @@ const CreateOrder = () => {
                 balanceDue,
                 companyDetails
             };
+
+            // Save to database
+            await api.post("/api/orders", orderData);
 
             // Trigger PDF generation IMMEDIATELY
             generateInvoicePDF(orderData);

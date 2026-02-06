@@ -187,7 +187,7 @@ const PurchaseOrders = () => {
                     <TableCell>{po.deliveryDate}</TableCell>
                     <TableCell>{po.items}</TableCell>
                     <TableCell className="font-semibold">
-                      ₹{po.total.toLocaleString()}
+                      ₹{(po.total || 0).toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(po.status)}>

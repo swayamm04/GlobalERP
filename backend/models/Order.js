@@ -3,20 +3,50 @@ const mongoose = require('mongoose');
 const orderSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
         ref: 'User'
     },
     customerName: {
         type: String,
         required: true
     },
-    product: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Product'
+    contact: {
+        type: String,
+        required: true
     },
-    amount: {
+    address: {
+        type: String,
+        required: true
+    },
+    items: [
+        {
+            productName: String,
+            quantity: Number,
+            price: Number,
+            category: String
+        }
+    ],
+    subtotal: {
         type: Number,
+        required: true
+    },
+    discount: {
+        type: Number,
+        default: 0
+    },
+    grandTotal: {
+        type: Number,
+        required: true
+    },
+    paidAmount: {
+        type: Number,
+        required: true
+    },
+    balanceDue: {
+        type: Number,
+        required: true
+    },
+    paymentMethod: {
+        type: String,
         required: true
     },
     status: {

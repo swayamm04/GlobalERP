@@ -105,7 +105,26 @@ export const Sidebar = ({
   mobileOpen,
   onMobileClose,
 }: SidebarProps) => {
-  const pathname = usePathname() || "";
+  const [pathname, setPathname] = useState("");
+
+  // Attempt to use next/navigation
+  let appPathname: string | null = null;
+  try {
+    // We wrap this in a component context check if we could, 
+    // but here we rely on the fact that if it's App Router, it's safe.
+    // NOTE: This call MUST be at the top level.
+    appPathname = usePathname();
+  } catch (e) {
+    // Falls through to useEffect fallback
+  }
+
+  useEffect(() => {
+    if (appPathname) {
+      setPathname(appPathname);
+    } else if (typeof window !== "undefined") {
+      setPathname(window.location.pathname);
+    }
+  }, [appPathname]);
 
   const SidebarContent = () => (
     <>
