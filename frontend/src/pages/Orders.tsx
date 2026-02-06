@@ -11,11 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download } from "lucide-react";
+import { Search, Filter, Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { generateInvoice } from "@/lib/invoiceGenerator";
 
 interface Order {
   id: string;
@@ -47,6 +48,7 @@ const getStatusVariant = (status: string) => {
 const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -64,6 +66,37 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
+  const handleDownloadInvoice = async (orderId: string) => {
+    setDownloadingId(orderId);
+    try {
+      // 1. Fetch full order details
+      const { data: order } = await api.get(`/api/orders/${orderId}`);
+
+      // 2. Fetch company settings
+      const { data: settings } = await api.get("/api/company-settings");
+
+      // 3. Generate Invoice
+      generateInvoice({
+        customerName: order.customerName,
+        contact: order.contact,
+        address: order.address,
+        items: order.items,
+        grandTotal: order.grandTotal,
+        paymentMethod: order.paymentMethod,
+        orderId: order._id,
+        date: order.createdAt,
+        companyDetails: settings
+      });
+
+      toast.success("Invoice downloaded!");
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toast.error("Failed to download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -74,7 +107,7 @@ const Orders = () => {
           </div>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Export List
           </Button>
         </div>
 
@@ -101,16 +134,17 @@ const Orders = () => {
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">Loading orders...</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
                   </TableRow>
                 ) : orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">No orders found</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">No orders found</TableCell>
                   </TableRow>
                 ) : (
                   orders.map((order) => (
@@ -128,6 +162,20 @@ const Orders = () => {
                         <Badge variant={getStatusVariant(order.status)}>
                           {order.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadInvoice(order.id)}
+                          disabled={downloadingId === order.id}
+                        >
+                          {downloadingId === order.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
