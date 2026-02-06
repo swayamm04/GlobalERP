@@ -1,9 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/icon.svg/route": "app/icon.svg/route.js",
-  "/customers/page": "app/customers/page.js",
-  "/login/page": "app/login/page.js",
-  "/product-catalog/page": "app/product-catalog/page.js",
-  "/users/page": "app/users/page.js"
-}

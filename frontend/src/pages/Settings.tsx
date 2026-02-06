@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Building2, Shield, CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Settings = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -43,6 +44,8 @@ const Settings = () => {
     confirmPassword: ""
   });
 
+  const [activeTab, setActiveTab] = useState<"profile" | "company">("profile");
+
   useEffect(() => {
     fetchSettings();
   }, []);
@@ -58,6 +61,22 @@ const Settings = () => {
       toast.error("Failed to load settings");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    if (id.includes("bank-")) {
+      const bankField = id.replace("bank-", "");
+      setSettings((prev) => ({
+        ...prev,
+        bankDetails: {
+          ...prev.bankDetails,
+          [bankField]: value
+        }
+      }));
+    } else {
+      setSettings((prev) => ({ ...prev, [id]: value }));
     }
   };
 
@@ -110,22 +129,6 @@ const Settings = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    if (id.includes("bank-")) {
-      const bankField = id.replace("bank-", "");
-      setSettings((prev) => ({
-        ...prev,
-        bankDetails: {
-          ...prev.bankDetails,
-          [bankField]: value
-        }
-      }));
-    } else {
-      setSettings((prev) => ({ ...prev, [id]: value }));
-    }
-  };
-
   if (loading) {
     return (
       <DashboardLayout>
@@ -136,274 +139,320 @@ const Settings = () => {
     );
   }
 
+  const tabs = [
+    { id: "profile", label: "Account Profile", icon: User },
+    { id: "company", label: "Company Details", icon: Building2 },
+  ];
+
   return (
     <DashboardLayout>
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Settings</h1>
-              <p className="text-muted-foreground">Manage your application and company details</p>
-            </div>
-            <div className="flex gap-2">
-              {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)}>Edit Settings</Button>
-              ) : (
-                <>
-                  <Button variant="outline" onClick={() => { setIsEditing(false); fetchSettings(); }} disabled={saving}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save Changes
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Details</CardTitle>
-                <CardDescription>Basic information for your business</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      value={settings.companyName}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gstin">GSTIN</Label>
-                    <Input
-                      id="gstin"
-                      value={settings.gstin}
-                      onChange={handleChange}
-                      placeholder="29AAAAA0000A1Z5"
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={settings.email}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={settings.phone}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="col-span-full space-y-2">
-                    <Label htmlFor="address">Full Address</Label>
-                    <Input
-                      id="address"
-                      value={settings.address}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      value={settings.state}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gstCode">GST State Code</Label>
-                    <Input
-                      id="gstCode"
-                      value={settings.gstCode}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Invoice Settings</CardTitle>
-                <CardDescription>Configure how your invoices are generated</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
-                    <Input
-                      id="invoicePrefix"
-                      value={settings.invoicePrefix}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="financialYear">Financial Year</Label>
-                    <Input
-                      id="financialYear"
-                      value={settings.financialYear}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">GST Calculation (CGST/SGST/IGST)</p>
-                    <p className="text-sm text-muted-foreground">Enable or disable GST fields in invoices</p>
-                  </div>
-                  <Switch
-                    checked={settings.isGstEnabled}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, isGstEnabled: checked }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Bank Details</CardTitle>
-                <CardDescription>Your bank information for invoice payments</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="bank-bankName">Bank Name</Label>
-                    <Input
-                      id="bank-bankName"
-                      value={settings.bankDetails.bankName}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bank-accountNumber">Account Number</Label>
-                    <Input
-                      id="bank-accountNumber"
-                      value={settings.bankDetails.accountNumber}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bank-ifscCode">IFSC Code</Label>
-                    <Input
-                      id="bank-ifscCode"
-                      value={settings.bankDetails.ifscCode}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bank-branch">Branch</Label>
-                    <Input
-                      id="bank-branch"
-                      value={settings.bankDetails.branch}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Settings</h1>
+          <p className="text-muted-foreground">Manage your personal profile and business configurations</p>
         </div>
 
-        <div className="lg:col-span-4 lg:pt-16">
-          <Card className="sticky top-24">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Account Profile</CardTitle>
-                {!isAccountEditing && (
-                  <Button variant="ghost" size="sm" onClick={() => setIsAccountEditing(true)}>
-                    Edit
-                  </Button>
-                )}
-              </div>
-              <CardDescription>Update your personal information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAccountSave} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="profile-name">Full Name</Label>
-                  <Input
-                    id="profile-name"
-                    value={accountSettings.name}
-                    onChange={(e) => setAccountSettings(prev => ({ ...prev, name: e.target.value }))}
-                    disabled={!isAccountEditing}
-                  />
-                </div>
+        <div className="grid gap-6 lg:grid-cols-12">
+          {/* Sidebar Navigation */}
+          <div className="lg:col-span-3">
+            <nav className="flex flex-col gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-muted",
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-                {isAccountEditing && (
-                  <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <Label htmlFor="profile-password">New Password</Label>
-                      <Input
-                        id="profile-password"
-                        type="password"
-                        placeholder="Leave blank to keep current"
-                        value={accountSettings.password}
-                        onChange={(e) => setAccountSettings(prev => ({ ...prev, password: e.target.value }))}
-                      />
+          {/* Main Content Area */}
+          <div className="lg:col-span-9">
+            {activeTab === "profile" && (
+              <div className="space-y-6">
+                <Card className="border-none shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold">Account Profile</CardTitle>
+                      <CardDescription>Update your personal information and password</CardDescription>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="profile-confirm">Confirm Password</Label>
-                      <Input
-                        id="profile-confirm"
-                        type="password"
-                        value={accountSettings.confirmPassword}
-                        onChange={(e) => setAccountSettings(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          setIsAccountEditing(false);
-                          setAccountSettings(prev => ({
-                            ...prev,
-                            name: Cookies.get("user_name") || "",
-                            password: "",
-                            confirmPassword: ""
-                          }));
-                        }}
-                        disabled={accountSaving}
-                      >
+                    {!isAccountEditing ? (
+                      <Button variant="outline" size="sm" onClick={() => setIsAccountEditing(true)}>
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setIsAccountEditing(false)} disabled={accountSaving}>
+                          Cancel
+                        </Button>
+                        <Button size="sm" onClick={handleAccountSave} disabled={accountSaving}>
+                          {accountSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleAccountSave} className="space-y-6">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="profile-name">Full Name</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              id="profile-name"
+                              className="pl-10"
+                              value={accountSettings.name}
+                              onChange={(e) => setAccountSettings(prev => ({ ...prev, name: e.target.value }))}
+                              disabled={!isAccountEditing}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Account Role</Label>
+                          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                            <Shield className="h-4 w-4" />
+                            {Cookies.get("user_role") === "super_admin" ? "Super Admin" : "Administrator"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {isAccountEditing && (
+                        <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-2">
+                          <Separator />
+                          <div>
+                            <h3 className="text-sm font-medium mb-4">Change Password</h3>
+                            <div className="grid gap-6 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="profile-password">New Password</Label>
+                                <Input
+                                  id="profile-password"
+                                  type="password"
+                                  placeholder="Leave blank to keep current"
+                                  value={accountSettings.password}
+                                  onChange={(e) => setAccountSettings(prev => ({ ...prev, password: e.target.value }))}
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="profile-confirm">Confirm Password</Label>
+                                <Input
+                                  id="profile-confirm"
+                                  type="password"
+                                  value={accountSettings.confirmPassword}
+                                  onChange={(e) => setAccountSettings(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === "company" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">Company Configuration</h2>
+                    <p className="text-sm text-muted-foreground">Business details and payment information</p>
+                  </div>
+                  {!isEditing ? (
+                    <Button onClick={() => setIsEditing(true)}>Edit Details</Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => { setIsEditing(false); fetchSettings(); }} disabled={saving}>
                         Cancel
                       </Button>
-                      <Button type="submit" className="flex-1" disabled={accountSaving}>
-                        {accountSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Update
+                      <Button onClick={handleSave} disabled={saving}>
+                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save All Changes
                       </Button>
                     </div>
-                  </>
-                )}
-              </form>
-            </CardContent>
-          </Card>
+                  )}
+                </div>
+
+                <div className="grid gap-6">
+                  <Card className="border-none shadow-sm">
+                    <CardHeader>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <CardTitle>Basic Information</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="companyName">Company Name</Label>
+                          <Input
+                            id="companyName"
+                            value={settings.companyName}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="gstin">GSTIN</Label>
+                          <Input
+                            id="gstin"
+                            value={settings.gstin}
+                            onChange={handleChange}
+                            placeholder="29AAAAA0000A1Z5"
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Business Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={settings.email}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Phone Number</Label>
+                          <Input
+                            id="phone"
+                            value={settings.phone}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="col-span-full space-y-2">
+                          <Label htmlFor="address">Address</Label>
+                          <Input
+                            id="address"
+                            value={settings.address}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State</Label>
+                          <Input
+                            id="state"
+                            value={settings.state}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="gstCode">State Code</Label>
+                          <Input
+                            id="gstCode"
+                            value={settings.gstCode}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-none shadow-sm">
+                    <CardHeader>
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                        <CardTitle>Bank Details</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-bankName">Bank Name</Label>
+                          <Input
+                            id="bank-bankName"
+                            value={settings.bankDetails.bankName}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-accountNumber">Account Number</Label>
+                          <Input
+                            id="bank-accountNumber"
+                            value={settings.bankDetails.accountNumber}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-ifscCode">IFSC Code</Label>
+                          <Input
+                            id="bank-ifscCode"
+                            value={settings.bankDetails.ifscCode}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="bank-branch">Branch</Label>
+                          <Input
+                            id="bank-branch"
+                            value={settings.bankDetails.branch}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-none shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Invoice Rules</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                          <Input
+                            id="invoicePrefix"
+                            value={settings.invoicePrefix}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="financialYear">Financial Year</Label>
+                          <Input
+                            id="financialYear"
+                            value={settings.financialYear}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="text-base">Tax Inclusion (GST)</Label>
+                          <p className="text-sm text-muted-foreground">Show tax breakdown on invoices</p>
+                        </div>
+                        <Switch
+                          checked={settings.isGstEnabled}
+                          onCheckedChange={(checked) => setSettings(prev => ({ ...prev, isGstEnabled: checked }))}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>

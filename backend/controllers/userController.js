@@ -37,10 +37,14 @@ const authUser = async (req, res) => {
 const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+        return res.status(400).json({ message: 'Email is already registered' });
+    }
 
-    if (userExists) {
-        return res.status(400).json({ message: 'User already exists' });
+    const nameExists = await User.findOne({ name });
+    if (nameExists) {
+        return res.status(400).json({ message: 'Name is already taken' });
     }
 
     const user = await User.create({
@@ -96,7 +100,14 @@ const updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-        user.name = req.body.name || user.name;
+        if (req.body.name && req.body.name !== user.name) {
+            const nameExists = await User.findOne({ name: req.body.name });
+            if (nameExists) {
+                return res.status(400).json({ message: 'Name is already taken' });
+            }
+            user.name = req.body.name;
+        }
+
         if (req.body.password) {
             user.password = req.body.password;
         }
