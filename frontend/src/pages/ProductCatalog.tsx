@@ -24,6 +24,19 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const getColorClass = (color: string) => {
+    switch (color) {
+        case "Red":
+            return "text-red-600 font-semibold";
+        case "Blue":
+            return "text-blue-600 font-semibold";
+        case "Green":
+            return "text-green-600 font-semibold";
+        default:
+            return "";
+    }
+};
+
 const ProductCatalog = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -55,6 +68,10 @@ const ProductCatalog = () => {
                 "Sl No.": index + 1,
                 "Product Name": product.name,
                 "Category": product.category,
+                "Color": product.color,
+                "Length": product.length,
+                "Thickness": product.thickness ? `${product.thickness}mm` : "-",
+                "HSN Code": product.hsnCode,
                 "Price": product.price,
             }));
 
@@ -84,11 +101,15 @@ const ProductCatalog = () => {
                 index + 1,
                 product.name,
                 product.category,
+                product.color,
+                product.thickness ? `${product.thickness}mm` : "-",
+                product.length,
+                product.hsnCode,
                 `Rs. ${product.price}`,
             ]);
 
             autoTable(doc, {
-                head: [["Sl No.", "Product Name", "Category", "Price"]],
+                head: [["Sl No.", "Product Name", "Category", "Color", "Thickness", "Length", "HSN Code", "Price"]],
                 body: tableData,
                 startY: 44,
             });
@@ -159,6 +180,10 @@ const ProductCatalog = () => {
                                     <TableHead className="w-[80px]">Sl No.</TableHead>
                                     <TableHead>Product Name</TableHead>
                                     <TableHead>Category</TableHead>
+                                    <TableHead>Color</TableHead>
+                                    <TableHead>Thickness</TableHead>
+                                    <TableHead>Length</TableHead>
+                                    <TableHead>HSN Code</TableHead>
                                     <TableHead>Price</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -179,6 +204,10 @@ const ProductCatalog = () => {
                                             <TableCell className="font-medium">{index + 1}</TableCell>
                                             <TableCell>{product.name}</TableCell>
                                             <TableCell>{product.category}</TableCell>
+                                            <TableCell className={getColorClass(product.color)}>{product.color}</TableCell>
+                                            <TableCell>{product.thickness ? `${product.thickness}mm` : "-"}</TableCell>
+                                            <TableCell>{product.length}</TableCell>
+                                            <TableCell>{product.hsnCode}</TableCell>
                                             <TableCell>₹{product.price}</TableCell>
                                         </TableRow>
                                     ))

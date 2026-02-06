@@ -31,6 +31,19 @@ const getStatusVariant = (status: string) => {
   }
 };
 
+const getColorClass = (color: string) => {
+  switch (color) {
+    case "Red":
+      return "text-red-600 font-semibold";
+    case "Blue":
+      return "text-blue-600 font-semibold";
+    case "Green":
+      return "text-green-600 font-semibold";
+    default:
+      return "";
+  }
+};
+
 const Products = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,6 +162,10 @@ const Products = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Color</TableHead>
+                  <TableHead>Thickness</TableHead>
+                  <TableHead>Length</TableHead>
+                  <TableHead>HSN Code</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
@@ -160,6 +177,10 @@ const Products = () => {
                   <TableRow key={product._id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
+                    <TableCell className={getColorClass(product.color)}>{product.color}</TableCell>
+                    <TableCell>{product.thickness ? `${product.thickness}mm` : "-"}</TableCell>
+                    <TableCell>{product.length}</TableCell>
+                    <TableCell>{product.hsnCode}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>₹{product.price}</TableCell>
                     <TableCell>
@@ -188,7 +209,7 @@ const Products = () => {
                 ))}
                 {filteredProducts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       No products found. Add a new product to get started.
                     </TableCell>
                   </TableRow>

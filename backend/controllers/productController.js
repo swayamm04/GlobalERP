@@ -30,6 +30,10 @@ const createProduct = async (req, res) => {
         stock: req.body.stock,
         price: req.body.price,
         status: status,
+        color: req.body.color,
+        length: req.body.length,
+        thickness: req.body.thickness,
+        hsnCode: req.body.hsnCode,
         user: req.user.id
     });
 

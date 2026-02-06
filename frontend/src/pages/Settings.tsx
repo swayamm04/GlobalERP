@@ -139,9 +139,11 @@ const Settings = () => {
     );
   }
 
+  const userRole = Cookies.get("user_role");
+
   const tabs = [
     { id: "profile", label: "Account Profile", icon: User },
-    { id: "company", label: "Company Details", icon: Building2 },
+    ...(userRole === "super_admin" ? [{ id: "company", label: "Company Details", icon: Building2 }] : []),
   ];
 
   return (
@@ -260,7 +262,7 @@ const Settings = () => {
               </div>
             )}
 
-            {activeTab === "company" && (
+            {activeTab === "company" && userRole === "super_admin" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center justify-between">
                   <div>
