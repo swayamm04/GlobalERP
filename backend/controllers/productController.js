@@ -4,7 +4,7 @@ const Product = require('../models/Product');
 // @route   GET /api/products
 // @access  Public (or Private depending on needs, currently Public)
 const getProducts = async (req, res) => {
-    const products = await Product.find();
+    const products = await Product.find().populate('category');
     res.status(200).json(products);
 };
 
@@ -25,19 +25,13 @@ const createProduct = async (req, res) => {
     }
 
     const product = await Product.create({
-        name: req.body.name,
-        category: req.body.category,
-        stock: req.body.stock,
-        price: req.body.price,
+        ...req.body,
         status: status,
-        color: req.body.color,
-        length: req.body.length,
-        thickness: req.body.thickness,
-        hsnCode: req.body.hsnCode,
         user: req.user.id
     });
 
-    res.status(200).json(product);
+    const populatedProduct = await Product.findById(product._id).populate('category');
+    res.status(200).json(populatedProduct);
 };
 
 // @desc    Update product
@@ -77,7 +71,7 @@ const updateProduct = async (req, res) => {
 
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
-    });
+    }).populate('category');
 
     res.status(200).json(updatedProduct);
 };

@@ -10,6 +10,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Search, Filter, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
@@ -26,8 +33,19 @@ import {
 
 const ProductCatalog = () => {
     const [products, setProducts] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("all");
     const [loading, setLoading] = useState(true);
+
+    const fetchCategories = async () => {
+        try {
+            const { data } = await api.get("/api/categories");
+            setCategories(data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        }
+    };
 
     const fetchProducts = async () => {
         try {
@@ -43,24 +61,28 @@ const ProductCatalog = () => {
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
     }, []);
 
-    const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter((product) => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === "all" ||
+            (typeof product.category === 'object' ? product.category._id : product.category) === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     const exportToExcel = () => {
         try {
-            const dataToExport = filteredProducts.map((product, index) => ({
-                "Sl No.": index + 1,
-                "Product Name": product.name,
-                "Category": product.category,
-                "Color": product.color,
-                "Length": product.length,
-                "Thickness": product.thickness ? `${product.thickness}mm` : "-",
-                "HSN Code": product.hsnCode,
-                "Price": product.price,
-            }));
+            const dataToExport = filteredProducts.map((product, index) => {
+                const specs = product.customFields?.map((f: any) => `${f.label}: ${f.value}`).join(", ") || "";
+                return {
+                    "Sl No.": index + 1,
+                    "Product Name": product.name,
+                    "Category": product.category?.name || "No Category",
+                    "Specifications": specs,
+                    "Price": product.price,
+                };
+            });
 
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
@@ -87,16 +109,13 @@ const ProductCatalog = () => {
             const tableData = filteredProducts.map((product, index) => [
                 index + 1,
                 product.name,
-                product.category,
-                product.color,
-                product.thickness ? `${product.thickness}mm` : "-",
-                product.length,
-                product.hsnCode,
+                product.category?.name || "No Category",
+                product.customFields?.map((f: any) => `${f.label}: ${f.value}`).join(", ") || "-",
                 `Rs. ${product.price}`,
             ]);
 
             autoTable(doc, {
-                head: [["Sl No.", "Product Name", "Category", "Color", "Thickness", "Length", "HSN Code", "Price"]],
+                head: [["Sl No.", "Product Name", "Category", "Specifications", "Price"]],
                 body: tableData,
                 startY: 44,
             });
@@ -157,7 +176,20 @@ const ProductCatalog = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            {/* Filter button removed */}
+                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                <SelectTrigger className="w-[180px]">
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    <SelectValue placeholder="Filter by Category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Categories</SelectItem>
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat._id} value={cat._id}>
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -167,10 +199,6 @@ const ProductCatalog = () => {
                                     <TableHead className="w-[80px]">Sl No.</TableHead>
                                     <TableHead>Product Name</TableHead>
                                     <TableHead>Category</TableHead>
-                                    <TableHead>Color</TableHead>
-                                    <TableHead>Thickness</TableHead>
-                                    <TableHead>Length</TableHead>
-                                    <TableHead>HSN Code</TableHead>
                                     <TableHead>Price</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -196,18 +224,14 @@ const ProductCatalog = () => {
                                                         <div className="flex flex-wrap gap-x-2 mt-1">
                                                             {product.customFields.map((f: any, i: number) => (
                                                                 <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
-                                                                    {f.label}: {f.value}
+                                                                    {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
                                                                 </span>
                                                             ))}
                                                         </div>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{product.category}</TableCell>
-                                            <TableCell>{product.color}</TableCell>
-                                            <TableCell>{product.thickness ? `${product.thickness}mm` : "-"}</TableCell>
-                                            <TableCell>{product.length}</TableCell>
-                                            <TableCell>{product.hsnCode}</TableCell>
+                                            <TableCell>{product.category?.name || "No Category"}</TableCell>
                                             <TableCell>₹{product.price}</TableCell>
                                         </TableRow>
                                     ))

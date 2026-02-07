@@ -16,6 +16,7 @@ export interface InvoiceData {
         stateCode: string;
         phone: string;
         email: string;
+        hsnCode?: string;
     };
     orderId?: string;
     date?: string | Date;
@@ -137,10 +138,18 @@ export const generateInvoice = (data: InvoiceData) => {
     // Items Table with Multi-page Support
     const tableBody = items.map((item, index) => {
         const rateExclTax = item.price / 1.18;
+        const specs = item.customFields && item.customFields.length > 0
+            ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(", ")
+            : "";
+
+        const description = specs
+            ? { content: `${item.productName || "Product"}\n(${specs})`, styles: { fontSize: 6, cellPadding: 1 } }
+            : (item.productName || "Product");
+
         return [
             index + 1,
-            item.productName || "Product",
-            item.category || "N/A", // Using category as HSN/SAC fallback if not explicitly provided
+            description,
+            companyDetails?.hsnCode || item.category || "N/A", // Using global HSN first, then category as fallback
             `${item.quantity} NO`,
             item.price.toFixed(2),
             rateExclTax.toFixed(2),

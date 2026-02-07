@@ -11,11 +11,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Search, Filter, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { ProductDialog } from "@/components/products/ProductDialog";
+import { CategoryDialog } from "@/components/products/CategoryDialog";
 import Cookies from "js-cookie";
 
 const getStatusVariant = (status: string) => {
@@ -35,7 +43,19 @@ const Products = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const fetchCategories = async () => {
+    try {
+      const { data } = await api.get("/api/categories");
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -49,6 +69,7 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const handleCreate = async (data: any) => {
@@ -110,9 +131,12 @@ const Products = () => {
     setIsDialogOpen(true);
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "all" ||
+      (typeof product.category === 'object' ? product.category._id : product.category) === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <DashboardLayout>
@@ -122,10 +146,16 @@ const Products = () => {
             <h1 className="text-2xl font-bold">Manage Products</h1>
             <p className="text-muted-foreground">Manage your product inventory</p>
           </div>
-          <Button onClick={openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Category
+            </Button>
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -140,7 +170,20 @@ const Products = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              {/* Filter button removed */}
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Filter by Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
@@ -149,10 +192,6 @@ const Products = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Color</TableHead>
-                  <TableHead>Thickness</TableHead>
-                  <TableHead>Length</TableHead>
-                  <TableHead>HSN Code</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
@@ -169,18 +208,14 @@ const Products = () => {
                           <div className="flex flex-wrap gap-x-2 mt-1">
                             {product.customFields.map((f: any, i: number) => (
                               <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
-                                {f.label}: {f.value}
+                                {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
                               </span>
                             ))}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>{product.color}</TableCell>
-                    <TableCell>{product.thickness ? `${product.thickness}mm` : "-"}</TableCell>
-                    <TableCell>{product.length}</TableCell>
-                    <TableCell>{product.hsnCode}</TableCell>
+                    <TableCell>{product.category?.name || "No Category"}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>₹{product.price}</TableCell>
                     <TableCell>
@@ -224,6 +259,12 @@ const Products = () => {
           onOpenChange={setIsDialogOpen}
           onSubmit={editingProduct ? handleUpdate : handleCreate}
           product={editingProduct}
+          categories={categories}
+        />
+        <CategoryDialog
+          open={isCategoryDialogOpen}
+          onOpenChange={setIsCategoryDialogOpen}
+          onSuccess={fetchCategories}
         />
       </div>
     </DashboardLayout>

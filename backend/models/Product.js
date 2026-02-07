@@ -11,8 +11,9 @@ const productSchema = mongoose.Schema({
         required: [true, 'Please add a name']
     },
     category: {
-        type: String,
-        required: [true, 'Please add a category']
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, 'Please add a category'],
+        ref: 'Category'
     },
     stock: {
         type: Number,
@@ -31,24 +32,29 @@ const productSchema = mongoose.Schema({
     },
     color: {
         type: String,
-        required: [true, 'Please add a color']
+        required: false
     },
     length: {
         type: String,
-        required: [true, 'Please add a length']
+        required: false
     },
     thickness: {
         type: String,
         required: false
     },
-    hsnCode: {
-        type: String,
-        required: [true, 'Please add an HSN code']
+    cgst: {
+        type: Number,
+        default: 9
+    },
+    sgst: {
+        type: Number,
+        default: 9
     },
     customFields: [
         {
             label: String,
-            value: String
+            value: String,
+            unit: String
         }
     ]
 }, {

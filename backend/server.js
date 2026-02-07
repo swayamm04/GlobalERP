@@ -18,6 +18,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/company-settings', require('./routes/companySettingsRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)

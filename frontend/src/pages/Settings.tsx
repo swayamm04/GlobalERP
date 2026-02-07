@@ -35,7 +35,8 @@ const Settings = () => {
       branch: ""
     },
     email: "",
-    phone: ""
+    phone: "",
+    hsnCode: ""
   });
 
   const [accountSettings, setAccountSettings] = useState({
@@ -329,6 +330,16 @@ const Settings = () => {
                             id="phone"
                             value={settings.phone}
                             onChange={handleChange}
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="hsnCode">Default HSN Code</Label>
+                          <Input
+                            id="hsnCode"
+                            value={settings.hsnCode}
+                            onChange={handleChange}
+                            placeholder="e.g. 7210"
                             disabled={!isEditing}
                           />
                         </div>

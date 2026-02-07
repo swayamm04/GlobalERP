@@ -22,7 +22,14 @@ const orderSchema = mongoose.Schema({
             productName: String,
             quantity: Number,
             price: Number,
-            category: String
+            category: String,
+            customFields: [
+                {
+                    label: String,
+                    value: String,
+                    unit: String
+                }
+            ]
         }
     ],
     subtotal: {

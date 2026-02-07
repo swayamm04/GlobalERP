@@ -17,6 +17,7 @@ interface ProductDialogProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: any) => Promise<void>;
     product?: any;
+    categories: any[];
 }
 
 export function ProductDialog({
@@ -24,61 +25,63 @@ export function ProductDialog({
     onOpenChange,
     onSubmit,
     product,
+    categories,
 }: ProductDialogProps) {
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<any>({
         name: "",
         category: "",
         stock: "",
         price: "",
-        color: "",
-        length: "",
-        thickness: "",
-        hsnCode: "",
+        cgst: "9",
+        sgst: "9",
     });
-    const [customFields, setCustomFields] = useState<any[]>([]);
+    const [categoryFields, setCategoryFields] = useState<any[]>([]);
 
     useEffect(() => {
         if (product) {
             setFormData({
                 name: product.name,
-                category: product.category || "",
+                category: typeof product.category === 'object' ? product.category._id : product.category || "",
                 stock: product.stock.toString(),
                 price: product.price.toString(),
-                color: product.color || "",
-                length: product.length || "",
-                thickness: product.thickness || "",
-                hsnCode: product.hsnCode || "",
+                cgst: (product.cgst || 9).toString(),
+                sgst: (product.sgst || 9).toString(),
             });
-            setCustomFields(product.customFields || []);
+            // Map customFields to category fields if needed, 
+            // but for simplicity I'll just load them into the state.
+            // When category changes, we'll reset or populate these.
         } else {
             setFormData({
                 name: "",
                 category: "",
                 stock: "",
                 price: "",
-                color: "",
-                length: "",
-                thickness: "",
-                hsnCode: "",
+                cgst: "9",
+                sgst: "9",
             });
-            setCustomFields([]);
+            setCategoryFields([]);
         }
     }, [product, open]);
 
-    const handleAddField = () => {
-        setCustomFields([...customFields, { label: "", value: "" }]);
-    };
+    useEffect(() => {
+        if (formData.category) {
+            const selectedCat = categories.find(c => c._id === formData.category);
+            if (selectedCat) {
+                // Initialize physicsSpecs from product if available, or empty
+                const fields = selectedCat.fields.map((f: any) => {
+                    const existing = product?.customFields?.find((cf: any) => cf.label === f.label);
+                    return {
+                        label: f.label,
+                        unit: f.unit,
+                        value: existing ? existing.value : ""
+                    };
+                });
+                setCategoryFields(fields);
+            }
+        }
+    }, [formData.category, categories, product]);
 
-    const handleRemoveField = (index: number) => {
-        setCustomFields(customFields.filter((_, i) => i !== index));
-    };
-
-    const handleFieldChange = (index: number, field: string, value: string) => {
-        const newFields = [...customFields];
-        newFields[index] = { ...newFields[index], [field]: value };
-        setCustomFields(newFields);
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -88,7 +91,9 @@ export function ProductDialog({
                 ...formData,
                 stock: Number(formData.stock),
                 price: Number(formData.price),
-                customFields
+                cgst: Number(formData.cgst),
+                sgst: Number(formData.sgst),
+                customFields: categoryFields.map(f => ({ label: f.label, value: f.value, unit: f.unit }))
             });
             onOpenChange(false);
         } finally {
@@ -123,13 +128,20 @@ export function ProductDialog({
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
-                                    <Input
+                                    <select
                                         id="category"
+                                        className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background"
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        placeholder="e.g. Sheet"
                                         required
-                                    />
+                                    >
+                                        <option value="">Select Category</option>
+                                        {categories.map((cat) => (
+                                            <option key={cat._id} value={cat._id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -153,94 +165,57 @@ export function ProductDialog({
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="hsnCode">HSN Code</Label>
-                                    <Input
-                                        id="hsnCode"
-                                        value={formData.hsnCode}
-                                        onChange={(e) => setFormData({ ...formData, hsnCode: e.target.value })}
-                                        required
-                                    />
-                                </div>
                             </div>
 
                             <div className="space-y-4">
-                                <h3 className="text-sm font-medium border-b pb-2">Physical Specs</h3>
-                                <div className="space-y-2">
-                                    <Label htmlFor="color">Color</Label>
-                                    <Input
-                                        id="color"
-                                        value={formData.color}
-                                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                        placeholder="e.g. Red"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="length">Length</Label>
-                                    <Input
-                                        id="length"
-                                        value={formData.length}
-                                        onChange={(e) => setFormData({ ...formData, length: e.target.value })}
-                                        placeholder="e.g. 12ft"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="thickness">Thickness (mm)</Label>
-                                    <Input
-                                        id="thickness"
-                                        value={formData.thickness}
-                                        onChange={(e) => setFormData({ ...formData, thickness: e.target.value })}
-                                        placeholder="Optional"
-                                    />
-                                </div>
-
-                                <div className="pt-4 space-y-4 border-t">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-medium">Extra Fields (Optional)</h3>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleAddField}
-                                            className="h-8"
-                                        >
-                                            <Plus className="h-4 w-4 mr-1" />
-                                            Add
-                                        </Button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {customFields.map((field, index) => (
-                                            <div key={index} className="flex gap-2 items-center">
+                                <h3 className="text-sm font-medium border-b pb-2">Category Specific Fields</h3>
+                                {categoryFields.length > 0 ? (
+                                    <div className="space-y-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+                                        {categoryFields.map((field, index) => (
+                                            <div key={index} className="space-y-2">
+                                                <Label className="text-blue-900/70">{field.label} {field.unit ? `(${field.unit})` : ""}</Label>
                                                 <Input
-                                                    placeholder="Label (e.g. Brand)"
-                                                    value={field.label}
-                                                    onChange={(e) => handleFieldChange(index, "label", e.target.value)}
-                                                    className="flex-1 h-8 text-xs"
-                                                />
-                                                <Input
-                                                    placeholder="Value"
+                                                    className="bg-white/50 border-blue-100"
                                                     value={field.value}
-                                                    onChange={(e) => handleFieldChange(index, "value", e.target.value)}
-                                                    className="flex-1 h-8 text-xs"
+                                                    onChange={(e) => {
+                                                        const newFields = [...categoryFields];
+                                                        newFields[index].value = e.target.value;
+                                                        setCategoryFields(newFields);
+                                                    }}
+                                                    placeholder={`Enter ${field.label.toLowerCase()}`}
                                                 />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleRemoveField(index)}
-                                                    className="h-8 w-8 text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
                                             </div>
                                         ))}
-                                        {customFields.length === 0 && (
-                                            <p className="text-xs text-muted-foreground text-center italic">
-                                                No extra fields added
-                                            </p>
-                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground italic py-2">
+                                        {formData.category ? "No specific fields for this category" : "Please select a category first"}
+                                    </p>
+                                )}
+
+                                <div className="pt-4 space-y-4 border-t">
+                                    <h3 className="text-sm font-medium">GST Details</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="cgst">CGST (%)</Label>
+                                            <Input
+                                                id="cgst"
+                                                type="number"
+                                                value={formData.cgst}
+                                                onChange={(e) => setFormData({ ...formData, cgst: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="sgst">SGST (%)</Label>
+                                            <Input
+                                                id="sgst"
+                                                type="number"
+                                                value={formData.sgst}
+                                                onChange={(e) => setFormData({ ...formData, sgst: e.target.value })}
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -119,7 +119,7 @@ const Inventory = () => {
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          Category: {item.category}
+                          Category: {item.category?.name || "No Category"}
                         </p>
                       </div>
                       <div className="text-right">
@@ -155,7 +155,7 @@ const Inventory = () => {
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          Category: {item.category}
+                          Category: {item.category?.name || "No Category"}
                         </p>
                       </div>
                       <div className="text-right">

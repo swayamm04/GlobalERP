@@ -16,7 +16,8 @@ const companySettingsSchema = new mongoose.Schema({
         branch: { type: String, default: '' }
     },
     email: { type: String, default: '' },
-    phone: { type: String, default: '' }
+    phone: { type: String, default: '' },
+    hsnCode: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('CompanySettings', companySettingsSchema);

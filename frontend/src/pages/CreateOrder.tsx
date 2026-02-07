@@ -136,8 +136,9 @@ const CreateOrder = () => {
                 const product = availableProducts.find(p => p._id === item.productName);
                 return {
                     ...item,
-                    category: product ? product.category : item.category,
-                    productName: product ? product.name : item.productName
+                    category: product ? (product.category?.name || "No Category") : item.category,
+                    productName: product ? product.name : item.productName,
+                    customFields: product ? product.customFields : []
                 };
             });
 
@@ -278,7 +279,7 @@ const CreateOrder = () => {
                                                                             />
                                                                             <div className="flex flex-col">
                                                                                 <span className="font-medium text-foreground group-hover:text-white">{p.name}</span>
-                                                                                <span className="text-xs text-muted-foreground group-hover:text-blue-50">Price: ₹{p.price} | Category: {p.category}</span>
+                                                                                <span className="text-xs text-muted-foreground group-hover:text-blue-50">Price: ₹{p.price} | Category: {p.category?.name || "No Category"}</span>
                                                                             </div>
                                                                         </CommandItem>
                                                                     ))}
