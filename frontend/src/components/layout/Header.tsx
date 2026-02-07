@@ -14,12 +14,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
-  let router: any = null;
-  try {
-    router = useRouter();
-  } catch (e) {
-    // Falls through to window.location fallback in functions
-  }
+  const router = useRouter(); // Top level hook call
   const [mounted, setMounted] = useState(false);
 
   const userName = Cookies.get("user_name") || "Admin User";

@@ -74,25 +74,25 @@ const Dashboard = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
             title="Total Products"
-            value={stats.totalProducts.toString()}
+            value={(stats?.totalProducts ?? 0).toString()}
             icon={Package}
             iconColor="bg-primary/10 text-primary"
           />
           <StatsCard
             title="Total Orders"
-            value={stats.totalOrders.toString()}
+            value={(stats?.totalOrders ?? 0).toString()}
             icon={ShoppingCart}
             iconColor="bg-success/10 text-success"
           />
           <StatsCard
             title="Revenue"
-            value={`₹${stats.totalRevenue}`}
+            value={`₹${stats?.totalRevenue ?? 0}`}
             icon={IndianRupee}
             iconColor="bg-warning/10 text-warning"
           />
           <StatsCard
             title="Active Customers"
-            value={stats.activeCustomers.toString()}
+            value={(stats?.activeCustomers ?? 0).toString()}
             icon={Users}
             iconColor="bg-info/10 text-info"
           />
