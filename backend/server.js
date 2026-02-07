@@ -21,12 +21,13 @@ app.use('/api/company-settings', require('./routes/companySettingsRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 
 // Database Connection
+console.log('Attempting to connect to MongoDB...', process.env.MONGO_URI ? 'URI set' : 'URI MISSING');
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
-        console.log('MongoDB Connected');
+        console.log('MongoDB Connected successfully');
     })
     .catch((err) => {
-        console.error('MongoDB Connection Error:', err);
+        console.error('MongoDB Connection Error:', err.message);
     });
 
 // Basic Route
@@ -35,6 +36,11 @@ app.get('/', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on 0.0.0.0:${PORT}`);
+    console.log('Health check available at /');
+});
+
+server.on('error', (err) => {
+    console.error('Server startup error:', err);
 });
