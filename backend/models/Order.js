@@ -56,6 +56,33 @@ const orderSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    customerType: {
+        type: String,
+        enum: ['Individual', 'Business'],
+        default: 'Individual'
+    },
+    // Business specific fields
+    companyName: String,
+    gstin: String,
+    stateName: String,
+    stateCode: String,
+    email: String,
+    // Delivery credentials
+    invoiceNo: String,
+    invoiceDate: Date,
+    deliveryNote: String,
+    modeOfPayment: String,
+    referenceNo: String,
+    otherReferences: String,
+    buyersOrderNo: String,
+    buyersOrderDate: Date,
+    dispatchDocNo: String,
+    deliveryNoteDate: Date,
+    dispatchedThrough: String,
+    destination: String,
+    billOfLading: String,
+    motorVehicleNo: String,
+    termsOfDelivery: String,
     status: {
         type: String,
         enum: ['Pending', 'Processing', 'Shipped', 'Completed'],

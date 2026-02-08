@@ -39,7 +39,28 @@ const createOrder = async (req, res) => {
             grandTotal,
             paidAmount,
             balanceDue,
-            paymentMethod
+            paymentMethod,
+            customerType,
+            companyName,
+            gstin,
+            stateName,
+            stateCode,
+            email,
+            invoiceNo,
+            invoiceDate,
+            deliveryNote,
+            modeOfPayment,
+            referenceNo,
+            otherReferences,
+            buyersOrderNo,
+            buyersOrderDate,
+            dispatchDocNo,
+            deliveryNoteDate,
+            dispatchedThrough,
+            destination,
+            billOfLading,
+            motorVehicleNo,
+            termsOfDelivery
         } = req.body;
 
         const orderData = {
@@ -52,7 +73,28 @@ const createOrder = async (req, res) => {
             grandTotal,
             paidAmount,
             balanceDue,
-            paymentMethod
+            paymentMethod,
+            customerType,
+            companyName,
+            gstin,
+            stateName,
+            stateCode,
+            email,
+            invoiceNo,
+            invoiceDate,
+            deliveryNote,
+            modeOfPayment,
+            referenceNo,
+            otherReferences,
+            buyersOrderNo,
+            buyersOrderDate,
+            dispatchDocNo,
+            deliveryNoteDate,
+            dispatchedThrough,
+            destination,
+            billOfLading,
+            motorVehicleNo,
+            termsOfDelivery
         };
 
         if (req.user) {

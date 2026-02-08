@@ -33,9 +33,35 @@ interface OrderItem {
 }
 
 const CreateOrder = () => {
+    const [customerType, setCustomerType] = useState<"Individual" | "Business">("Individual");
     const [customerName, setCustomerName] = useState("");
     const [contact, setContact] = useState("");
     const [address, setAddress] = useState("");
+
+    // Business specific state
+    const [companyName, setCompanyName] = useState("");
+    const [gstin, setGstin] = useState("");
+    const [stateName, setStateName] = useState("");
+    const [stateCode, setStateCode] = useState("");
+    const [email, setEmail] = useState("");
+
+    // Delivery Credentials state
+    const [invoiceNo, setInvoiceNo] = useState("");
+    const [invoiceDate, setInvoiceDate] = useState("");
+    const [deliveryNote, setDeliveryNote] = useState("");
+    const [modeOfPayment, setModeOfPayment] = useState("");
+    const [referenceNo, setReferenceNo] = useState("");
+    const [otherReferences, setOtherReferences] = useState("");
+    const [buyersOrderNo, setBuyersOrderNo] = useState("");
+    const [buyersOrderDate, setBuyersOrderDate] = useState("");
+    const [dispatchDocNo, setDispatchDocNo] = useState("");
+    const [deliveryNoteDate, setDeliveryNoteDate] = useState("");
+    const [dispatchedThrough, setDispatchedThrough] = useState("");
+    const [destination, setDestination] = useState("");
+    const [billOfLading, setBillOfLading] = useState("");
+    const [motorVehicleNo, setMotorVehicleNo] = useState("");
+    const [termsOfDelivery, setTermsOfDelivery] = useState("");
+
     const [availableProducts, setAvailableProducts] = useState<any[]>([]);
     const [companyDetails, setCompanyDetails] = useState<any>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
@@ -121,8 +147,11 @@ const CreateOrder = () => {
     };
 
     const handleSubmit = async () => {
-        if (!customerName || !address) {
-            toast.error("Please fill in required fields (Name, Address)");
+        const isBusiness = customerType === "Business";
+        const primaryName = isBusiness ? companyName : customerName;
+
+        if (!primaryName || !address) {
+            toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
             return;
         }
         if (items.length === 0) {
@@ -143,7 +172,7 @@ const CreateOrder = () => {
             });
 
             const orderData = {
-                customerName,
+                customerName: isBusiness ? companyName : customerName,
                 contact,
                 address,
                 items: formattedItems,
@@ -153,7 +182,28 @@ const CreateOrder = () => {
                 paidAmount,
                 paymentMethod,
                 balanceDue,
-                companyDetails
+                companyDetails,
+                customerType,
+                companyName,
+                gstin,
+                stateName,
+                stateCode,
+                email,
+                invoiceNo,
+                invoiceDate,
+                deliveryNote,
+                modeOfPayment,
+                referenceNo,
+                otherReferences,
+                buyersOrderNo,
+                buyersOrderDate,
+                dispatchDocNo,
+                deliveryNoteDate,
+                dispatchedThrough,
+                destination,
+                billOfLading,
+                motorVehicleNo,
+                termsOfDelivery
             };
 
             // Save to database
@@ -171,6 +221,23 @@ const CreateOrder = () => {
             setItems([]);
             setDiscount(0);
             setPaidAmount(0);
+            setCompanyName("");
+            setGstin("");
+            setStateName("");
+            setStateCode("");
+            setEmail("");
+            setInvoiceNo("");
+            setDeliveryNote("");
+            setModeOfPayment("");
+            setReferenceNo("");
+            setOtherReferences("");
+            setBuyersOrderNo("");
+            setDispatchDocNo("");
+            setDispatchedThrough("");
+            setDestination("");
+            setBillOfLading("");
+            setMotorVehicleNo("");
+            setTermsOfDelivery("");
 
         } catch (error) {
             console.error("Error creating order:", error);
@@ -188,34 +255,183 @@ const CreateOrder = () => {
 
                 <Card className="shadow-md">
                     <CardContent className="p-6 space-y-8">
-                        {/* Customer Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="customerName" className="font-semibold">Customer Name <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="customerName"
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                    placeholder="Enter name"
-                                />
+                        {/* Customer Type Toggle */}
+                        <div className="flex flex-col space-y-4">
+                            <Label className="font-semibold text-lg">Customer Type</Label>
+                            <RadioGroup
+                                defaultValue="Individual"
+                                value={customerType}
+                                onValueChange={(val: any) => setCustomerType(val)}
+                                className="flex gap-6 mt-2"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Individual" id="individual" />
+                                    <Label htmlFor="individual" className="cursor-pointer">Individual</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="Business" id="business" />
+                                    <Label htmlFor="business" className="cursor-pointer">Business</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h3 className="text-lg font-semibold border-b pb-2">
+                                {customerType === "Business" ? "Business & Customer Details" : "Customer Details"}
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {customerType === "Individual" ? (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="customerName" className="font-semibold">Customer Name <span className="text-destructive">*</span></Label>
+                                        <Input
+                                            id="customerName"
+                                            value={customerName}
+                                            onChange={(e) => setCustomerName(e.target.value)}
+                                            placeholder="Enter name"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="companyName" className="font-semibold">Company Name <span className="text-destructive">*</span></Label>
+                                        <Input
+                                            id="companyName"
+                                            value={companyName}
+                                            onChange={(e) => setCompanyName(e.target.value)}
+                                            placeholder="Enter company name"
+                                        />
+                                    </div>
+                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="contact" className="font-semibold">Contact</Label>
+                                    <Input
+                                        id="contact"
+                                        value={contact}
+                                        onChange={(e) => setContact(e.target.value)}
+                                        placeholder="Phone number"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address" className="font-semibold">Address <span className="text-destructive">*</span></Label>
+                                    <Input
+                                        id="address"
+                                        value={address}
+                                        onChange={(e) => setAddress(e.target.value)}
+                                        placeholder="Full address"
+                                    />
+                                </div>
+
+                                {customerType === "Business" && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="gstin" className="font-semibold">GSTIN/UIN</Label>
+                                            <Input
+                                                id="gstin"
+                                                value={gstin}
+                                                onChange={(e) => setGstin(e.target.value)}
+                                                placeholder="GST number"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email" className="font-semibold">Email</Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="Business email"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="stateName" className="font-semibold">State Name</Label>
+                                            <Input
+                                                id="stateName"
+                                                value={stateName}
+                                                onChange={(e) => setStateName(e.target.value)}
+                                                placeholder="e.g. Karnataka"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="stateCode" className="font-semibold">State Code</Label>
+                                            <Input
+                                                id="stateCode"
+                                                value={stateCode}
+                                                onChange={(e) => setStateCode(e.target.value)}
+                                                placeholder="e.g. 29"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="contact" className="font-semibold">Contact</Label>
-                                <Input
-                                    id="contact"
-                                    value={contact}
-                                    onChange={(e) => setContact(e.target.value)}
-                                    placeholder="Phone number"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="address" className="font-semibold">Address <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="address"
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    placeholder="Full address"
-                                />
+                        </div>
+
+                        {/* Delivery Credentials Section */}
+                        <div className="space-y-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                Delivery Credentials
+                                <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="invoiceNo">Invoice No.</Label>
+                                    <Input id="invoiceNo" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="e.g. LT/25-26/316" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="invoiceDate">Dated</Label>
+                                    <Input id="invoiceDate" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="deliveryNote">Delivery Note</Label>
+                                    <Input id="deliveryNote" value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modeOfPayment">Mode/Terms of Payment</Label>
+                                    <Input id="modeOfPayment" value={modeOfPayment} onChange={(e) => setModeOfPayment(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="referenceNo">Reference No. & Date</Label>
+                                    <Input id="referenceNo" value={referenceNo} onChange={(e) => setReferenceNo(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="otherReferences">Other References</Label>
+                                    <Input id="otherReferences" value={otherReferences} onChange={(e) => setOtherReferences(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="buyersOrderNo">Buyer's Order No.</Label>
+                                    <Input id="buyersOrderNo" value={buyersOrderNo} onChange={(e) => setBuyersOrderNo(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="buyersOrderDate">Dated (Order)</Label>
+                                    <Input id="buyersOrderDate" type="date" value={buyersOrderDate} onChange={(e) => setBuyersOrderDate(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dispatchDocNo">Dispatch Doc No.</Label>
+                                    <Input id="dispatchDocNo" value={dispatchDocNo} onChange={(e) => setDispatchDocNo(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="deliveryNoteDate">Delivery Note Date</Label>
+                                    <Input id="deliveryNoteDate" type="date" value={deliveryNoteDate} onChange={(e) => setDeliveryNoteDate(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dispatchedThrough">Dispatched through</Label>
+                                    <Input id="dispatchedThrough" value={dispatchedThrough} onChange={(e) => setDispatchedThrough(e.target.value)} placeholder="e.g. VEHICLE" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="destination">Destination</Label>
+                                    <Input id="destination" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="e.g. SHIVAMOGGA" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="billOfLading">Bill of Lading/LR-RR No.</Label>
+                                    <Input id="billOfLading" value={billOfLading} onChange={(e) => setBillOfLading(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="motorVehicleNo">Motor Vehicle No.</Label>
+                                    <Input id="motorVehicleNo" value={motorVehicleNo} onChange={(e) => setMotorVehicleNo(e.target.value)} placeholder="e.g. KA17B1810" />
+                                </div>
+                                <div className="col-span-full space-y-2">
+                                    <Label htmlFor="termsOfDelivery">Terms of Delivery</Label>
+                                    <Input id="termsOfDelivery" value={termsOfDelivery} onChange={(e) => setTermsOfDelivery(e.target.value)} />
+                                </div>
                             </div>
                         </div>
 

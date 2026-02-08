@@ -8,6 +8,27 @@ export interface InvoiceData {
     items: any[];
     grandTotal: number;
     paymentMethod: string;
+    customerType?: string;
+    companyName?: string;
+    gstin?: string;
+    stateName?: string;
+    stateCode?: string;
+    email?: string;
+    invoiceNo?: string;
+    invoiceDate?: string | Date;
+    deliveryNote?: string;
+    modeOfPayment?: string;
+    referenceNo?: string;
+    otherReferences?: string;
+    buyersOrderNo?: string;
+    buyersOrderDate?: string | Date;
+    dispatchDocNo?: string;
+    deliveryNoteDate?: string | Date;
+    dispatchedThrough?: string;
+    destination?: string;
+    billOfLading?: string;
+    motorVehicleNo?: string;
+    termsOfDelivery?: string;
     companyDetails?: {
         companyName: string;
         address: string;
@@ -32,12 +53,41 @@ export const generateInvoice = (data: InvoiceData) => {
         paymentMethod,
         companyDetails,
         orderId,
-        date
+        date,
+        customerType,
+        companyName: businessCompanyName,
+        gstin,
+        stateName: buyerStateName,
+        stateCode: buyerStateCode,
+        email: buyerEmail,
+        invoiceNo,
+        invoiceDate: invDate,
+        deliveryNote,
+        modeOfPayment,
+        referenceNo,
+        otherReferences,
+        buyersOrderNo,
+        buyersOrderDate,
+        dispatchDocNo,
+        deliveryNoteDate,
+        dispatchedThrough,
+        destination,
+        billOfLading,
+        motorVehicleNo,
+        termsOfDelivery
     } = data;
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Helper to format date
+    const formatDate = (dateInput?: any) => {
+        if (!dateInput) return "";
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return dateInput.toString();
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+    };
 
     // Configuration for uniform page layout
     const drawPageDecoration = (tableData?: any) => {
@@ -75,8 +125,8 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.text(addressLines, leftCol, 25);
 
     let headerY = 25 + (addressLines.length * 4);
-    doc.text(`GSTIN/UIN: ${companyDetails?.gstNumber || "29ABCDE1234F1Z5"}`, leftCol, headerY);
-    doc.text(`State Name: ${companyDetails?.stateName || "Karnataka"}, Code: ${companyDetails?.stateCode || "29"}`, leftCol, headerY + 5);
+    doc.text(`GSTIN/UIN: ${companyDetails?.gstNumber || ""}`, leftCol, headerY);
+    doc.text(`State Name: ${companyDetails?.stateName || ""}, Code: ${companyDetails?.stateCode || ""}`, leftCol, headerY + 5);
 
     // Top Section - Detailed Grid
     doc.setFontSize(8);
@@ -89,48 +139,105 @@ export const generateInvoice = (data: InvoiceData) => {
     // Right Column Content - Grid fields
     doc.text("Invoice No.", rightColOffset + 2, 19);
     doc.setFont("helvetica", "bold");
-    const displayId = orderId ? (orderId.length > 6 ? `#INV-${orderId.slice(-6).toUpperCase()}` : `#INV-${orderId}`) : `#INV-${Date.now().toString().slice(-6)}`;
-    doc.text(displayId, rightColOffset + 2, 21.5);
+    const displayInvoiceNo = invoiceNo || (orderId ? (orderId.length > 6 ? `#INV-${orderId.slice(-6).toUpperCase()}` : `#INV-${orderId}`) : `#INV-${Date.now().toString().slice(-6)}`);
+    doc.text(displayInvoiceNo, rightColOffset + 2, 21.5);
 
     doc.setFont("helvetica", "normal");
     doc.text("Dated", rightColOffset + 35, 19);
     doc.setFont("helvetica", "bold");
-    const invoiceDate = date ? new Date(date) : new Date();
-    doc.text(invoiceDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }), rightColOffset + 35, 21.5);
+    doc.text(formatDate(invDate || date || new Date()), rightColOffset + 35, 21.5);
 
     doc.setFont("helvetica", "normal");
     doc.text("Delivery Note", rightColOffset + 2, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text(deliveryNote || "", rightColOffset + 2, 30);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Mode/Terms of Payment", rightColOffset + 35, 26);
     doc.setFont("helvetica", "bold");
-    doc.text((paymentMethod || "Cash").toUpperCase(), rightColOffset + 35, 30);
+    doc.text((modeOfPayment || paymentMethod || "Cash").toUpperCase(), rightColOffset + 35, 30);
 
     doc.setFont("helvetica", "normal");
     doc.text("Reference No. & Date", rightColOffset + 2, 36);
+    doc.setFont("helvetica", "bold");
+    doc.text(referenceNo || "", rightColOffset + 2, 40);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Other References", rightColOffset + 35, 36);
+    doc.setFont("helvetica", "bold");
+    doc.text(otherReferences || "", rightColOffset + 35, 40);
 
+    doc.setFont("helvetica", "normal");
     doc.text("Buyer's Order No.", rightColOffset + 2, 46);
+    doc.setFont("helvetica", "bold");
+    doc.text(buyersOrderNo || "", rightColOffset + 2, 50);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Dated", rightColOffset + 35, 46);
+    doc.setFont("helvetica", "bold");
+    doc.text(formatDate(buyersOrderDate), rightColOffset + 35, 50);
 
+    doc.setFont("helvetica", "normal");
     doc.text("Dispatch Doc No.", rightColOffset + 2, 56);
-    doc.text("Delivery Note Date", rightColOffset + 35, 56);
+    doc.setFont("helvetica", "bold");
+    doc.text(dispatchDocNo || "", rightColOffset + 2, 60);
 
+    doc.setFont("helvetica", "normal");
+    doc.text("Delivery Note Date", rightColOffset + 35, 56);
+    doc.setFont("helvetica", "bold");
+    doc.text(formatDate(deliveryNoteDate), rightColOffset + 35, 60);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Dispatched through", rightColOffset + 2, 66);
+    doc.setFont("helvetica", "bold");
+    doc.text(dispatchedThrough || "", rightColOffset + 2, 70);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Destination", rightColOffset + 35, 66);
     doc.setFont("helvetica", "bold");
-    doc.text(address.split(',').pop()?.trim() || "N/A", rightColOffset + 35, 70);
+    doc.text(destination || address.split(',').pop()?.trim() || "N/A", rightColOffset + 35, 70);
 
     doc.setFont("helvetica", "normal");
     doc.text("Terms of Delivery", rightColOffset + 2, 76);
+    const termsLines = doc.splitTextToSize(termsOfDelivery || "", 45);
+    doc.setFont("helvetica", "bold");
+    doc.text(termsLines, rightColOffset + 2, 80);
+
+    doc.setFont("helvetica", "normal");
     doc.text("Motor Vehicle No.", rightColOffset + 35, 76);
+    doc.setFont("helvetica", "bold");
+    doc.text(motorVehicleNo || "", rightColOffset + 35, 80);
 
     // Buyer Details
     doc.setFont("helvetica", "bold");
     doc.text("Buyer (Bill to)", leftCol, headerY + 15);
-    doc.text(customerName, leftCol, headerY + 20);
+
+    let buyerY = headerY + 20;
+    if (customerType === "Business" && businessCompanyName) {
+        doc.text(businessCompanyName, leftCol, buyerY);
+        buyerY += 4;
+    } else {
+        doc.text(customerName, leftCol, buyerY);
+        buyerY += 4;
+    }
+
     doc.setFont("helvetica", "normal");
     const buyerAddr = doc.splitTextToSize(address, 80);
-    doc.text(buyerAddr, leftCol, headerY + 25);
-    doc.text(`Contact: ${contact}`, leftCol, headerY + 25 + (buyerAddr.length * 4));
+    doc.text(buyerAddr, leftCol, buyerY);
+    buyerY += (buyerAddr.length * 4);
+
+    if (customerType === "Business") {
+        if (gstin) {
+            doc.text(`GSTIN/UIN: ${gstin}`, leftCol, buyerY);
+            buyerY += 4;
+        }
+        if (buyerStateName) {
+            doc.text(`State Name: ${buyerStateName}${buyerStateCode ? `, Code: ${buyerStateCode}` : ""}`, leftCol, buyerY);
+            buyerY += 4;
+        }
+    }
+
+    doc.text(`Contact: ${contact}`, leftCol, buyerY);
 
     doc.line(pageWidth / 2, 15, pageWidth / 2, 85);
     doc.line(5, 85, pageWidth - 5, 85);
