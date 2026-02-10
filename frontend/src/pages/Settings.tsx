@@ -77,11 +77,18 @@ const Settings = () => {
         }
       }));
     } else {
-      setSettings((prev) => ({ ...prev, [id]: value }));
+      let finalValue = value;
+      if (id === "phone") {
+        finalValue = value.replace(/\D/g, '').slice(0, 10);
+      }
+      setSettings((prev) => ({ ...prev, [id]: finalValue }));
     }
   };
 
   const handleSave = async () => {
+    if (settings.phone && settings.phone.length !== 10) {
+      return toast.error("Phone number must be exactly 10 digits");
+    }
     setSaving(true);
     try {
       await api.put("/api/company-settings", settings);

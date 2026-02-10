@@ -19,6 +19,9 @@ import {
   Tags,
   PlusCircle,
   UserPlus,
+  History,
+  Boxes,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,11 +41,15 @@ const menuItems = [
   { icon: Package, label: "Product Catalog", path: "/product-catalog" },
   { icon: Tags, label: "Manage Products", path: "/products" },
   { icon: Warehouse, label: "Inventory", path: "/inventory" },
+  { icon: Boxes, label: "Raw Inventory", path: "/raw-inventory" },
   { icon: PlusCircle, label: "Create Order", path: "/create-order" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
+  { icon: ClipboardList, label: "Pending Orders", path: "/pending-orders" },
+  { icon: History, label: "Advance Orders", path: "/advance-order" },
+  { icon: FileText, label: "Estimations", path: "/estimations" },
   { icon: Truck, label: "Suppliers", path: "/suppliers" },
   { icon: Users, label: "Customers", path: "/customers" },
-  { icon: ClipboardList, label: "Purchase Orders", path: "/purchase-orders" },
+  { icon: Receipt, label: "Purchase Orders", path: "/purchase-orders" },
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Settings, label: "Settings", path: "/settings" },
@@ -72,7 +79,7 @@ const SidebarNav = ({
   });
 
   return (
-    <nav className="mt-4 px-2">
+    <nav className="mt-4 px-2 flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-default">
       <ul className="space-y-1">
         {filteredMenuItems.map((item) => {
           const isActive = pathname === item.path;
@@ -118,7 +125,7 @@ export const Sidebar = ({
   }, [appPathname]);
 
   const SidebarContent = () => (
-    <>
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -135,7 +142,7 @@ export const Sidebar = ({
         pathname={pathname}
         onItemClick={onMobileClose}
       />
-    </>
+    </div>
   );
 
   return (

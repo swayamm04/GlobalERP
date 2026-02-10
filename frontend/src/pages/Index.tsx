@@ -9,7 +9,7 @@ import {
   ShoppingCart,
   IndianRupee,
   Users,
-  TrendingUp,
+  Activity,
   AlertTriangle,
 } from "lucide-react";
 
@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
+    totalActiveOrders: 0,
     totalRevenue: 0,
     activeCustomers: 0,
     recentOrders: [],
@@ -71,7 +72,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <StatsCard
             title="Total Products"
             value={(stats?.totalProducts ?? 0).toString()}
@@ -89,6 +90,12 @@ const Dashboard = () => {
             value={`₹${stats?.totalRevenue ?? 0}`}
             icon={IndianRupee}
             iconColor="bg-warning/10 text-warning"
+          />
+          <StatsCard
+            title="Active Orders"
+            value={(stats?.totalActiveOrders ?? 0).toString()}
+            icon={Activity}
+            iconColor="bg-blue-500/10 text-blue-500"
           />
           <StatsCard
             title="Active Customers"

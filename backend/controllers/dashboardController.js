@@ -9,9 +9,10 @@ const getDashboardStats = async (req, res) => {
     try {
         const totalProducts = await Product.countDocuments();
         const totalOrders = await Order.countDocuments();
+        const totalActiveOrders = await Order.countDocuments({ status: { $ne: 'Completed' } });
 
-        // Calculate total revenue
-        const orders = await Order.find();
+        // Calculate total revenue (only delivered orders)
+        const orders = await Order.find({ status: 'Completed' });
         const totalRevenue = orders.reduce((acc, order) => acc + (order.grandTotal || 0), 0);
 
         const activeCustomers = await User.countDocuments();
@@ -31,6 +32,7 @@ const getDashboardStats = async (req, res) => {
         res.status(200).json({
             totalProducts,
             totalOrders,
+            totalActiveOrders,
             totalRevenue,
             activeCustomers,
             recentOrders: formattedOrders

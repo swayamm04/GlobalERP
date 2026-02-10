@@ -11,8 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Download, Loader2, FilterX, Filter } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -26,6 +33,9 @@ interface Order {
   product: string;
   amount: number;
   status: string;
+  customerType: string;
+  balanceDue?: number;
+  paidAmount?: number;
 }
 
 const getStatusVariant = (status: string) => {
@@ -49,6 +59,24 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchesSearch =
+        order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.id.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesType =
+        typeFilter === "all" ||
+        order.customerType.toLowerCase() === typeFilter.toLowerCase();
+
+      const isDone = order.status === "Completed" && (order.balanceDue === 0 || !order.balanceDue);
+
+      return matchesSearch && matchesType && isDone;
+    });
+  }, [orders, searchTerm, typeFilter]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -85,7 +113,9 @@ const Orders = () => {
         paymentMethod: order.paymentMethod,
         orderId: order._id,
         date: order.createdAt,
-        companyDetails: settings
+        companyDetails: settings,
+        paidAmount: order.paidAmount,
+        balanceDue: order.balanceDue
       });
 
       toast.success("Invoice downloaded!");
@@ -102,8 +132,8 @@ const Orders = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Orders</h1>
-            <p className="text-muted-foreground">View and manage customer orders</p>
+            <h1 className="text-2xl font-bold">Delivered Orders</h1>
+            <p className="text-muted-foreground">View all delivered and completed orders</p>
           </div>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
@@ -113,15 +143,31 @@ const Orders = () => {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="relative flex-1 max-w-sm w-full">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search orders..." className="pl-10" />
+                <Input
+                  placeholder="Search orders..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      <SelectValue placeholder="Filter" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="individual">Individual</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -142,12 +188,12 @@ const Orders = () => {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
                   </TableRow>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-24">No orders found</TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
+                  filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium hidden sm:table-cell">
                         #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}

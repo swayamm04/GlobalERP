@@ -32,7 +32,7 @@ interface OrderItem {
     category: string;
 }
 
-const CreateOrder = () => {
+const AdvanceOrder = () => {
     const [customerType, setCustomerType] = useState<"Individual" | "Business">("Individual");
     const [customerName, setCustomerName] = useState("");
     const [contact, setContact] = useState("");
@@ -66,10 +66,13 @@ const CreateOrder = () => {
     const [companyDetails, setCompanyDetails] = useState<any>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
     const [discount, setDiscount] = useState(0);
+    const [paidAmount, setPaidAmount] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+
     const [subtotal, setSubtotal] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
+    const [balanceDue, setBalanceDue] = useState(0);
 
     const fetchData = async () => {
         try {
@@ -94,8 +97,6 @@ const CreateOrder = () => {
             const today = new Date().toISOString().split('T')[0];
             setInvoiceDate(today);
 
-            // Simple auto-generation for invoice number
-            // Using date/time components for uniqueness in this simple implementation
             if (!invoiceNo) {
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
@@ -107,7 +108,6 @@ const CreateOrder = () => {
         }
     }, [customerType]);
 
-    // Sync modeOfPayment with paymentMethod selection
     useEffect(() => {
         if (paymentMethod) {
             setModeOfPayment(paymentMethod.toUpperCase());
@@ -117,11 +117,10 @@ const CreateOrder = () => {
     useEffect(() => {
         const newSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         setSubtotal(newSubtotal);
-
-        // Simple discount calculation
         const total = newSubtotal - discount;
         setGrandTotal(Math.max(0, total));
-    }, [items, discount]);
+        setBalanceDue(Math.max(0, total - paidAmount));
+    }, [items, discount, paidAmount]);
 
     const addItem = () => {
         setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, category: "" }, ...items]);
@@ -142,18 +141,12 @@ const CreateOrder = () => {
         setItems(items.map(item => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value };
-
-                // Auto-fill price if productName (ID in this context) changes
                 if (field === 'productName') {
                     const product = availableProducts.find(p => p._id === value);
                     if (product) {
                         updatedItem.price = product.price;
-                        // We store the ID in productName for the dropdown, 
-                        // but we might want to store the actual name for the final order
-                        // For now, let's just keep the reference
                     }
                 }
-
                 return updatedItem;
             }
             return item;
@@ -188,7 +181,6 @@ const CreateOrder = () => {
         }
 
         try {
-            // Map items to include actual product names if necessary before sending to API
             const formattedItems = items.map(item => {
                 const product = availableProducts.find(p => p._id === item.productName);
                 return {
@@ -207,9 +199,9 @@ const CreateOrder = () => {
                 subtotal,
                 discount,
                 grandTotal,
-                paidAmount: grandTotal,
+                paidAmount,
                 paymentMethod,
-                balanceDue: 0,
+                balanceDue,
                 companyDetails,
                 customerType,
                 companyName,
@@ -232,16 +224,12 @@ const CreateOrder = () => {
                 billOfLading,
                 motorVehicleNo,
                 termsOfDelivery,
-                status: 'Completed'
+                status: 'Pending' // Always pending for Advance Orders
             };
 
-            // Save to database
             await api.post("/api/orders", orderData);
-
-            // Trigger PDF generation IMMEDIATELY
             generateInvoicePDF(orderData);
-
-            toast.success("Order placed and invoice generated!");
+            toast.success("Advance order placed and invoice generated!");
 
             // Reset form
             setCustomerName("");
@@ -249,6 +237,7 @@ const CreateOrder = () => {
             setAddress("");
             setItems([]);
             setDiscount(0);
+            setPaidAmount(0);
             setCompanyName("");
             setGstin("");
             setStateName("");
@@ -277,13 +266,12 @@ const CreateOrder = () => {
         <DashboardLayout>
             <div className="space-y-6 max-w-5xl mx-auto">
                 <div>
-                    <h1 className="text-2xl font-bold">Create Order</h1>
-                    <p className="text-muted-foreground">Enter order details below.</p>
+                    <h1 className="text-2xl font-bold">Advance Order</h1>
+                    <p className="text-muted-foreground">Enter advance order details below. These orders will appear in Pending Orders first.</p>
                 </div>
 
                 <Card className="shadow-md">
                     <CardContent className="p-6 space-y-8">
-                        {/* Customer Type Toggle */}
                         <div className="flex flex-col space-y-4">
                             <Label className="font-semibold text-lg">Customer Type</Label>
                             <RadioGroup
@@ -396,7 +384,6 @@ const CreateOrder = () => {
                             </div>
                         </div>
 
-                        {/* Delivery Credentials Section - Only for Business */}
                         {customerType === "Business" && (
                             <div className="space-y-6 pt-4 border-t">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -460,7 +447,6 @@ const CreateOrder = () => {
                             </div>
                         )}
 
-                        {/* Order Items */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold">Order Items</h3>
@@ -510,7 +496,7 @@ const CreateOrder = () => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="group aria-selected:bg-transparent hover:!bg-blue-600 hover:!text-white data-[selected='true']:bg-transparent cursor-pointer transition-colors"
+                                                                            className="group cursor-pointer transition-colors"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -519,8 +505,8 @@ const CreateOrder = () => {
                                                                                 )}
                                                                             />
                                                                             <div className="flex flex-col">
-                                                                                <span className="font-medium text-foreground group-hover:text-white">{p.name}</span>
-                                                                                <span className="text-xs text-muted-foreground group-hover:text-blue-50">Price: ₹{p.price} | Category: {p.category?.name || "No Category"}</span>
+                                                                                <span className="font-medium text-foreground">{p.name}</span>
+                                                                                <span className="text-xs text-muted-foreground">Price: ₹{p.price} | Category: {p.category?.name || "No Category"}</span>
                                                                             </div>
                                                                         </CommandItem>
                                                                     ))}
@@ -571,9 +557,7 @@ const CreateOrder = () => {
                             </div>
                         </div>
 
-                        {/* Bottom Section */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                            {/* Left Column */}
                             <div className="space-y-4">
                                 {companyDetails && (
                                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
@@ -584,7 +568,6 @@ const CreateOrder = () => {
                                 )}
                             </div>
 
-                            {/* Right Column - Calculations */}
                             <div className="space-y-6 bg-muted/20 p-6 rounded-lg border">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="font-semibold">Subtotal:</span>
@@ -610,6 +593,22 @@ const CreateOrder = () => {
                                 </div>
 
                                 <div className="space-y-2">
+                                    <Label htmlFor="paidAmount" className="text-sm font-semibold">Paid Amount</Label>
+                                    <Input
+                                        id="paidAmount"
+                                        type="number"
+                                        min="0"
+                                        value={paidAmount}
+                                        onChange={(e) => {
+                                            const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                            setPaidAmount(Math.min(val, grandTotal));
+                                        }}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        className="bg-background"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
                                     <Label className="text-sm font-semibold">Payment Method</Label>
                                     <RadioGroup
                                         defaultValue="cash"
@@ -631,6 +630,11 @@ const CreateOrder = () => {
                                         </div>
                                     </RadioGroup>
                                 </div>
+
+                                <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-md border border-destructive/20 text-destructive mt-4">
+                                    <span className="font-bold">Balance Due:</span>
+                                    <span className="font-bold text-lg">₹ {balanceDue.toFixed(2)}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -639,7 +643,7 @@ const CreateOrder = () => {
                             className="w-full py-6 text-lg mt-8"
                             size="lg"
                         >
-                            Place Order
+                            Place Advance Order
                         </Button>
 
                     </CardContent>
@@ -649,4 +653,4 @@ const CreateOrder = () => {
     );
 };
 
-export default CreateOrder;
+export default AdvanceOrder;

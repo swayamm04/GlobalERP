@@ -19,6 +19,10 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/company-settings', require('./routes/companySettingsRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/estimations', require('./routes/estimationRoutes'));
+app.use('/api/suppliers', require('./routes/supplierRoutes'));
+app.use('/api/raw-materials', require('./routes/rawMaterialRoutes'));
+app.use('/api/purchase-orders', require('./routes/purchaseOrderRoutes'));
 
 // Database Connection
 console.log('Attempting to connect to MongoDB...', process.env.MONGO_URI ? 'URI set' : 'URI MISSING');

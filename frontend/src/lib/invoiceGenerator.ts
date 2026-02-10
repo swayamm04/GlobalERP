@@ -32,15 +32,22 @@ export interface InvoiceData {
     companyDetails?: {
         companyName: string;
         address: string;
-        gstNumber: string;
-        stateName: string;
-        stateCode: string;
+        gstNumber?: string; // Fallback
+        gstin?: string;     // Backend name
+        stateName?: string; // Fallback
+        state?: string;     // Backend name
+        stateCode?: string; // Fallback
+        gstCode?: string;   // Backend name
         phone: string;
         email: string;
         hsnCode?: string;
     };
     orderId?: string;
     date?: string | Date;
+    isEstimation?: boolean;
+    estimationNo?: string;
+    paidAmount?: number;
+    balanceDue?: number;
 }
 
 export const generateInvoice = (data: InvoiceData) => {
@@ -74,7 +81,9 @@ export const generateInvoice = (data: InvoiceData) => {
         destination,
         billOfLading,
         motorVehicleNo,
-        termsOfDelivery
+        termsOfDelivery,
+        paidAmount,
+        balanceDue
     } = data;
 
     const doc = new jsPDF();
@@ -111,7 +120,7 @@ export const generateInvoice = (data: InvoiceData) => {
     // Header - Tax Invoice (First Page)
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Tax Invoice", pageWidth / 2, 12, { align: "center" });
+    doc.text(data.isEstimation ? "ESTIMATION" : "Tax Invoice", pageWidth / 2, 12, { align: "center" });
     doc.line(5, 15, pageWidth - 5, 15);
 
     // Top Section
@@ -125,8 +134,12 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.text(addressLines, leftCol, 25);
 
     let headerY = 25 + (addressLines.length * 4);
-    doc.text(`GSTIN/UIN: ${companyDetails?.gstNumber || ""}`, leftCol, headerY);
-    doc.text(`State Name: ${companyDetails?.stateName || ""}, Code: ${companyDetails?.stateCode || ""}`, leftCol, headerY + 5);
+    const displayGstin = companyDetails?.gstin || (companyDetails as any)?.gstNumber || "";
+    const displayStateName = companyDetails?.state || (companyDetails as any)?.stateName || "";
+    const displayStateCode = companyDetails?.gstCode || (companyDetails as any)?.stateCode || "";
+
+    doc.text(`GSTIN/UIN: ${displayGstin}`, leftCol, headerY);
+    doc.text(`State Name: ${displayStateName}, Code: ${displayStateCode}`, leftCol, headerY + 5);
 
     // Top Section - Detailed Grid
     doc.setFontSize(8);
@@ -134,12 +147,15 @@ export const generateInvoice = (data: InvoiceData) => {
     const rightColOffset = pageWidth / 2;
 
     // Horizontal separators for header grid
-    [22, 32, 42, 52, 62, 72, 85].forEach(y => doc.line(rightColOffset, y, pageWidth - 5, y));
+    const gridLines = data.isEstimation ? [22, 85] : [22, 32, 42, 52, 65, 85];
+    gridLines.forEach(y => doc.line(rightColOffset, y, pageWidth - 5, y));
 
     // Right Column Content - Grid fields
-    doc.text("Invoice No.", rightColOffset + 2, 19);
+    doc.text(data.isEstimation ? "Estimation No." : "Invoice No.", rightColOffset + 2, 19);
     doc.setFont("helvetica", "bold");
-    const displayInvoiceNo = invoiceNo || (orderId ? (orderId.length > 6 ? `#INV-${orderId.slice(-6).toUpperCase()}` : `#INV-${orderId}`) : `#INV-${Date.now().toString().slice(-6)}`);
+    const displayInvoiceNo = data.isEstimation
+        ? (data.estimationNo || `EST-${Date.now().toString().slice(-6)}`)
+        : (invoiceNo || (orderId ? (orderId.length > 6 ? `#INV-${orderId.slice(-6).toUpperCase()}` : `#INV-${orderId}`) : `#INV-${Date.now().toString().slice(-6)}`));
     doc.text(displayInvoiceNo, rightColOffset + 2, 21.5);
 
     doc.setFont("helvetica", "normal");
@@ -147,66 +163,43 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.setFont("helvetica", "bold");
     doc.text(formatDate(invDate || date || new Date()), rightColOffset + 35, 21.5);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Delivery Note", rightColOffset + 2, 26);
-    doc.setFont("helvetica", "bold");
-    doc.text(deliveryNote || "", rightColOffset + 2, 30);
+    if (!data.isEstimation) {
+        doc.setFont("helvetica", "normal");
+        doc.text("Delivery Note", rightColOffset + 2, 26);
+        doc.setFont("helvetica", "bold");
+        doc.text(deliveryNote || "", rightColOffset + 2, 30);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Mode/Terms of Payment", rightColOffset + 35, 26);
-    doc.setFont("helvetica", "bold");
-    doc.text((modeOfPayment || paymentMethod || "Cash").toUpperCase(), rightColOffset + 35, 30);
+        doc.setFont("helvetica", "normal");
+        doc.text("Mode/Terms of Payment", rightColOffset + 35, 26);
+        doc.setFont("helvetica", "bold");
+        doc.text((modeOfPayment || paymentMethod || "Cash").toUpperCase(), rightColOffset + 35, 30);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Reference No. & Date", rightColOffset + 2, 36);
-    doc.setFont("helvetica", "bold");
-    doc.text(referenceNo || "", rightColOffset + 2, 40);
+        doc.setFont("helvetica", "normal");
+        doc.text("Dispatched through", rightColOffset + 2, 36);
+        doc.setFont("helvetica", "bold");
+        doc.text(dispatchedThrough || "", rightColOffset + 2, 40);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Other References", rightColOffset + 35, 36);
-    doc.setFont("helvetica", "bold");
-    doc.text(otherReferences || "", rightColOffset + 35, 40);
+        doc.setFont("helvetica", "normal");
+        doc.text("Destination", rightColOffset + 35, 36);
+        doc.setFont("helvetica", "bold");
+        doc.text(destination || (address ? address.split(',').pop()?.trim() : "") || "N/A", rightColOffset + 35, 40);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Buyer's Order No.", rightColOffset + 2, 46);
-    doc.setFont("helvetica", "bold");
-    doc.text(buyersOrderNo || "", rightColOffset + 2, 50);
+        doc.setFont("helvetica", "normal");
+        doc.text("Delivery Note Date", rightColOffset + 2, 46);
+        doc.setFont("helvetica", "bold");
+        doc.text(formatDate(deliveryNoteDate), rightColOffset + 2, 50);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Dated", rightColOffset + 35, 46);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatDate(buyersOrderDate), rightColOffset + 35, 50);
+        doc.setFont("helvetica", "normal");
+        doc.text("Motor Vehicle No.", rightColOffset + 35, 46);
+        doc.setFont("helvetica", "bold");
+        doc.text(motorVehicleNo || "", rightColOffset + 35, 50);
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Dispatch Doc No.", rightColOffset + 2, 56);
-    doc.setFont("helvetica", "bold");
-    doc.text(dispatchDocNo || "", rightColOffset + 2, 60);
-
-    doc.setFont("helvetica", "normal");
-    doc.text("Delivery Note Date", rightColOffset + 35, 56);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatDate(deliveryNoteDate), rightColOffset + 35, 60);
-
-    doc.setFont("helvetica", "normal");
-    doc.text("Dispatched through", rightColOffset + 2, 66);
-    doc.setFont("helvetica", "bold");
-    doc.text(dispatchedThrough || "", rightColOffset + 2, 70);
-
-    doc.setFont("helvetica", "normal");
-    doc.text("Destination", rightColOffset + 35, 66);
-    doc.setFont("helvetica", "bold");
-    doc.text(destination || address.split(',').pop()?.trim() || "N/A", rightColOffset + 35, 70);
-
-    doc.setFont("helvetica", "normal");
-    doc.text("Terms of Delivery", rightColOffset + 2, 76);
-    const termsLines = doc.splitTextToSize(termsOfDelivery || "", 45);
-    doc.setFont("helvetica", "bold");
-    doc.text(termsLines, rightColOffset + 2, 80);
-
-    doc.setFont("helvetica", "normal");
-    doc.text("Motor Vehicle No.", rightColOffset + 35, 76);
-    doc.setFont("helvetica", "bold");
-    doc.text(motorVehicleNo || "", rightColOffset + 35, 80);
+        doc.setFont("helvetica", "normal");
+        doc.text("Terms of Delivery", rightColOffset + 2, 56);
+        const termsLines = doc.splitTextToSize(termsOfDelivery || "", 70);
+        doc.setFont("helvetica", "bold");
+        doc.text(termsLines, rightColOffset + 2, 60);
+    }
 
     // Buyer Details
     doc.setFont("helvetica", "bold");
@@ -322,5 +315,25 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.text("Grand Total:", summaryX, lastY + 22);
     doc.text(`Rs. ${grandTotal.toFixed(2)}`, rightEdge, lastY + 22, { align: 'right' });
 
-    doc.save(`Invoice_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
+    // Payment Summary for Advance Orders
+    if (balanceDue !== undefined && balanceDue > 0) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Amount Paid:", summaryX, lastY + 30);
+        doc.text(`Rs. ${paidAmount?.toFixed(2) || "0.00"}`, rightEdge, lastY + 30, { align: 'right' });
+
+        doc.setTextColor(220, 38, 38); // Red for balance due
+        doc.text("Balance Due:", summaryX, lastY + 36);
+        doc.text(`Rs. ${balanceDue.toFixed(2)}`, rightEdge, lastY + 36, { align: 'right' });
+        doc.setTextColor(0, 0, 0); // Reset to black
+    } else if (paidAmount !== undefined && paidAmount >= grandTotal) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Status:", summaryX, lastY + 30);
+        doc.setTextColor(22, 163, 74); // Green for Fully Paid
+        doc.text("FULLY PAID", rightEdge, lastY + 30, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
+    }
+
+    doc.save(`${data.isEstimation ? 'Estimation' : 'Invoice'}_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
 };

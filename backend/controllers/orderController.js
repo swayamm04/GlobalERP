@@ -14,7 +14,9 @@ const getOrders = async (req, res) => {
             items: order.items.length,
             amount: order.grandTotal || 0,
             status: order.status,
-            paymentMethod: order.paymentMethod
+            paymentMethod: order.paymentMethod,
+            customerType: order.customerType,
+            balanceDue: order.balanceDue || 0
         }));
 
         res.status(200).json(formattedOrders);
@@ -60,7 +62,8 @@ const createOrder = async (req, res) => {
             destination,
             billOfLading,
             motorVehicleNo,
-            termsOfDelivery
+            termsOfDelivery,
+            status
         } = req.body;
 
         const orderData = {
@@ -94,7 +97,8 @@ const createOrder = async (req, res) => {
             destination,
             billOfLading,
             motorVehicleNo,
-            termsOfDelivery
+            termsOfDelivery,
+            status: status || 'Pending'
         };
 
         if (req.user) {
@@ -108,6 +112,27 @@ const createOrder = async (req, res) => {
     } catch (error) {
         console.error('Error in createOrder:', error);
         res.status(500).json({ message: 'Failed to create order', error: error.message });
+    }
+};
+
+// @desc    Update order status
+// @route   PATCH /api/orders/:id/status
+// @access  Private
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            order.status = status;
+            const updatedOrder = await order.save();
+            res.status(200).json(updatedOrder);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
@@ -129,8 +154,31 @@ const getOrderById = async (req, res) => {
     }
 };
 
+// @desc    Mark order as paid
+// @route   PATCH /api/orders/:id/pay
+// @access  Private
+const markOrderAsPaid = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            order.paidAmount = order.grandTotal;
+            order.balanceDue = 0;
+            const updatedOrder = await order.save();
+            res.status(200).json(updatedOrder);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getOrders,
     createOrder,
-    getOrderById
+    getOrderById,
+    updateOrderStatus,
+    markOrderAsPaid
 };

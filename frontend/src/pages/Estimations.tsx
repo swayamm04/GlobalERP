@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown, FileText, Download, History as HistoryIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -20,9 +20,18 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { generateInvoice } from "@/lib/invoiceGenerator";
+import { format } from "date-fns";
 
 interface OrderItem {
     id: string;
@@ -32,7 +41,7 @@ interface OrderItem {
     category: string;
 }
 
-const CreateOrder = () => {
+const Estimations = () => {
     const [customerType, setCustomerType] = useState<"Individual" | "Business">("Individual");
     const [customerName, setCustomerName] = useState("");
     const [contact, setContact] = useState("");
@@ -45,40 +54,28 @@ const CreateOrder = () => {
     const [stateCode, setStateCode] = useState("");
     const [email, setEmail] = useState("");
 
-    // Delivery Credentials state
-    const [invoiceNo, setInvoiceNo] = useState("");
-    const [invoiceDate, setInvoiceDate] = useState("");
-    const [deliveryNote, setDeliveryNote] = useState("");
-    const [modeOfPayment, setModeOfPayment] = useState("");
-    const [referenceNo, setReferenceNo] = useState("");
-    const [otherReferences, setOtherReferences] = useState("");
-    const [buyersOrderNo, setBuyersOrderNo] = useState("");
-    const [buyersOrderDate, setBuyersOrderDate] = useState("");
-    const [dispatchDocNo, setDispatchDocNo] = useState("");
-    const [deliveryNoteDate, setDeliveryNoteDate] = useState("");
-    const [dispatchedThrough, setDispatchedThrough] = useState("");
-    const [destination, setDestination] = useState("");
-    const [billOfLading, setBillOfLading] = useState("");
-    const [motorVehicleNo, setMotorVehicleNo] = useState("");
-    const [termsOfDelivery, setTermsOfDelivery] = useState("");
-
     const [availableProducts, setAvailableProducts] = useState<any[]>([]);
     const [companyDetails, setCompanyDetails] = useState<any>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
     const [discount, setDiscount] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState("cash");
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+
     const [subtotal, setSubtotal] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
 
+    const [estimationHistory, setEstimationHistory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+
     const fetchData = async () => {
         try {
-            const [productsRes, settingsRes] = await Promise.all([
+            const [productsRes, settingsRes, historyRes] = await Promise.all([
                 api.get("/api/products"),
-                api.get("/api/company-settings")
+                api.get("/api/company-settings"),
+                api.get("/api/estimations")
             ]);
             setAvailableProducts(productsRes.data);
             setCompanyDetails(settingsRes.data);
+            setEstimationHistory(historyRes.data);
         } catch (error) {
             console.error("Error fetching data:", error);
             toast.error("Failed to load required data");
@@ -90,35 +87,8 @@ const CreateOrder = () => {
     }, []);
 
     useEffect(() => {
-        if (customerType === "Business") {
-            const today = new Date().toISOString().split('T')[0];
-            setInvoiceDate(today);
-
-            // Simple auto-generation for invoice number
-            // Using date/time components for uniqueness in this simple implementation
-            if (!invoiceNo) {
-                const now = new Date();
-                const year = now.getFullYear().toString().slice(-2);
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const random = Math.floor(100 + Math.random() * 900);
-                setInvoiceNo(`INV/${year}${month}${day}/${random}`);
-            }
-        }
-    }, [customerType]);
-
-    // Sync modeOfPayment with paymentMethod selection
-    useEffect(() => {
-        if (paymentMethod) {
-            setModeOfPayment(paymentMethod.toUpperCase());
-        }
-    }, [paymentMethod]);
-
-    useEffect(() => {
         const newSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         setSubtotal(newSubtotal);
-
-        // Simple discount calculation
         const total = newSubtotal - discount;
         setGrandTotal(Math.max(0, total));
     }, [items, discount]);
@@ -142,31 +112,23 @@ const CreateOrder = () => {
         setItems(items.map(item => {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value };
-
-                // Auto-fill price if productName (ID in this context) changes
                 if (field === 'productName') {
                     const product = availableProducts.find(p => p._id === value);
                     if (product) {
                         updatedItem.price = product.price;
-                        // We store the ID in productName for the dropdown, 
-                        // but we might want to store the actual name for the final order
-                        // For now, let's just keep the reference
                     }
                 }
-
                 return updatedItem;
             }
             return item;
         }));
     };
 
-    const generateInvoicePDF = (orderData: any) => {
+    const handleGeneratePDF = (est: any) => {
         generateInvoice({
-            ...orderData,
-            paymentMethod,
-            companyDetails,
-            paidAmount: orderData.paidAmount,
-            balanceDue: orderData.balanceDue
+            ...est,
+            isEstimation: true,
+            companyDetails
         });
     };
 
@@ -178,17 +140,13 @@ const CreateOrder = () => {
             toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
             return;
         }
-        if (contact && contact.length !== 10) {
-            toast.error("Contact number must be exactly 10 digits");
-            return;
-        }
         if (items.length === 0) {
             toast.error("Please add at least one item");
             return;
         }
 
+        setLoading(true);
         try {
-            // Map items to include actual product names if necessary before sending to API
             const formattedItems = items.map(item => {
                 const product = availableProducts.find(p => p._id === item.productName);
                 return {
@@ -199,7 +157,7 @@ const CreateOrder = () => {
                 };
             });
 
-            const orderData = {
+            const estimationData = {
                 customerName: isBusiness ? companyName : customerName,
                 contact,
                 address,
@@ -207,41 +165,21 @@ const CreateOrder = () => {
                 subtotal,
                 discount,
                 grandTotal,
-                paidAmount: grandTotal,
-                paymentMethod,
-                balanceDue: 0,
-                companyDetails,
                 customerType,
                 companyName,
                 gstin,
                 stateName,
                 stateCode,
                 email,
-                invoiceNo,
-                invoiceDate,
-                deliveryNote,
-                modeOfPayment,
-                referenceNo,
-                otherReferences,
-                buyersOrderNo,
-                buyersOrderDate,
-                dispatchDocNo,
-                deliveryNoteDate,
-                dispatchedThrough,
-                destination,
-                billOfLading,
-                motorVehicleNo,
-                termsOfDelivery,
-                status: 'Completed'
+                estimationNo: `EST-${Date.now().toString().slice(-6)}`
             };
 
-            // Save to database
-            await api.post("/api/orders", orderData);
+            const response = await api.post("/api/estimations", estimationData);
 
-            // Trigger PDF generation IMMEDIATELY
-            generateInvoicePDF(orderData);
+            // Auto download PDF
+            handleGeneratePDF(response.data);
 
-            toast.success("Order placed and invoice generated!");
+            toast.success("Estimation created and downloaded!");
 
             // Reset form
             setCustomerName("");
@@ -254,36 +192,34 @@ const CreateOrder = () => {
             setStateName("");
             setStateCode("");
             setEmail("");
-            setInvoiceNo("");
-            setDeliveryNote("");
-            setModeOfPayment("");
-            setReferenceNo("");
-            setOtherReferences("");
-            setBuyersOrderNo("");
-            setDispatchDocNo("");
-            setDispatchedThrough("");
-            setDestination("");
-            setBillOfLading("");
-            setMotorVehicleNo("");
-            setTermsOfDelivery("");
+
+            // Refresh history
+            fetchData();
 
         } catch (error) {
-            console.error("Error creating order:", error);
-            toast.error("Failed to place order");
+            console.error("Error creating estimation:", error);
+            toast.error("Failed to create estimation");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <DashboardLayout>
-            <div className="space-y-6 max-w-5xl mx-auto">
+            <div className="space-y-6 max-w-5xl mx-auto pb-10">
                 <div>
-                    <h1 className="text-2xl font-bold">Create Order</h1>
-                    <p className="text-muted-foreground">Enter order details below.</p>
+                    <h1 className="text-2xl font-bold">Price Estimations</h1>
+                    <p className="text-muted-foreground">Create and manage price quotes for customers.</p>
                 </div>
 
                 <Card className="shadow-md">
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-primary" />
+                            New Estimation
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent className="p-6 space-y-8">
-                        {/* Customer Type Toggle */}
                         <div className="flex flex-col space-y-4">
                             <Label className="font-semibold text-lg">Customer Type</Label>
                             <RadioGroup
@@ -304,10 +240,6 @@ const CreateOrder = () => {
                         </div>
 
                         <div className="space-y-6">
-                            <h3 className="text-lg font-semibold border-b pb-2">
-                                {customerType === "Business" ? "Business & Customer Details" : "Customer Details"}
-                            </h3>
-
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {customerType === "Individual" ? (
                                     <div className="space-y-2">
@@ -335,11 +267,8 @@ const CreateOrder = () => {
                                     <Input
                                         id="contact"
                                         value={contact}
-                                        onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                            setContact(val);
-                                        }}
-                                        placeholder="10-digit phone number"
+                                        onChange={(e) => setContact(e.target.value)}
+                                        placeholder="Phone number"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -396,112 +325,44 @@ const CreateOrder = () => {
                             </div>
                         </div>
 
-                        {/* Delivery Credentials Section - Only for Business */}
-                        {customerType === "Business" && (
-                            <div className="space-y-6 pt-4 border-t">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    Delivery Credentials
-                                    <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="deliveryNote">Delivery Note</Label>
-                                        <Input
-                                            id="deliveryNote"
-                                            value={deliveryNote}
-                                            onChange={(e) => setDeliveryNote(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="deliveryNoteDate">Delivery Note Date</Label>
-                                        <Input
-                                            id="deliveryNoteDate"
-                                            type="date"
-                                            value={deliveryNoteDate}
-                                            onChange={(e) => setDeliveryNoteDate(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="dispatchedThrough">Dispatched through</Label>
-                                        <Input
-                                            id="dispatchedThrough"
-                                            value={dispatchedThrough}
-                                            onChange={(e) => setDispatchedThrough(e.target.value)}
-                                            placeholder="e.g. VEHICLE"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="destination">Destination</Label>
-                                        <Input
-                                            id="destination"
-                                            value={destination}
-                                            onChange={(e) => setDestination(e.target.value)}
-                                            placeholder="e.g. SHIVAMOGGA"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="motorVehicleNo">Motor Vehicle No.</Label>
-                                        <Input
-                                            id="motorVehicleNo"
-                                            value={motorVehicleNo}
-                                            onChange={(e) => setMotorVehicleNo(e.target.value)}
-                                            placeholder="e.g. KA17B1810"
-                                        />
-                                    </div>
-                                    <div className="col-span-full space-y-2">
-                                        <Label htmlFor="termsOfDelivery">Terms of Delivery</Label>
-                                        <Input
-                                            id="termsOfDelivery"
-                                            value={termsOfDelivery}
-                                            onChange={(e) => setTermsOfDelivery(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Order Items */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold">Order Items</h3>
-                                <Button onClick={addItem} variant="default">
+                                <h3 className="text-lg font-semibold">Estimation Items</h3>
+                                <Button onClick={addItem} variant="outline" size="sm">
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Add Product
+                                    Add Item
                                 </Button>
                             </div>
 
-                            <div className="border rounded-md p-4 bg-muted/30 min-h-[100px] space-y-4">
+                            <div className="border rounded-md p-4 bg-muted/20 space-y-4">
                                 {items.length === 0 ? (
-                                    <p className="text-center text-muted-foreground py-4">No items added. Click "Add Product" to begin.</p>
+                                    <p className="text-center text-muted-foreground py-4">No items added.</p>
                                 ) : (
-                                    items.map((item, index) => (
+                                    items.map((item) => (
                                         <div key={item.id} className="flex flex-col md:flex-row gap-4 items-end border-b pb-4 last:border-0 last:pb-0">
                                             <div className="flex-1 space-y-2 w-full">
-                                                <Label className="font-semibold text-foreground">Product Name</Label>
+                                                <Label className="text-xs font-semibold">Product</Label>
                                                 <Popover open={openPopoverId === item.id} onOpenChange={(open) => setOpenPopoverId(open ? item.id : null)}>
                                                     <PopoverTrigger asChild>
                                                         <Button
                                                             variant="outline"
                                                             role="combobox"
-                                                            className="w-full justify-between bg-muted/30 border-input text-left font-normal h-10 px-3"
+                                                            className="w-full justify-between bg-background border-input text-left font-normal h-10 px-3"
                                                         >
-                                                            <span className={cn(
-                                                                "truncate",
-                                                                !item.productName && "text-muted-foreground"
-                                                            )}>
+                                                            <span className="truncate">
                                                                 {item.productName
                                                                     ? availableProducts.find((p) => p._id === item.productName)?.name
-                                                                    : "Search Product Name..."}
+                                                                    : "Select Product..."}
                                                             </span>
                                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                         </Button>
                                                     </PopoverTrigger>
                                                     <PopoverContent className="w-[400px] p-0" align="start">
-                                                        <Command className="border-0">
-                                                            <CommandInput placeholder="Type a product name..." autoComplete="off" className="border-none focus:ring-0" />
-                                                            <CommandList className="max-h-[300px]">
-                                                                <CommandEmpty>No matching products found.</CommandEmpty>
-                                                                <CommandGroup heading="Existing Products">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search Product..." />
+                                                            <CommandList>
+                                                                <CommandEmpty>No product found.</CommandEmpty>
+                                                                <CommandGroup>
                                                                     {availableProducts.map((p) => (
                                                                         <CommandItem
                                                                             key={p._id}
@@ -510,7 +371,7 @@ const CreateOrder = () => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="group aria-selected:bg-transparent hover:!bg-blue-600 hover:!text-white data-[selected='true']:bg-transparent cursor-pointer transition-colors"
+                                                                            className="cursor-pointer"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -519,8 +380,8 @@ const CreateOrder = () => {
                                                                                 )}
                                                                             />
                                                                             <div className="flex flex-col">
-                                                                                <span className="font-medium text-foreground group-hover:text-white">{p.name}</span>
-                                                                                <span className="text-xs text-muted-foreground group-hover:text-blue-50">Price: ₹{p.price} | Category: {p.category?.name || "No Category"}</span>
+                                                                                <span className="font-medium">{p.name}</span>
+                                                                                <span className="text-xs text-muted-foreground">Price: ₹{p.price}</span>
                                                                             </div>
                                                                         </CommandItem>
                                                                     ))}
@@ -531,39 +392,36 @@ const CreateOrder = () => {
                                                 </Popover>
                                             </div>
                                             <div className="w-full md:w-32 space-y-2">
-                                                <Label>Price</Label>
+                                                <Label className="text-xs font-semibold">Price</Label>
                                                 <Input
                                                     type="number"
-                                                    min="0"
                                                     value={item.price}
                                                     readOnly
-                                                    className="bg-muted cursor-not-allowed"
+                                                    className="bg-muted"
                                                 />
                                             </div>
                                             <div className="w-full md:w-24 space-y-2">
-                                                <Label>Qty</Label>
+                                                <Label className="text-xs font-semibold">Qty</Label>
                                                 <Input
                                                     type="number"
                                                     min="1"
                                                     value={item.quantity}
                                                     onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 1)}
-                                                    onWheel={(e) => e.currentTarget.blur()}
-                                                    className="bg-background"
                                                 />
                                             </div>
                                             <div className="w-full md:w-32 space-y-2">
-                                                <Label>Total</Label>
-                                                <div className="h-10 flex items-center px-3 border rounded-md bg-muted text-muted-foreground">
-                                                    {(item.price * item.quantity).toFixed(2)}
+                                                <Label className="text-xs font-semibold">Total</Label>
+                                                <div className="h-10 flex items-center px-3 border rounded-md bg-muted font-medium">
+                                                    ₹ {(item.price * item.quantity).toFixed(2)}
                                                 </div>
                                             </div>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="text-destructive hover:bg-destructive/10 mb-0.5"
+                                                className="text-destructive hover:bg-destructive/10"
                                                 onClick={() => removeItem(item.id)}
                                             >
-                                                <Trash2 className="h-5 w-5" />
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     ))
@@ -571,77 +429,100 @@ const CreateOrder = () => {
                             </div>
                         </div>
 
-                        {/* Bottom Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                            {/* Left Column */}
-                            <div className="space-y-4">
-                                {companyDetails && (
-                                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                                        <h4 className="text-sm font-semibold mb-1">Billing From:</h4>
-                                        <p className="text-sm font-bold">{companyDetails.companyName}</p>
-                                        <p className="text-xs text-muted-foreground">{companyDetails.address}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Right Column - Calculations */}
-                            <div className="space-y-6 bg-muted/20 p-6 rounded-lg border">
+                        <div className="flex justify-end pt-4 border-t">
+                            <div className="w-full md:w-80 space-y-4">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="font-semibold">Subtotal:</span>
-                                    <span className="text-muted-foreground">₹ {subtotal.toFixed(2)}</span>
+                                    <span className="font-semibold text-muted-foreground">Subtotal:</span>
+                                    <span>₹ {subtotal.toFixed(2)}</span>
                                 </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="discount" className="text-sm font-semibold">Discount</Label>
+                                <div className="flex items-center gap-4">
+                                    <Label className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Discount:</Label>
                                     <Input
-                                        id="discount"
                                         type="number"
-                                        min="0"
                                         value={discount}
                                         onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                                        onWheel={(e) => e.currentTarget.blur()}
-                                        className="bg-background"
+                                        className="h-8"
                                     />
                                 </div>
-
-                                <div className="flex justify-between items-center text-lg font-bold">
+                                <div className="flex justify-between items-center text-xl font-bold border-t pt-4">
                                     <span>Grand Total:</span>
-                                    <span>₹ {grandTotal.toFixed(2)}</span>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-semibold">Payment Method</Label>
-                                    <RadioGroup
-                                        defaultValue="cash"
-                                        value={paymentMethod}
-                                        onValueChange={setPaymentMethod}
-                                        className="flex gap-6 mt-2"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="cash" id="cash" />
-                                            <Label htmlFor="cash">Cash</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="online" id="online" />
-                                            <Label htmlFor="online">Online</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="card" id="card" />
-                                            <Label htmlFor="card">Card</Label>
-                                        </div>
-                                    </RadioGroup>
+                                    <span className="text-primary">₹ {grandTotal.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
 
                         <Button
                             onClick={handleSubmit}
-                            className="w-full py-6 text-lg mt-8"
+                            className="w-full py-6 text-lg"
                             size="lg"
+                            disabled={loading}
                         >
-                            Place Order
+                            {loading ? "Creating..." : "Create & Download Estimation"}
                         </Button>
+                    </CardContent>
+                </Card>
 
+                {/* Estimation History Table */}
+                <Card className="shadow-md border-primary/10">
+                    <CardHeader className="bg-primary/5">
+                        <CardTitle className="text-xl flex items-center gap-2">
+                            <HistoryIcon className="h-5 w-5 text-primary" />
+                            Estimation History
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="rounded-md border-t">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/30">
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Estimation #</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Items</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="text-center">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {estimationHistory.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                                No estimations found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        estimationHistory.map((est) => (
+                                            <TableRow key={est._id} className="hover:bg-muted/10 transition-colors">
+                                                <TableCell className="font-medium">
+                                                    {format(new Date(est.createdAt), "dd MMM yyyy")}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold">
+                                                        {est.estimationNo || "N/A"}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>{est.customerName}</TableCell>
+                                                <TableCell>{est.items.length} Product(s)</TableCell>
+                                                <TableCell className="text-right font-bold text-primary">
+                                                    ₹ {est.grandTotal.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-primary hover:bg-primary/10 flex items-center gap-1 mx-auto"
+                                                        onClick={() => handleGeneratePDF(est)}
+                                                    >
+                                                        <Download className="h-3.5 w-3.5" />
+                                                        <span className="text-xs">PDF</span>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -649,4 +530,4 @@ const CreateOrder = () => {
     );
 };
 
-export default CreateOrder;
+export default Estimations;

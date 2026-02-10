@@ -11,62 +11,100 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Mail, Phone, MapPin } from "lucide-react";
-
-const suppliers = [
-  {
-    id: "SUP-001",
-    name: "TechParts Inc.",
-    contact: "John Smith",
-    email: "john@techparts.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, USA",
-    status: "Active",
-    products: 45,
-  },
-  {
-    id: "SUP-002",
-    name: "Global Electronics",
-    contact: "Sarah Johnson",
-    email: "sarah@globalelec.com",
-    phone: "+1 (555) 234-5678",
-    location: "Los Angeles, USA",
-    status: "Active",
-    products: 78,
-  },
-  {
-    id: "SUP-003",
-    name: "Prime Materials",
-    contact: "Mike Davis",
-    email: "mike@primemats.com",
-    phone: "+1 (555) 345-6789",
-    location: "Chicago, USA",
-    status: "Inactive",
-    products: 23,
-  },
-  {
-    id: "SUP-004",
-    name: "Quality Components",
-    contact: "Emily Brown",
-    email: "emily@qualitycomp.com",
-    phone: "+1 (555) 456-7890",
-    location: "Houston, USA",
-    status: "Active",
-    products: 56,
-  },
-  {
-    id: "SUP-005",
-    name: "FastShip Logistics",
-    contact: "David Wilson",
-    email: "david@fastship.com",
-    phone: "+1 (555) 567-8901",
-    location: "Miami, USA",
-    status: "Active",
-    products: 34,
-  },
-];
+import { Plus, Search, Mail, Phone, MapPin, Loader2, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const Suppliers = () => {
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [formData, setFormData] = useState({
+    companyName: "",
+    contactPerson: "",
+    email: "",
+    password: "",
+    phone: "",
+    location: "",
+  });
+
+  const fetchSuppliers = async () => {
+    try {
+      const { data } = await api.get("/api/suppliers");
+      setSuppliers(data);
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+      toast.error("Failed to load suppliers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await api.post("/api/suppliers", formData);
+      toast.success("Supplier added successfully!");
+      setIsModalOpen(false);
+      setFormData({
+        companyName: "",
+        contactPerson: "",
+        email: "",
+        password: "",
+        phone: "",
+        location: "",
+      });
+      fetchSuppliers();
+    } catch (error: any) {
+      console.error("Error creating supplier:", error);
+      toast.error(error.response?.data?.message || "Failed to add supplier");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this supplier? This will also delete their login account.")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/api/suppliers/${id}`);
+      toast.success("Supplier removed successfully");
+      fetchSuppliers();
+    } catch (error) {
+      console.error("Error deleting supplier:", error);
+      toast.error("Failed to remove supplier");
+    }
+  };
+
+  const filteredSuppliers = suppliers.filter(s =>
+    s.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.supplierId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -78,35 +116,66 @@ const Suppliers = () => {
               Manage your supplier relationships and contacts
             </p>
           </div>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Supplier
-          </Button>
+
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Supplier
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Supplier</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input id="companyName" value={formData.companyName} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactPerson">Contact Person</Label>
+                  <Input id="contactPerson" value={formData.contactPerson} onChange={handleInputChange} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={formData.email} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Login Password</Label>
+                    <Input id="password" type="password" value={formData.password} onChange={handleInputChange} required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" value={formData.phone} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input id="location" value={formData.location} onChange={handleInputChange} required />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Supplier Account"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{suppliers.length}</div>
               <p className="text-sm text-muted-foreground">Total Suppliers</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-success">21</div>
-              <p className="text-sm text-muted-foreground">Active</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-warning">3</div>
-              <p className="text-sm text-muted-foreground">Inactive</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">236</div>
+              <div className="text-2xl font-bold">
+                {suppliers.reduce((acc, s) => acc + (s.products || 0), 0)}
+              </div>
               <p className="text-sm text-muted-foreground">Products Supplied</p>
             </CardContent>
           </Card>
@@ -116,7 +185,12 @@ const Suppliers = () => {
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search suppliers..." className="pl-10" />
+            <Input
+              placeholder="Search suppliers..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
@@ -135,52 +209,62 @@ const Suppliers = () => {
                   <TableHead>Contact Info</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Products</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {suppliers.map((supplier) => (
-                  <TableRow key={supplier.id}>
-                    <TableCell className="font-medium">{supplier.id}</TableCell>
-                    <TableCell className="font-semibold">
-                      {supplier.name}
-                    </TableCell>
-                    <TableCell>{supplier.contact}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 text-sm">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {supplier.email}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {supplier.phone}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {supplier.location}
-                      </span>
-                    </TableCell>
-                    <TableCell>{supplier.products}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          supplier.status === "Active" ? "default" : "secondary"
-                        }
-                        className={
-                          supplier.status === "Active"
-                            ? "bg-success/10 text-success hover:bg-success/20"
-                            : ""
-                        }
-                      >
-                        {supplier.status}
-                      </Badge>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredSuppliers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                      No suppliers found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier._id}>
+                      <TableCell className="font-medium">{supplier.supplierId}</TableCell>
+                      <TableCell className="font-semibold">
+                        {supplier.companyName}
+                      </TableCell>
+                      <TableCell>{supplier.contactPerson}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 text-sm">
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {supplier.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {supplier.phone}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {supplier.location}
+                        </span>
+                      </TableCell>
+                      <TableCell>{supplier.products || 0}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(supplier._id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
