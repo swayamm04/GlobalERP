@@ -55,10 +55,12 @@ const Estimations = () => {
     const [email, setEmail] = useState("");
 
     const [availableProducts, setAvailableProducts] = useState<any[]>([]);
+    const [availableCustomers, setAvailableCustomers] = useState<any[]>([]);
     const [companyDetails, setCompanyDetails] = useState<any>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
     const [discount, setDiscount] = useState(0);
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+    const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
 
     const [subtotal, setSubtotal] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
@@ -68,14 +70,16 @@ const Estimations = () => {
 
     const fetchData = async () => {
         try {
-            const [productsRes, settingsRes, historyRes] = await Promise.all([
+            const [productsRes, settingsRes, historyRes, customersRes] = await Promise.all([
                 api.get("/api/products"),
                 api.get("/api/company-settings"),
-                api.get("/api/estimations")
+                api.get("/api/estimations"),
+                api.get("/api/customers")
             ]);
             setAvailableProducts(productsRes.data);
             setCompanyDetails(settingsRes.data);
             setEstimationHistory(historyRes.data);
+            setAvailableCustomers(customersRes.data);
         } catch (error) {
             console.error("Error fetching data:", error);
             toast.error("Failed to load required data");
@@ -130,6 +134,22 @@ const Estimations = () => {
             isEstimation: true,
             companyDetails
         });
+    };
+
+    const handleSelectCustomer = (customer: any) => {
+        if (customerType === "Individual") {
+            setCustomerName(customer.name);
+        } else {
+            setCompanyName(customer.companyName || customer.name);
+        }
+        setContact(customer.contact || "");
+        setAddress(customer.address || "");
+        setEmail(customer.email || "");
+        setGstin(customer.gstin || "");
+        setStateName(customer.stateName || "");
+        setStateCode(customer.stateCode || "");
+        setIsCustomerPopoverOpen(false);
+        toast.info(`Details pre-filled for ${customerType === "Business" ? (customer.companyName || customer.name) : customer.name}`);
     };
 
     const handleSubmit = async () => {
@@ -244,22 +264,80 @@ const Estimations = () => {
                                 {customerType === "Individual" ? (
                                     <div className="space-y-2">
                                         <Label htmlFor="customerName" className="font-semibold">Customer Name <span className="text-destructive">*</span></Label>
-                                        <Input
-                                            id="customerName"
-                                            value={customerName}
-                                            onChange={(e) => setCustomerName(e.target.value)}
-                                            placeholder="Enter name"
-                                        />
+                                        <Popover
+                                            open={isCustomerPopoverOpen && customerName.length > 0 && availableCustomers.filter(c => c.customerType === "Individual" && c.name.toLowerCase().includes(customerName.toLowerCase())).length > 0}
+                                            onOpenChange={setIsCustomerPopoverOpen}
+                                        >
+                                            <PopoverTrigger asChild>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="customerName"
+                                                        value={customerName}
+                                                        onChange={(e) => {
+                                                            setCustomerName(e.target.value);
+                                                            if (e.target.value.length >= 1) setIsCustomerPopoverOpen(true);
+                                                        }}
+                                                        placeholder="Enter name"
+                                                        autoComplete="off"
+                                                    />
+                                                </div>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                                <div className="max-h-[200px] overflow-y-auto">
+                                                    {availableCustomers
+                                                        .filter(c => c.customerType === "Individual" && c.name.toLowerCase().includes(customerName.toLowerCase()))
+                                                        .map((c) => (
+                                                            <div
+                                                                key={c._id}
+                                                                onClick={() => handleSelectCustomer(c)}
+                                                                className="flex flex-col px-3 py-2 cursor-pointer hover:bg-primary/5 rounded-sm transition-colors border-b last:border-0 border-muted/30"
+                                                            >
+                                                                <span className="font-medium text-sm">{c.name}</span>
+                                                                <span className="text-[10px] text-muted-foreground">{c.contact}</span>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
                                         <Label htmlFor="companyName" className="font-semibold">Company Name <span className="text-destructive">*</span></Label>
-                                        <Input
-                                            id="companyName"
-                                            value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
-                                            placeholder="Enter company name"
-                                        />
+                                        <Popover
+                                            open={isCustomerPopoverOpen && companyName.length > 0 && availableCustomers.filter(c => c.customerType === "Business" && (c.companyName?.toLowerCase().includes(companyName.toLowerCase()) || c.name.toLowerCase().includes(companyName.toLowerCase()))).length > 0}
+                                            onOpenChange={setIsCustomerPopoverOpen}
+                                        >
+                                            <PopoverTrigger asChild>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="companyName"
+                                                        value={companyName}
+                                                        onChange={(e) => {
+                                                            setCompanyName(e.target.value);
+                                                            if (e.target.value.length >= 1) setIsCustomerPopoverOpen(true);
+                                                        }}
+                                                        placeholder="Enter company name"
+                                                        autoComplete="off"
+                                                    />
+                                                </div>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                                <div className="max-h-[200px] overflow-y-auto">
+                                                    {availableCustomers
+                                                        .filter(c => c.customerType === "Business" && (c.companyName?.toLowerCase().includes(companyName.toLowerCase()) || c.name.toLowerCase().includes(companyName.toLowerCase())))
+                                                        .map((c) => (
+                                                            <div
+                                                                key={c._id}
+                                                                onClick={() => handleSelectCustomer(c)}
+                                                                className="flex flex-col px-3 py-2 cursor-pointer hover:bg-primary/5 rounded-sm transition-colors border-b last:border-0 border-muted/30"
+                                                            >
+                                                                <span className="font-medium text-sm">{c.companyName || c.name}</span>
+                                                                <span className="text-[10px] text-muted-foreground">{c.contact}</span>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 )}
                                 <div className="space-y-2">

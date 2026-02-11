@@ -46,7 +46,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: ClipboardList, label: "Pending Orders", path: "/pending-orders" },
   { icon: History, label: "Advance Orders", path: "/advance-order" },
-  { icon: FileText, label: "Estimations", path: "/estimations" },
+  { icon: FileText, label: "Create Estimations", path: "/estimations" },
   { icon: Truck, label: "Suppliers", path: "/suppliers" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: Receipt, label: "Purchase Orders", path: "/purchase-orders" },

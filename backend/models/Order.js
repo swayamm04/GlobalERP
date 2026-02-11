@@ -87,7 +87,14 @@ const orderSchema = mongoose.Schema({
         type: String,
         enum: ['Pending', 'Processing', 'Shipped', 'Completed'],
         default: 'Pending'
-    }
+    },
+    paymentHistory: [
+        {
+            amount: { type: Number, required: true },
+            date: { type: Date, default: Date.now },
+            method: { type: String, required: true }
+        }
+    ]
 }, {
     timestamps: true
 });
