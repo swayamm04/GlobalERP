@@ -43,12 +43,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Search, Loader2, Filter, CheckCircle2, RefreshCcw, MoreVertical, CreditCard, History, Plus, XCircle } from "lucide-react";
+import { Search, Loader2, Filter, CheckCircle2, RefreshCcw, MoreVertical, CreditCard, History, Plus, XCircle, Download } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { generateInvoice, generatePaymentStatement } from "@/lib/invoiceGenerator";
 
 interface PaymentHistory {
     amount: number;
@@ -100,6 +101,8 @@ const PendingOrders = () => {
     const [newPaymentAmount, setNewPaymentAmount] = useState("");
     const [newPaymentMethod, setNewPaymentMethod] = useState("Cash");
     const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+    const [downloadingReceiptIndex, setDownloadingReceiptIndex] = useState<number | null>(null);
+    const [isDownloadingStatement, setIsDownloadingStatement] = useState(false);
 
     // Cancel Order State
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -205,6 +208,61 @@ const PendingOrders = () => {
         setSelectedOrder(order);
         setNewPaymentAmount("");
         setIsPaymentModalOpen(true);
+    };
+
+    const handleDownloadInvoice = async (order: Order, index: number) => {
+        setDownloadingReceiptIndex(index);
+        try {
+            // Fetch full order details to get all fields and company settings
+            const [orderRes, settingsRes] = await Promise.all([
+                api.get(`/api/orders/${order.id}`),
+                api.get("/api/company-settings")
+            ]);
+
+            const fullOrder = orderRes.data;
+            const companyDetails = settingsRes.data;
+
+            generateInvoice({
+                ...fullOrder,
+                orderId: fullOrder._id,
+                companyDetails: companyDetails
+            });
+            toast.success("Invoice downloaded");
+        } catch (error) {
+            console.error("Error generating invoice:", error);
+            toast.error("Failed to generate invoice");
+        } finally {
+            setDownloadingReceiptIndex(null);
+        }
+    };
+
+    const handleDownloadStatement = async (order: Order) => {
+        setIsDownloadingStatement(true);
+        try {
+            const [orderRes, settingsRes] = await Promise.all([
+                api.get(`/api/orders/${order.id}`),
+                api.get("/api/company-settings")
+            ]);
+
+            const fullOrder = orderRes.data;
+            const companyDetails = settingsRes.data;
+
+            generatePaymentStatement({
+                customerName: fullOrder.customerName,
+                contact: fullOrder.contact,
+                address: fullOrder.address,
+                orderId: fullOrder._id,
+                totalAmount: fullOrder.grandTotal,
+                paymentHistory: fullOrder.paymentHistory || [],
+                companyDetails: companyDetails
+            });
+            toast.success("Payment statement downloaded");
+        } catch (error) {
+            console.error("Error generating statement:", error);
+            toast.error("Failed to generate statement");
+        } finally {
+            setIsDownloadingStatement(false);
+        }
     };
 
     return (
@@ -349,13 +407,13 @@ const PendingOrders = () => {
 
                 {/* Payment Modal */}
                 <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-                    <DialogContent className="sm:max-w-[500px]">
-                        <DialogHeader>
+                    <DialogContent className="max-w-[95vw] sm:max-w-[550px] p-0 overflow-hidden">
+                        <DialogHeader className="p-6 pb-2">
                             <DialogTitle>Order Payment Details</DialogTitle>
                         </DialogHeader>
 
                         {selectedOrder && (
-                            <div className="space-y-6">
+                            <div className="p-6 pt-2 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
                                 {/* Amount Summary */}
                                 <div className="space-y-4">
                                     <div className="border rounded-lg p-6 bg-primary/5 text-center">
@@ -416,9 +474,27 @@ const PendingOrders = () => {
 
                                 {/* Payment History */}
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold flex items-center gap-2">
-                                        <History className="h-4 w-4" /> Payment History
-                                    </h3>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-semibold flex items-center gap-2">
+                                            <History className="h-4 w-4" /> Payment History (Recent First)
+                                        </h3>
+                                        {selectedOrder.paymentHistory && selectedOrder.paymentHistory.length > 0 && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 gap-2"
+                                                onClick={() => handleDownloadStatement(selectedOrder)}
+                                                disabled={isDownloadingStatement}
+                                            >
+                                                {isDownloadingStatement ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Download className="h-4 w-4" />
+                                                )}
+                                                Download Ledger
+                                            </Button>
+                                        )}
+                                    </div>
                                     <div className="max-h-[200px] overflow-y-auto border rounded-md">
                                         <Table>
                                             <TableHeader className="bg-muted/50 sticky top-0">
@@ -426,21 +502,41 @@ const PendingOrders = () => {
                                                     <TableHead className="py-2">Date</TableHead>
                                                     <TableHead className="py-2">Method</TableHead>
                                                     <TableHead className="py-2 text-right">Amount</TableHead>
+                                                    <TableHead className="py-2 text-right">Action</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {!selectedOrder.paymentHistory || selectedOrder.paymentHistory.length === 0 ? (
                                                     <TableRow>
-                                                        <TableCell colSpan={3} className="text-center text-muted-foreground py-4">No history found</TableCell>
+                                                        <TableCell colSpan={4} className="text-center text-muted-foreground py-4">No history found</TableCell>
                                                     </TableRow>
                                                 ) : (
-                                                    selectedOrder.paymentHistory.map((history, idx) => (
-                                                        <TableRow key={idx}>
-                                                            <TableCell className="py-2">{format(new Date(history.date), 'MMM dd, yyyy')}</TableCell>
-                                                            <TableCell className="py-2">{history.method}</TableCell>
-                                                            <TableCell className="py-2 text-right font-medium">₹{history.amount.toLocaleString()}</TableCell>
-                                                        </TableRow>
-                                                    ))
+                                                    [...selectedOrder.paymentHistory]
+                                                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                        .map((history, idx) => (
+                                                            <TableRow key={idx}>
+                                                                <TableCell className="py-2">{format(new Date(history.date), 'MMM dd, yyyy')}</TableCell>
+                                                                <TableCell className="py-2">{history.method}</TableCell>
+                                                                <TableCell className="py-2 text-right font-medium">₹{history.amount.toLocaleString()}</TableCell>
+                                                                <TableCell className="py-2 text-right">
+                                                                    {idx === 0 && (
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-8 w-8 p-0"
+                                                                            onClick={() => handleDownloadInvoice(selectedOrder, idx)}
+                                                                            disabled={downloadingReceiptIndex === idx}
+                                                                        >
+                                                                            {downloadingReceiptIndex === idx ? (
+                                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                                            ) : (
+                                                                                <Download className="h-4 w-4" />
+                                                                            )}
+                                                                        </Button>
+                                                                    )}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
                                                 )}
                                             </TableBody>
                                         </Table>
@@ -448,8 +544,8 @@ const PendingOrders = () => {
                                 </div>
                             </div>
                         )}
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>Close</Button>
+                        <DialogFooter className="p-6 pt-0">
+                            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setIsPaymentModalOpen(false)}>Close</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

@@ -50,6 +50,33 @@ export interface InvoiceData {
     balanceDue?: number;
 }
 
+export interface PaymentReceiptData {
+    customerName: string;
+    contact: string;
+    address: string;
+    orderId: string;
+    paymentAmount: number;
+    paymentDate: string | Date;
+    paymentMethod: string;
+    totalAmount: number;
+    balanceDue: number;
+    companyDetails?: InvoiceData['companyDetails'];
+}
+
+export interface StatementData {
+    customerName: string;
+    contact: string;
+    address: string;
+    orderId: string;
+    totalAmount: number;
+    paymentHistory: {
+        amount: number;
+        date: string | Date;
+        method: string;
+    }[];
+    companyDetails?: InvoiceData['companyDetails'];
+}
+
 export const generateInvoice = (data: InvoiceData) => {
     const {
         customerName,
@@ -312,14 +339,14 @@ export const generateInvoice = (data: InvoiceData) => {
 
     doc.line(summaryX - 2, lastY + 15, pageWidth - 5, lastY + 15);
     doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
     doc.text("Grand Total:", summaryX, lastY + 22);
     doc.text(`Rs. ${grandTotal.toFixed(2)}`, rightEdge, lastY + 22, { align: 'right' });
 
-    // Payment Summary for Advance Orders
+    // Payment Summary Section
+    doc.setFontSize(9);
     if (balanceDue !== undefined && balanceDue > 0) {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("Amount Paid:", summaryX, lastY + 30);
+        doc.text("Paid Amount:", summaryX, lastY + 30);
         doc.text(`Rs. ${paidAmount?.toFixed(2) || "0.00"}`, rightEdge, lastY + 30, { align: 'right' });
 
         doc.setTextColor(220, 38, 38); // Red for balance due
@@ -327,13 +354,228 @@ export const generateInvoice = (data: InvoiceData) => {
         doc.text(`Rs. ${balanceDue.toFixed(2)}`, rightEdge, lastY + 36, { align: 'right' });
         doc.setTextColor(0, 0, 0); // Reset to black
     } else if (paidAmount !== undefined && paidAmount >= grandTotal) {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
         doc.text("Status:", summaryX, lastY + 30);
-        doc.setTextColor(22, 163, 74); // Green for Fully Paid
+        doc.setTextColor(22, 163, 74);
         doc.text("FULLY PAID", rightEdge, lastY + 30, { align: 'right' });
         doc.setTextColor(0, 0, 0);
     }
 
     doc.save(`${data.isEstimation ? 'Estimation' : 'Invoice'}_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
+};
+
+export const generateReceipt = (data: PaymentReceiptData) => {
+    const {
+        customerName,
+        contact,
+        address,
+        orderId,
+        paymentAmount,
+        paymentDate,
+        paymentMethod,
+        totalAmount,
+        balanceDue,
+        companyDetails
+    } = data;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Helper to format date
+    const formatDate = (dateInput?: any) => {
+        if (!dateInput) return "";
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return dateInput.toString();
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+    };
+
+    // Draw Main Border
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.1);
+    doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+
+    // Header - Payment Receipt
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT RECEIPT", pageWidth / 2, 15, { align: "center" });
+    doc.line(5, 20, pageWidth - 5, 20);
+
+    // Company Section
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 30);
+    doc.setFont("helvetica", "normal");
+    const addressLines = doc.splitTextToSize(companyDetails?.address || "No 25/11, 2nd Main, 2nd Cross, Industrial Area, Bangalore", 100);
+    doc.text(addressLines, 10, 35);
+
+    let currentY = 35 + (addressLines.length * 5);
+    doc.text(`GSTIN: ${companyDetails?.gstin || (companyDetails as any)?.gstNumber || "N/A"}`, 10, currentY);
+    doc.text(`Contact: ${companyDetails?.phone || "N/A"}`, 10, currentY + 5);
+
+    // Receipt Info Section
+    doc.line(pageWidth / 2, 20, pageWidth / 2, 60);
+    const rightCol = (pageWidth / 2) + 5;
+    doc.text("Receipt Details:", rightCol, 30);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Receipt No: RCT-${orderId.slice(-6).toUpperCase()}-${Date.now().toString().slice(-4)}`, rightCol, 36);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date: ${formatDate(paymentDate)}`, rightCol, 42);
+    doc.text(`Order Ref: #${orderId.slice(-6).toUpperCase()}`, rightCol, 48);
+
+    doc.line(5, 60, pageWidth - 5, 60);
+
+    // Customer Section
+    doc.setFont("helvetica", "bold");
+    doc.text("Received From:", 10, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(customerName, 10, 76);
+    const buyerAddr = doc.splitTextToSize(address, 120);
+    doc.text(buyerAddr, 10, 81);
+    doc.text(`Contact: ${contact}`, 10, 81 + (buyerAddr.length * 5));
+
+    // Payment Section
+    doc.line(5, 100, pageWidth - 5, 100);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payment Information", pageWidth / 2, 110, { align: "center" });
+
+    autoTable(doc, {
+        startY: 115,
+        head: [['Description', 'Details']],
+        body: [
+            ['Payment Method', paymentMethod.toUpperCase()],
+            ['Paid Amount', `Rs. ${paymentAmount.toLocaleString()}`],
+            ['Payment Date', formatDate(paymentDate)],
+            ['Original Order Total', `Rs. ${totalAmount.toLocaleString()}`],
+            ['Balance Due', `Rs. ${balanceDue.toLocaleString()}`]
+        ],
+        theme: 'striped',
+        styles: { fontSize: 10, cellPadding: 5 },
+        headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
+        margin: { left: 10, right: 10 }
+    });
+
+    let finalY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Signatures
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Customer Signature", 30, finalY);
+    doc.text("Authorized Signatory", pageWidth - 70, finalY);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.text("This is a system generated payment receipt.", pageWidth / 2, pageHeight - 10, { align: "center" });
+
+    doc.save(`Receipt_${customerName.replace(/\s+/g, '_')}_${orderId.slice(-6)}.pdf`);
+};
+
+export const generatePaymentStatement = (data: StatementData) => {
+    const {
+        customerName,
+        contact,
+        address,
+        orderId,
+        totalAmount,
+        paymentHistory,
+        companyDetails
+    } = data;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const formatDate = (dateInput?: any) => {
+        if (!dateInput) return "";
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return dateInput.toString();
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+    };
+
+    // Main Border
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.1);
+    doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+
+    // Header
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT LEDGER / STATEMENT", pageWidth / 2, 15, { align: "center" });
+    doc.line(5, 20, pageWidth - 5, 20);
+
+    // Company & Statement Info
+    doc.setFontSize(10);
+    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 30);
+    doc.setFont("helvetica", "normal");
+    const addressLines = doc.splitTextToSize(companyDetails?.address || "Industrial Area, Bangalore", 100);
+    doc.text(addressLines, 10, 35);
+
+    const rightCol = pageWidth / 2 + 5;
+    doc.setFont("helvetica", "bold");
+    doc.text("Statement Details:", rightCol, 30);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
+    doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
+    doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
+
+    doc.line(5, 60, pageWidth - 5, 60);
+
+    // Customer
+    doc.setFont("helvetica", "bold");
+    doc.text("Customer:", 10, 70);
+    doc.setFont("helvetica", "normal");
+    doc.text(customerName, 10, 76);
+    doc.text(contact, 10, 81);
+
+    // Ledger Table
+    let runningBalance = totalAmount;
+    const ledgerEntries = paymentHistory
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .map((entry, idx) => {
+            runningBalance -= entry.amount;
+            return [
+                idx + 1,
+                formatDate(entry.date),
+                `Payment ${idx + 1}`,
+                entry.method.toUpperCase(),
+                `Rs. ${entry.amount.toLocaleString()}`,
+                `Rs. ${Math.max(0, runningBalance).toLocaleString()}`
+            ];
+        });
+
+    autoTable(doc, {
+        startY: 90,
+        head: [['#', 'Date', 'Description', 'Method', 'Paid', 'Balance Due']],
+        body: ledgerEntries,
+        theme: 'striped',
+        styles: { fontSize: 9 },
+        headStyles: {
+            fillColor: [44, 62, 80],
+            textColor: [255, 255, 255],
+            halign: 'left' // Default
+        },
+        columnStyles: {
+            0: { halign: 'center' },
+            4: { halign: 'right' },
+            5: { halign: 'right' }
+        },
+        // Explicitly align specific header cells if needed, but columnStyles usually handles it.
+        // Adding didParseCell for robustness in header alignment.
+        didParseCell: (data) => {
+            if (data.section === 'head' && (data.column.index === 4 || data.column.index === 5)) {
+                data.cell.styles.halign = 'right';
+            }
+        }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Final Balance Due: Rs. ${Math.max(0, runningBalance).toLocaleString()}`, pageWidth - 10, finalY, { align: 'right' });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.text("End of Statement", pageWidth / 2, pageHeight - 10, { align: "center" });
+
+    doc.save(`Statement_${customerName.replace(/\s+/g, '_')}_${orderId.slice(-6)}.pdf`);
 };
