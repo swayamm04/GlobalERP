@@ -20,6 +20,7 @@ const createCategory = async (req, res) => {
     const category = await Category.create({
         user: req.user.id,
         name: req.body.name,
+        hsnCode: req.body.hsnCode || '',
         fields: req.body.fields || []
     });
 

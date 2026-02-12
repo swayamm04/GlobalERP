@@ -4,7 +4,7 @@ const Product = require('../models/Product');
 // @route   GET /api/products
 // @access  Public (or Private depending on needs, currently Public)
 const getProducts = async (req, res) => {
-    const products = await Product.find().populate('category');
+    const products = await Product.find().populate('category').sort({ createdAt: -1 });
     res.status(200).json(products);
 };
 

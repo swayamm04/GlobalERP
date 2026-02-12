@@ -23,6 +23,7 @@ const estimationSchema = mongoose.Schema({
             quantity: Number,
             price: Number,
             category: String,
+            hsnCode: String,
             customFields: [
                 {
                     label: String,
@@ -58,6 +59,10 @@ const estimationSchema = mongoose.Schema({
     date: {
         type: Date,
         default: Date.now
+    },
+    includeGST: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true

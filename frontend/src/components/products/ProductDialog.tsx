@@ -183,6 +183,10 @@ export function ProductDialog({
                                             type="number"
                                             value={formData.stock}
                                             onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            onBlur={(e) => {
+                                                if (e.target.value === "") setFormData({ ...formData, stock: "0" });
+                                            }}
                                             required
                                         />
                                     </div>
@@ -193,6 +197,10 @@ export function ProductDialog({
                                             type="number"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                            onFocus={(e) => e.target.select()}
+                                            onBlur={(e) => {
+                                                if (e.target.value === "") setFormData({ ...formData, price: "0" });
+                                            }}
                                             required
                                         />
                                     </div>
@@ -239,6 +247,10 @@ export function ProductDialog({
                                                 type="number"
                                                 value={formData.cgst}
                                                 onChange={(e) => setFormData({ ...formData, cgst: e.target.value })}
+                                                onFocus={(e) => e.target.select()}
+                                                onBlur={(e) => {
+                                                    if (e.target.value === "") setFormData({ ...formData, cgst: "9" });
+                                                }}
                                                 required
                                             />
                                         </div>
@@ -249,6 +261,10 @@ export function ProductDialog({
                                                 type="number"
                                                 value={formData.sgst}
                                                 onChange={(e) => setFormData({ ...formData, sgst: e.target.value })}
+                                                onFocus={(e) => e.target.select()}
+                                                onBlur={(e) => {
+                                                    if (e.target.value === "") setFormData({ ...formData, sgst: "9" });
+                                                }}
                                                 required
                                             />
                                         </div>

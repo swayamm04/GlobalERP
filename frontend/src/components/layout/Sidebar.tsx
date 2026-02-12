@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -115,28 +114,60 @@ export const Sidebar = ({
   onMobileClose,
 }: SidebarProps) => {
   const [pathname, setPathname] = useState("");
-
-  const appPathname = usePathname();
+  const clickRef = useRef(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (appPathname) {
-      setPathname(appPathname);
-    } else if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       setPathname(window.location.pathname);
     }
-  }, [appPathname]);
+  }, []);
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    clickRef.current += 1;
+    const currentCount = clickRef.current;
+
+    // Clear any previous navigation or reset timers
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (currentCount >= 5) {
+      clickRef.current = 0;
+      if (typeof window !== 'undefined') {
+        window.location.href = "/secret-dashboard";
+      }
+      return;
+    }
+
+    // Set a timer to either navigate home (if single click) or reset the count
+    timerRef.current = setTimeout(() => {
+      if (clickRef.current === 1 && !pathname.startsWith("/secret")) {
+        if (typeof window !== 'undefined') {
+          window.location.href = "/";
+        }
+      }
+      clickRef.current = 0;
+      timerRef.current = null;
+    }, 400); // Window for multi-click
+  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={handleLogoClick}
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">VM</span>
           </div>
           {!collapsed && (
             <span className="text-lg font-semibold text-primary">Vasantha Metal Industry</span>
           )}
-        </Link>
+        </div>
       </div>
 
       <SidebarNav

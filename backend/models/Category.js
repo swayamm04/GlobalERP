@@ -11,6 +11,10 @@ const categorySchema = mongoose.Schema({
         required: [true, 'Please add a category name'],
         unique: true
     },
+    hsnCode: {
+        type: String,
+        required: [true, 'Please add an HSN code']
+    },
     fields: [
         {
             label: {

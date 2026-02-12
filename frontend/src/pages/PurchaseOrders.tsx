@@ -250,7 +250,7 @@ const PurchaseOrders = () => {
                                           {m.specifications && m.specifications.length > 0 ? (
                                             <div className="flex flex-wrap gap-x-1 mt-0.5">
                                               {m.specifications.map((s: any, i: number) => (
-                                                <span key={i} className="text-[9px] text-muted-foreground bg-muted px-1 rounded group-hover:!bg-white/20 group-hover:!text-white">
+                                                <span key={i} className="text-[9px] text-muted-foreground bg-muted px-1 rounded border border-muted-foreground/20 group-data-[selected=true]:text-foreground group-data-[selected=true]:border-foreground/10">
                                                   {s.label}: {s.value}
                                                 </span>
                                               ))}

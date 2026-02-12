@@ -191,6 +191,10 @@ const StockManagement = () => {
                                                         className="pl-10 h-12 text-lg"
                                                         value={addQuantity}
                                                         onChange={(e) => setAddQuantity(e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value === "") setAddQuantity("");
+                                                        }}
                                                         autoFocus
                                                     />
                                                 </div>

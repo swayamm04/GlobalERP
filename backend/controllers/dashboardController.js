@@ -1,23 +1,36 @@
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const User = require('../models/User');
+const Customer = require('../models/Customer');
 
 // @desc    Get dashboard stats
 // @route   GET /api/dashboard
 // @access  Private
 const getDashboardStats = async (req, res) => {
     try {
-        const totalProducts = await Product.countDocuments();
-        const totalOrders = await Order.countDocuments();
-        const totalActiveOrders = await Order.countDocuments({ status: { $ne: 'Completed' } });
+        const isSecret = req.query.secret === 'true';
+        const filter = isSecret
+            ? { includeGST: false }
+            : { includeGST: { $ne: false } };
 
-        // Calculate total revenue (only delivered orders)
-        const orders = await Order.find({ status: 'Completed' });
+        const totalOrders = await Order.countDocuments(filter);
+        const totalActiveOrders = await Order.countDocuments({
+            ...filter,
+            status: { $ne: 'Completed' }
+        });
+
+        // Calculate total revenue (only delivered/completed orders with specific filter)
+        const orders = await Order.find({
+            ...filter,
+            status: 'Completed'
+        });
         const totalRevenue = orders.reduce((acc, order) => acc + (order.grandTotal || 0), 0);
 
-        const activeCustomers = await User.countDocuments();
+        // Products and Customers remain global for now, but we could filter if needed
+        const totalProducts = await Product.countDocuments();
+        const activeCustomers = await Customer.countDocuments();
 
-        const recentOrders = await Order.find()
+        const recentOrders = await Order.find(filter)
             .sort({ createdAt: -1 })
             .limit(5);
 

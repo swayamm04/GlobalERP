@@ -1,12 +1,42 @@
 const Order = require('../models/Order');
 const Customer = require('../models/Customer');
+const Product = require('../models/Product');
+
+// Helper to update product stock
+const updateProductStock = async (items, type = 'deduct') => {
+    for (const item of items) {
+        if (!item.productId) continue;
+        const product = await Product.findById(item.productId);
+        if (product) {
+            if (type === 'deduct') {
+                product.stock -= item.quantity;
+            } else {
+                product.stock += item.quantity;
+            }
+            // Update status based on new stock level
+            if (product.stock <= 0) {
+                product.status = 'Out of Stock';
+            } else if (product.stock <= 5) { // Assuming 5 as low stock threshold
+                product.status = 'Low Stock';
+            } else {
+                product.status = 'In Stock';
+            }
+            await product.save();
+        }
+    }
+};
 
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private
 const getOrders = async (req, res) => {
     try {
-        const orders = await Order.find().sort({ createdAt: -1 });
+        const isSecret = req.query.secret === 'true';
+        const filter = isSecret
+            ? { includeGST: false }
+            : { includeGST: { $ne: false } };
+
+        const orders = await Order.find(filter).sort({ createdAt: -1 });
 
         const formattedOrders = orders.map(order => ({
             id: order._id,
@@ -19,7 +49,8 @@ const getOrders = async (req, res) => {
             customerType: order.customerType,
             balanceDue: order.balanceDue || 0,
             paidAmount: order.paidAmount || 0,
-            paymentHistory: order.paymentHistory || []
+            paymentHistory: order.paymentHistory || [],
+            includeGST: order.includeGST
         }));
 
         res.status(200).json(formattedOrders);
@@ -66,7 +97,8 @@ const createOrder = async (req, res) => {
             billOfLading,
             motorVehicleNo,
             termsOfDelivery,
-            status
+            status,
+            includeGST
         } = req.body;
 
         const orderData = {
@@ -101,6 +133,7 @@ const createOrder = async (req, res) => {
             billOfLading,
             motorVehicleNo,
             termsOfDelivery,
+            includeGST: includeGST === false ? false : true,
             status: status || 'Pending',
             paymentHistory: paidAmount > 0 ? [{
                 amount: paidAmount,
@@ -116,11 +149,16 @@ const createOrder = async (req, res) => {
         const order = new Order(orderData);
         const createdOrder = await order.save();
 
+        // Deduct stock
+        try {
+            await updateProductStock(orderData.items, 'deduct');
+        } catch (stockError) {
+            console.error('Error updating stock on order creation:', stockError);
+        }
+
         // Update/Create Customer record
         try {
             const customerType = orderData.customerType || 'Individual';
-            const customerId = orderData.contact; // Using contact as unique identifier
-
             let customer = await Customer.findOne({ contact: orderData.contact });
 
             if (!customer) {
@@ -140,8 +178,6 @@ const createOrder = async (req, res) => {
             customer.totalOrders += 1;
             customer.totalSpent += (orderData.grandTotal || 0);
             customer.lastOrderDate = new Date();
-
-            // Update details if they changed
             customer.name = orderData.customerName;
             customer.address = orderData.address;
             customer.email = orderData.email || customer.email;
@@ -155,7 +191,6 @@ const createOrder = async (req, res) => {
             await customer.save();
         } catch (custError) {
             console.error('Error updating customer record:', custError);
-            // Don't fail the order if customer update fails
         }
 
         res.status(201).json(createdOrder);
@@ -174,8 +209,17 @@ const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(req.params.id);
 
         if (order) {
+            const oldStatus = order.status;
             order.status = status;
             const updatedOrder = await order.save();
+
+            // Handle stock refill/deduction on status change
+            if (status === 'Cancelled' && oldStatus !== 'Cancelled') {
+                await updateProductStock(order.items, 'refill');
+            } else if (oldStatus === 'Cancelled' && status !== 'Cancelled') {
+                await updateProductStock(order.items, 'deduct');
+            }
+
             res.status(200).json(updatedOrder);
         } else {
             res.status(404).json({ message: 'Order not found' });

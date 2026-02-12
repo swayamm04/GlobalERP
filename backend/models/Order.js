@@ -19,11 +19,16 @@ const orderSchema = mongoose.Schema({
     },
     items: [
         {
+            productId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Product'
+            },
             productName: String,
             quantity: Number,
             price: Number,
             unit: String,
             category: String,
+            hsnCode: String,
 
             customFields: [
                 {
@@ -87,7 +92,7 @@ const orderSchema = mongoose.Schema({
     termsOfDelivery: String,
     status: {
         type: String,
-        enum: ['Pending', 'Processing', 'Shipped', 'Completed'],
+        enum: ['Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'],
         default: 'Pending'
     },
     paymentHistory: [
@@ -96,7 +101,11 @@ const orderSchema = mongoose.Schema({
             date: { type: Date, default: Date.now },
             method: { type: String, required: true }
         }
-    ]
+    ],
+    includeGST: {
+        type: Boolean,
+        default: true
+    }
 }, {
     timestamps: true
 });

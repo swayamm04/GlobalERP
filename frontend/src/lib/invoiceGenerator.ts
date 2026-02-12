@@ -48,6 +48,7 @@ export interface InvoiceData {
     estimationNo?: string;
     paidAmount?: number;
     balanceDue?: number;
+    includeGST?: boolean;
 }
 
 export interface PaymentReceiptData {
@@ -112,7 +113,8 @@ export const generateInvoice = (data: InvoiceData) => {
         motorVehicleNo,
         termsOfDelivery,
         paidAmount,
-        balanceDue
+        balanceDue,
+        includeGST = true
     } = data;
 
     const doc = new jsPDF();
@@ -149,7 +151,8 @@ export const generateInvoice = (data: InvoiceData) => {
     // Header - Tax Invoice (First Page)
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(data.isEstimation ? "ESTIMATION" : "Tax Invoice", pageWidth / 2, 12, { align: "center" });
+    const headerTitle = data.isEstimation ? "ESTIMATION" : (includeGST ? "Tax Invoice" : "Invoice/Bill");
+    doc.text(headerTitle, pageWidth / 2, 12, { align: "center" });
     doc.line(5, 15, pageWidth - 5, 15);
 
     // Top Section
@@ -266,7 +269,6 @@ export const generateInvoice = (data: InvoiceData) => {
 
     // Items Table with Multi-page Support
     const tableBody = items.map((item, index) => {
-        const rateExclTax = item.price / 1.18;
         const specs = item.customFields && item.customFields.length > 0
             ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(", ")
             : "";
@@ -278,32 +280,31 @@ export const generateInvoice = (data: InvoiceData) => {
         return [
             index + 1,
             description,
-            companyDetails?.hsnCode || item.category || "N/A", // Using global HSN first, then category as fallback
+            item.hsnCode || item.category || "N/A",
             `${item.quantity} ${(item.unit || 'pcs').toUpperCase()}`,
             item.price.toFixed(2),
-            rateExclTax.toFixed(2),
             (item.unit || 'pcs').toUpperCase(),
-            (rateExclTax * item.quantity).toFixed(2)
+            (item.price * item.quantity).toFixed(2)
         ];
-
     });
+
+    const tableHead = [['SI No', 'Description of Goods', 'HSN/SAC', 'Quantity', 'Rate', 'per', 'Amount']];
 
     autoTable(doc, {
         startY: 85,
-        head: [['SI No', 'Description of Goods', 'HSN/SAC', 'Quantity', 'Rate (Incl. Tax)', 'Rate', 'per', 'Amount']],
+        head: tableHead,
         body: tableBody,
         theme: 'plain',
         styles: { fontSize: 7, cellPadding: 2, font: "helvetica", lineWidth: 0.1, lineColor: [0, 0, 0] },
         headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
         columnStyles: {
-            0: { cellWidth: 8 },
+            0: { cellWidth: 10 },
             1: { cellWidth: 'auto' },
-            2: { cellWidth: 18 },
-            3: { cellWidth: 18, halign: 'center' },
-            4: { cellWidth: 20, halign: 'right' },
-            5: { cellWidth: 20, halign: 'right' },
-            6: { cellWidth: 10 },
-            7: { cellWidth: 22, halign: 'right' }
+            2: { cellWidth: 25 },
+            3: { cellWidth: 20, halign: 'center' },
+            4: { cellWidth: 25, halign: 'right' },
+            5: { cellWidth: 15 },
+            6: { cellWidth: 25, halign: 'right' }
         },
         margin: { left: 5, right: 5, bottom: 15 },
         didDrawPage: drawPageDecoration
@@ -325,42 +326,66 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
 
-    const subtotalExclTax = items.reduce((sum, item) => sum + (item.price / 1.18 * item.quantity), 0);
+    const subtotalValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discountAmount = (data as any).discount || 0;
+    const taxableValue = subtotalValue - discountAmount;
 
-    doc.text("Total Amount Before Tax:", summaryX, lastY);
-    doc.text(`Rs. ${subtotalExclTax.toFixed(2)}`, rightEdge, lastY, { align: 'right' });
+    doc.text("Subtotal:", summaryX, lastY);
+    doc.text(`Rs. ${subtotalValue.toFixed(2)}`, rightEdge, lastY, { align: 'right' });
 
-    const cgst = subtotalExclTax * 0.09;
-    const sgst = subtotalExclTax * 0.09;
+    if (discountAmount > 0) {
+        doc.text("Discount:", summaryX, lastY + 6);
+        doc.text(`-Rs. ${discountAmount.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
+        lastY += 6;
 
-    doc.setFont("helvetica", "bold");
-    doc.text("CGST (9%):", summaryX + 20, lastY + 6);
-    doc.text(`Rs. ${cgst.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
+        doc.setFont("helvetica", "bold");
+        doc.text("Total Taxable Value:", summaryX, lastY + 6);
+        doc.text(`Rs. ${taxableValue.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
+        lastY += 6;
+        doc.setFont("helvetica", "normal");
+    } else {
+        doc.setFont("helvetica", "bold");
+        doc.text("Total Taxable Value:", summaryX, lastY + 6);
+        doc.text(`Rs. ${taxableValue.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
+        lastY += 6;
+        doc.setFont("helvetica", "normal");
+    }
 
-    doc.text("SGST (9%):", summaryX + 20, lastY + 12);
-    doc.text(`Rs. ${sgst.toFixed(2)}`, rightEdge, lastY + 12, { align: 'right' });
+    if (includeGST) {
+        const cgst = taxableValue * 0.09;
+        const sgst = taxableValue * 0.09;
 
-    doc.line(summaryX - 2, lastY + 15, pageWidth - 5, lastY + 15);
+        // In Add-On mode, we show taxes added specifically
+        doc.setFont("helvetica", "normal");
+        doc.text("CGST (9%):", summaryX + 20, lastY + 5);
+        doc.text(`Rs. ${cgst.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
+
+        doc.text("SGST (9%):", summaryX + 20, lastY + 10);
+        doc.text(`Rs. ${sgst.toFixed(2)}`, rightEdge, lastY + 10, { align: 'right' });
+        lastY += 10;
+    }
+
+    doc.line(summaryX - 2, lastY + 3, pageWidth - 5, lastY + 3);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Grand Total:", summaryX, lastY + 22);
-    doc.text(`Rs. ${grandTotal.toFixed(2)}`, rightEdge, lastY + 22, { align: 'right' });
+    doc.text("Grand Total:", summaryX, lastY + 9);
+    doc.text(`Rs. ${grandTotal.toFixed(2)}`, rightEdge, lastY + 9, { align: 'right' });
 
     // Payment Summary Section
     doc.setFontSize(9);
     if (balanceDue !== undefined && balanceDue > 0) {
-        doc.text("Paid Amount:", summaryX, lastY + 30);
-        doc.text(`Rs. ${paidAmount?.toFixed(2) || "0.00"}`, rightEdge, lastY + 30, { align: 'right' });
+        doc.text("Paid Amount:", summaryX, lastY + 16);
+        doc.text(`Rs. ${paidAmount?.toFixed(2) || "0.00"}`, rightEdge, lastY + 16, { align: 'right' });
 
         doc.setTextColor(220, 38, 38); // Red for balance due
-        doc.text("Balance Due:", summaryX, lastY + 36);
-        doc.text(`Rs. ${balanceDue.toFixed(2)}`, rightEdge, lastY + 36, { align: 'right' });
+        doc.text("Balance Due:", summaryX, lastY + 22);
+        doc.text(`Rs. ${balanceDue.toFixed(2)}`, rightEdge, lastY + 22, { align: 'right' });
         doc.setTextColor(0, 0, 0); // Reset to black
     } else if (paidAmount !== undefined && paidAmount >= grandTotal) {
         doc.setFontSize(10);
-        doc.text("Status:", summaryX, lastY + 30);
+        doc.text("Status:", summaryX, lastY + 16);
         doc.setTextColor(22, 163, 74);
-        doc.text("FULLY PAID", rightEdge, lastY + 30, { align: 'right' });
+        doc.text("FULLY PAID", rightEdge, lastY + 16, { align: 'right' });
         doc.setTextColor(0, 0, 0);
     }
 

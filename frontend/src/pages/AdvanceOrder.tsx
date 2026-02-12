@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -70,6 +71,7 @@ const AdvanceOrder = () => {
     const [items, setItems] = useState<OrderItem[]>([]);
     const [discount, setDiscount] = useState(0);
     const [paidAmount, setPaidAmount] = useState(0);
+    const [includeGST, setIncludeGST] = useState(true);
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -123,10 +125,15 @@ const AdvanceOrder = () => {
     useEffect(() => {
         const newSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         setSubtotal(newSubtotal);
-        const total = newSubtotal - discount;
+
+        // Calculate grand total: Add-on GST if enabled
+        const taxableValue = Math.max(0, newSubtotal - discount);
+        const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
+        const total = taxableValue + gstAmount;
+
         setGrandTotal(Math.max(0, total));
         setBalanceDue(Math.max(0, total - paidAmount));
-    }, [items, discount, paidAmount]);
+    }, [items, discount, paidAmount, includeGST]);
 
     const addItem = () => {
         setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, unit: "pcs", category: "" }, ...items]);
@@ -208,7 +215,9 @@ const AdvanceOrder = () => {
                 const product = availableProducts.find(p => p._id === item.productName);
                 return {
                     ...item,
+                    productId: item.productName, // productName stores the _id in the form state
                     category: product ? (product.category?.name || "No Category") : item.category,
+                    hsnCode: product?.category?.hsnCode || "",
                     productName: product ? product.name : item.productName,
                     customFields: product ? product.customFields : [],
                     unit: item.unit || product?.unit || 'pcs'
@@ -249,6 +258,7 @@ const AdvanceOrder = () => {
                 billOfLading,
                 motorVehicleNo,
                 termsOfDelivery,
+                includeGST,
                 status: 'Pending' // Always pending for Advance Orders
             };
 
@@ -576,7 +586,7 @@ const AdvanceOrder = () => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="group cursor-pointer transition-colors aria-selected:bg-slate-100 hover:bg-blue-600"
+                                                                            className="group cursor-pointer transition-colors data-[selected=true]:bg-slate-100 hover:bg-blue-600"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -586,20 +596,20 @@ const AdvanceOrder = () => {
                                                                             />
                                                                             <div className="flex flex-col">
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <span className="font-bold text-foreground group-hover:!text-white transition-colors">{p.name}</span>
-                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 group-hover:!border-white group-hover:!text-white uppercase transition-colors">
+                                                                                    <span className="font-bold text-foreground group-data-[selected=true]:text-foreground group-hover:text-white transition-colors">{p.name}</span>
+                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 border-muted-foreground/30 text-muted-foreground group-data-[selected=true]:text-foreground group-data-[selected=true]:border-foreground/20 group-hover:border-white group-hover:text-white uppercase transition-colors">
                                                                                         {p.unit || 'pcs'}
                                                                                     </Badge>
                                                                                 </div>
-                                                                                <span className="text-xs text-muted-foreground group-hover:!text-white transition-colors">
-                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-hover:!text-white">{p.category?.name || "No Category"}</span>
+                                                                                <span className="text-xs text-muted-foreground group-data-[selected=true]:text-muted-foreground group-hover:text-white transition-colors">
+                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-data-[selected=true]:text-foreground group-hover:text-white">{p.category?.name || "No Category"}</span>
                                                                                 </span>
                                                                                 {p.customFields && p.customFields.filter((f: any) => f.value && f.value.toString().trim() !== "").length > 0 && (
                                                                                     <div className="flex flex-wrap gap-1 mt-1">
                                                                                         {p.customFields
                                                                                             .filter((f: any) => f.value && f.value.toString().trim() !== "")
                                                                                             .map((f: any, i: number) => (
-                                                                                                <span key={i} className="text-[10px] bg-muted px-1.5 py-0.5 rounded group-hover:!bg-white/20 group-hover:!text-white transition-all">
+                                                                                                <span key={i} className="text-[10px] bg-muted px-1.5 py-0.5 rounded transition-all border border-muted-foreground/20 text-muted-foreground group-data-[selected=true]:text-foreground group-data-[selected=true]:border-foreground/10">
                                                                                                     {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
                                                                                                 </span>
                                                                                             ))}
@@ -620,7 +630,11 @@ const AdvanceOrder = () => {
                                                     type="number"
                                                     min="0"
                                                     value={item.price}
-                                                    onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) => updateItem(item.id, 'price', e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === "") updateItem(item.id, 'price', 0);
+                                                    }}
                                                     onWheel={(e) => e.currentTarget.blur()}
                                                     className="bg-background"
                                                 />
@@ -631,7 +645,11 @@ const AdvanceOrder = () => {
                                                     type="number"
                                                     min="1"
                                                     value={item.quantity}
-                                                    onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 1)}
+                                                    onChange={(e) => updateItem(item.id, 'quantity', e.target.value === "" ? "" : parseFloat(e.target.value) || 1)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === "") updateItem(item.id, 'quantity', 1);
+                                                    }}
                                                     onWheel={(e) => e.currentTarget.blur()}
                                                     className="bg-background"
                                                 />
@@ -668,6 +686,23 @@ const AdvanceOrder = () => {
                             </div>
 
                             <div className="space-y-6 bg-muted/20 p-6 rounded-lg border">
+                                <div className="flex justify-between items-center pb-2 border-b">
+                                    <div
+                                        className="flex flex-col gap-1 cursor-pointer select-none"
+                                        onDoubleClick={() => setIncludeGST(!includeGST)}
+                                    >
+                                        <Label
+                                            htmlFor="gst-toggle"
+                                            className={`font-bold transition-colors duration-200 ${includeGST ? 'text-foreground' : 'text-white'}`}
+                                        >
+                                            Include GST (18%)
+                                        </Label>
+                                        <p className={`text-[10px] transition-colors duration-200 ${includeGST ? 'text-muted-foreground' : 'text-white'}`}>
+                                            SGST+CGST
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="font-semibold">Subtotal:</span>
                                     <span className="text-muted-foreground">₹ {subtotal.toFixed(2)}</span>
@@ -680,7 +715,11 @@ const AdvanceOrder = () => {
                                         type="number"
                                         min="0"
                                         value={discount}
-                                        onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0) as any)}
+                                        onFocus={(e) => e.target.select()}
+                                        onBlur={(e) => {
+                                            if (e.target.value === "") setDiscount(0);
+                                        }}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         className="bg-background"
                                     />
@@ -699,8 +738,16 @@ const AdvanceOrder = () => {
                                         min="0"
                                         value={paidAmount}
                                         onChange={(e) => {
+                                            if (e.target.value === "") {
+                                                setPaidAmount("" as any);
+                                                return;
+                                            }
                                             const val = Math.max(0, parseFloat(e.target.value) || 0);
                                             setPaidAmount(Math.min(val, grandTotal));
+                                        }}
+                                        onFocus={(e) => e.target.select()}
+                                        onBlur={(e) => {
+                                            if (e.target.value === "") setPaidAmount(0);
                                         }}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         className="bg-background"

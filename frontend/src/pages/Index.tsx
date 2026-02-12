@@ -1,3 +1,4 @@
+"use client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
@@ -87,7 +88,7 @@ const Dashboard = () => {
           />
           <StatsCard
             title="Revenue"
-            value={`₹${stats?.totalRevenue ?? 0}`}
+            value={`₹${(stats?.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             icon={IndianRupee}
             iconColor="bg-warning/10 text-warning"
           />

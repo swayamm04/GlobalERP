@@ -1,3 +1,4 @@
+"use client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -68,6 +69,7 @@ interface Order {
     balanceDue: number;
     paidAmount: number;
     paymentHistory?: PaymentHistory[];
+    includeGST?: boolean;
 }
 
 const getStatusVariant = (status: string) => {
@@ -87,7 +89,7 @@ const getStatusVariant = (status: string) => {
     }
 };
 
-const PendingOrders = () => {
+const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean, isStandalone?: boolean }) => {
     const [orders, setOrders] = useState<Order[]>([]);
     console.log("PendingOrders Rendering - Actions: 3-dots, Unpaid: Dropdown");
     const [loading, setLoading] = useState(true);
@@ -121,13 +123,16 @@ const PendingOrders = () => {
 
             const isNotDone = order.status !== "Completed" || order.balanceDue > 0;
 
-            return matchesSearch && matchesType && isNotDone;
+            // Filter by GST status (secret/non-secret)
+            const matchesSecret = isSecret ? order.includeGST === false : (order.includeGST === true || order.includeGST === undefined);
+
+            return matchesSearch && matchesType && isNotDone && matchesSecret;
         });
-    }, [orders, searchTerm, typeFilter]);
+    }, [orders, searchTerm, typeFilter, isSecret]);
 
     const fetchOrders = async () => {
         try {
-            const { data } = await api.get("/api/orders");
+            const { data } = await api.get(`/api/orders${isSecret ? "?secret=true" : ""}`);
             setOrders(data);
         } catch (error) {
             console.error("Error fetching orders:", error);
@@ -265,324 +270,334 @@ const PendingOrders = () => {
         }
     };
 
-    return (
-        <DashboardLayout>
-            <div className="space-y-6">
+    const Content = (
+        <div className={`space-y-6 ${isStandalone ? "pt-4" : ""}`}>
+            {!isStandalone && (
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">Pending Orders List</h1>
-                        <p className="text-muted-foreground">Manage active and undelivered orders (Actions Updated)</p>
+                        <h1 className="text-2xl font-bold">{isSecret ? "Secret Pending Orders" : "Pending Orders List"}</h1>
+                        <p className="text-muted-foreground">
+                            {isSecret ? "Manage active orders created without tax" : "Manage active and undelivered orders"}
+                        </p>
                     </div>
                 </div>
+            )}
 
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <div className="relative flex-1 max-w-sm w-full">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search orders..."
-                                    className="pl-10"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto">
-                                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                                    <SelectTrigger className="w-full sm:w-[180px]">
-                                        <div className="flex items-center gap-2">
-                                            <Filter className="h-4 w-4" />
-                                            <SelectValue placeholder="Filter" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Types</SelectItem>
-                                        <SelectItem value="individual">Individual</SelectItem>
-                                        <SelectItem value="business">Business</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+            <Card>
+                <CardHeader>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div className="relative flex-1 max-w-sm w-full">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search orders..."
+                                className="pl-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="overflow-x-auto custom-scrollbar">
-                            <Table>
-                                <TableHeader>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Select value={typeFilter} onValueChange={setTypeFilter}>
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <div className="flex items-center gap-2">
+                                        <Filter className="h-4 w-4" />
+                                        <SelectValue placeholder="Filter" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Types</SelectItem>
+                                    <SelectItem value="individual">Individual</SelectItem>
+                                    <SelectItem value="business">Business</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="hidden sm:table-cell whitespace-nowrap">Order ID</TableHead>
+                                    <TableHead className="whitespace-nowrap">Customer</TableHead>
+                                    <TableHead className="hidden md:table-cell whitespace-nowrap">Date</TableHead>
+                                    <TableHead className="whitespace-nowrap">Total</TableHead>
+                                    <TableHead className="whitespace-nowrap">Due</TableHead>
+                                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
                                     <TableRow>
-                                        <TableHead className="hidden sm:table-cell whitespace-nowrap">Order ID</TableHead>
-                                        <TableHead className="whitespace-nowrap">Customer</TableHead>
-                                        <TableHead className="hidden md:table-cell whitespace-nowrap">Date</TableHead>
-                                        <TableHead className="whitespace-nowrap">Total</TableHead>
-                                        <TableHead className="whitespace-nowrap">Due</TableHead>
-                                        <TableHead className="whitespace-nowrap">Status</TableHead>
-                                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                                        <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
-                                        </TableRow>
-                                    ) : filteredOrders.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center h-24">No pending orders found</TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        filteredOrders.map((order) => (
-                                            <TableRow
-                                                key={order.id}
-                                                className="hover:bg-muted/50 transition-colors"
-                                            >
-                                                <TableCell className="font-medium hidden sm:table-cell whitespace-nowrap">
-                                                    #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
-                                                </TableCell>
-                                                <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
-                                                <TableCell className="hidden md:table-cell whitespace-nowrap">
-                                                    {format(new Date(order.date), 'MMM dd, yyyy')}
-                                                </TableCell>
-                                                <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
-                                                <TableCell className={cn("whitespace-nowrap font-semibold", order.balanceDue > 0 ? "text-destructive" : "text-foreground")}>
-                                                    {order.balanceDue > 0 ? `₹${order.balanceDue.toLocaleString()}` : "-"}
-                                                </TableCell>
-                                                <TableCell className="whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant={getStatusVariant(order.status)}>
-                                                            {order.status}
+                                ) : filteredOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center h-24">No pending orders found</TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredOrders.map((order) => (
+                                        <TableRow
+                                            key={order.id}
+                                            className="hover:bg-muted/50 transition-colors"
+                                        >
+                                            <TableCell className="font-medium hidden sm:table-cell whitespace-nowrap">
+                                                #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                                            <TableCell className="hidden md:table-cell whitespace-nowrap">
+                                                {format(new Date(order.date), 'MMM dd, yyyy')}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
+                                            <TableCell className={cn("whitespace-nowrap font-semibold", order.balanceDue > 0 ? "text-destructive" : "text-foreground")}>
+                                                {order.balanceDue > 0 ? `₹${order.balanceDue.toLocaleString()}` : "-"}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={getStatusVariant(order.status)}>
+                                                        {order.status}
+                                                    </Badge>
+                                                    {order.balanceDue > 0 && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="border-destructive text-destructive"
+                                                        >
+                                                            Unpaid
                                                         </Badge>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
                                                         {order.balanceDue > 0 && (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="border-destructive text-destructive"
-                                                            >
-                                                                Unpaid
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right whitespace-nowrap">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            {order.balanceDue > 0 && (
-                                                                <DropdownMenuItem
-                                                                    className="cursor-pointer text-blue-600 focus:text-blue-600"
-                                                                    onClick={() => openPaymentModal(order)}
-                                                                >
-                                                                    <CreditCard className="mr-2 h-4 w-4" />
-                                                                    <span>Add Payment</span>
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            {order.status !== 'Completed' && (
-                                                                <DropdownMenuItem
-                                                                    className="cursor-pointer text-green-600 focus:text-green-600"
-                                                                    onClick={() => handleUpdateStatus(order.id, 'Completed')}
-                                                                >
-                                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                                    <span>Mark as Delivered</span>
-                                                                </DropdownMenuItem>
-                                                            )}
                                                             <DropdownMenuItem
-                                                                className="cursor-pointer text-destructive focus:text-destructive"
-                                                                onClick={() => {
-                                                                    setOrderToCancel(order.id);
-                                                                    setIsCancelDialogOpen(true);
-                                                                }}
+                                                                className="cursor-pointer text-blue-600 focus:text-blue-600"
+                                                                onClick={() => openPaymentModal(order)}
                                                             >
-                                                                <XCircle className="mr-2 h-4 w-4" />
-                                                                <span>Cancel Order</span>
+                                                                <CreditCard className="mr-2 h-4 w-4" />
+                                                                <span>Add Payment</span>
                                                             </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </CardContent>
-                </Card>
+                                                        )}
+                                                        {order.status !== 'Completed' && (
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer text-green-600 focus:text-green-600"
+                                                                onClick={() => handleUpdateStatus(order.id, 'Completed')}
+                                                            >
+                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                                <span>Mark as Delivered</span>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer text-destructive focus:text-destructive"
+                                                            onClick={() => {
+                                                                setOrderToCancel(order.id);
+                                                                setIsCancelDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <XCircle className="mr-2 h-4 w-4" />
+                                                            <span>Cancel Order</span>
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* Payment Modal */}
-                <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-                    <DialogContent className="max-w-[95vw] sm:max-w-[550px] p-0 overflow-hidden">
-                        <DialogHeader className="p-6 pb-2">
-                            <DialogTitle>Order Payment Details</DialogTitle>
-                        </DialogHeader>
+            {/* Payment Modal */}
+            <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+                <DialogContent className="max-w-[95vw] sm:max-w-[550px] p-0 overflow-hidden">
+                    <DialogHeader className="p-6 pb-2">
+                        <DialogTitle>Order Payment Details</DialogTitle>
+                    </DialogHeader>
 
-                        {selectedOrder && (
-                            <div className="p-6 pt-2 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                                {/* Amount Summary */}
-                                <div className="space-y-4">
-                                    <div className="border rounded-lg p-6 bg-primary/5 text-center">
-                                        <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold mb-1">Grand Total</p>
-                                        <p className="text-3xl font-bold text-primary">₹{selectedOrder.amount.toLocaleString()}</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="border rounded-lg p-4 bg-green-50/50 text-center">
-                                            <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Total Paid</p>
-                                            <p className="text-xl font-bold text-green-600">₹{(selectedOrder.paidAmount || 0).toLocaleString()}</p>
-                                        </div>
-                                        <div className="border rounded-lg p-4 bg-red-50/50 text-center">
-                                            <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Balance Due</p>
-                                            <p className="text-xl font-bold text-destructive">₹{selectedOrder.balanceDue.toLocaleString()}</p>
-                                        </div>
-                                    </div>
+                    {selectedOrder && (
+                        <div className="p-6 pt-2 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                            {/* Amount Summary */}
+                            <div className="space-y-4">
+                                <div className="border rounded-lg p-6 bg-primary/5 text-center">
+                                    <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold mb-1">Grand Total</p>
+                                    <p className="text-3xl font-bold text-primary">₹{selectedOrder.amount.toLocaleString()}</p>
                                 </div>
-
-                                {/* Add Payment Section */}
-                                <div className="space-y-4 border rounded-lg p-4">
-                                    <h3 className="font-semibold flex items-center gap-2">
-                                        <Plus className="h-4 w-4" /> Add New Payment
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="pay-method">Method</Label>
-                                            <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
-                                                <SelectTrigger id="pay-method">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Cash">Cash</SelectItem>
-                                                    <SelectItem value="Online">Online</SelectItem>
-                                                    <SelectItem value="Card">Card</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="pay-amount">Amount</Label>
-                                            <Input
-                                                id="pay-amount"
-                                                type="number"
-                                                placeholder="Enter amount"
-                                                value={newPaymentAmount}
-                                                onChange={(e) => setNewPaymentAmount(e.target.value)}
-                                            />
-                                        </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="border rounded-lg p-4 bg-green-50/50 text-center">
+                                        <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Total Paid</p>
+                                        <p className="text-xl font-bold text-green-600">₹{(selectedOrder.paidAmount || 0).toLocaleString()}</p>
                                     </div>
-                                    <Button
-                                        className="w-full"
-                                        disabled={isSubmittingPayment}
-                                        onClick={handleAddPayment}
-                                    >
-                                        {isSubmittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                                        Record Payment
-                                    </Button>
-                                </div>
-
-                                {/* Payment History */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="font-semibold flex items-center gap-2">
-                                            <History className="h-4 w-4" /> Payment History (Recent First)
-                                        </h3>
-                                        {selectedOrder.paymentHistory && selectedOrder.paymentHistory.length > 0 && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 gap-2"
-                                                onClick={() => handleDownloadStatement(selectedOrder)}
-                                                disabled={isDownloadingStatement}
-                                            >
-                                                {isDownloadingStatement ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Download className="h-4 w-4" />
-                                                )}
-                                                Download Ledger
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <div className="max-h-[200px] overflow-y-auto border rounded-md">
-                                        <Table>
-                                            <TableHeader className="bg-muted/50 sticky top-0">
-                                                <TableRow>
-                                                    <TableHead className="py-2">Date</TableHead>
-                                                    <TableHead className="py-2">Method</TableHead>
-                                                    <TableHead className="py-2 text-right">Amount</TableHead>
-                                                    <TableHead className="py-2 text-right">Action</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {!selectedOrder.paymentHistory || selectedOrder.paymentHistory.length === 0 ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={4} className="text-center text-muted-foreground py-4">No history found</TableCell>
-                                                    </TableRow>
-                                                ) : (
-                                                    [...selectedOrder.paymentHistory]
-                                                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                                        .map((history, idx) => (
-                                                            <TableRow key={idx}>
-                                                                <TableCell className="py-2">{format(new Date(history.date), 'MMM dd, yyyy')}</TableCell>
-                                                                <TableCell className="py-2">{history.method}</TableCell>
-                                                                <TableCell className="py-2 text-right font-medium">₹{history.amount.toLocaleString()}</TableCell>
-                                                                <TableCell className="py-2 text-right">
-                                                                    {idx === 0 && (
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0"
-                                                                            onClick={() => handleDownloadInvoice(selectedOrder, idx)}
-                                                                            disabled={downloadingReceiptIndex === idx}
-                                                                        >
-                                                                            {downloadingReceiptIndex === idx ? (
-                                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                                            ) : (
-                                                                                <Download className="h-4 w-4" />
-                                                                            )}
-                                                                        </Button>
-                                                                    )}
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))
-                                                )}
-                                            </TableBody>
-                                        </Table>
+                                    <div className="border rounded-lg p-4 bg-red-50/50 text-center">
+                                        <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Balance Due</p>
+                                        <p className="text-xl font-bold text-destructive">₹{selectedOrder.balanceDue.toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
-                        )}
-                        <DialogFooter className="p-6 pt-0">
-                            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setIsPaymentModalOpen(false)}>Close</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-                {/* Cancel Confirmation Dialog */}
-                <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will cancel the order. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isSubmittingCancel}>No, keep order</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleCancelOrder();
-                                }}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={isSubmittingCancel}
-                            >
-                                {isSubmittingCancel ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Cancelling...
-                                    </>
-                                ) : (
-                                    "Yes, cancel order"
-                                )}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </div>
+
+                            {/* Add Payment Section */}
+                            <div className="space-y-4 border rounded-lg p-4">
+                                <h3 className="font-semibold flex items-center gap-2">
+                                    <Plus className="h-4 w-4" /> Add New Payment
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pay-method">Method</Label>
+                                        <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
+                                            <SelectTrigger id="pay-method">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Cash">Cash</SelectItem>
+                                                <SelectItem value="Online">Online</SelectItem>
+                                                <SelectItem value="Card">Card</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pay-amount">Amount</Label>
+                                        <Input
+                                            id="pay-amount"
+                                            type="number"
+                                            placeholder="Enter amount"
+                                            value={newPaymentAmount}
+                                            onChange={(e) => setNewPaymentAmount(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    className="w-full"
+                                    disabled={isSubmittingPayment}
+                                    onClick={handleAddPayment}
+                                >
+                                    {isSubmittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                                    Record Payment
+                                </Button>
+                            </div>
+
+                            {/* Payment History */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold flex items-center gap-2">
+                                        <History className="h-4 w-4" /> Payment History (Recent First)
+                                    </h3>
+                                    {selectedOrder.paymentHistory && selectedOrder.paymentHistory.length > 0 && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 gap-2"
+                                            onClick={() => handleDownloadStatement(selectedOrder)}
+                                            disabled={isDownloadingStatement}
+                                        >
+                                            {isDownloadingStatement ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Download className="h-4 w-4" />
+                                            )}
+                                            Download Ledger
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="max-h-[200px] overflow-y-auto border rounded-md">
+                                    <Table>
+                                        <TableHeader className="bg-muted/50 sticky top-0">
+                                            <TableRow>
+                                                <TableHead className="py-2">Date</TableHead>
+                                                <TableHead className="py-2">Method</TableHead>
+                                                <TableHead className="py-2 text-right">Amount</TableHead>
+                                                <TableHead className="py-2 text-right">Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {!selectedOrder.paymentHistory || selectedOrder.paymentHistory.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-muted-foreground py-4">No history found</TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                [...selectedOrder.paymentHistory]
+                                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                                    .map((history, idx) => (
+                                                        <TableRow key={idx}>
+                                                            <TableCell className="py-2">{format(new Date(history.date), 'MMM dd, yyyy')}</TableCell>
+                                                            <TableCell className="py-2">{history.method}</TableCell>
+                                                            <TableCell className="py-2 text-right font-medium">₹{history.amount.toLocaleString()}</TableCell>
+                                                            <TableCell className="py-2 text-right">
+                                                                {idx === 0 && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="h-8 w-8 p-0"
+                                                                        onClick={() => handleDownloadInvoice(selectedOrder, idx)}
+                                                                        disabled={downloadingReceiptIndex === idx}
+                                                                    >
+                                                                        {downloadingReceiptIndex === idx ? (
+                                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                                        ) : (
+                                                                            <Download className="h-4 w-4" />
+                                                                        )}
+                                                                    </Button>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter className="p-6 pt-0">
+                        <Button variant="outline" className="w-full sm:w-auto" onClick={() => setIsPaymentModalOpen(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* Cancel Confirmation Dialog */}
+            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will cancel the order. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isSubmittingCancel}>No, keep order</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleCancelOrder();
+                            }}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isSubmittingCancel}
+                        >
+                            {isSubmittingCancel ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Cancelling...
+                                </>
+                            ) : (
+                                "Yes, cancel order"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    );
+
+    if (isStandalone) return Content;
+
+    return (
+        <DashboardLayout>
+            {Content}
         </DashboardLayout>
     );
 };
