@@ -111,8 +111,9 @@ const ProductCatalog = () => {
                 product.name,
                 product.category?.name || "No Category",
                 product.customFields?.map((f: any) => `${f.label}: ${f.value}`).join(", ") || "-",
-                `Rs. ${product.price}`,
+                `Rs. ${product.price} / ${product.unit || 'pcs'}`,
             ]);
+
 
             autoTable(doc, {
                 head: [["Sl No.", "Product Name", "Category", "Specifications", "Price"]],
@@ -232,7 +233,8 @@ const ProductCatalog = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell>{product.category?.name || "No Category"}</TableCell>
-                                            <TableCell>₹{product.price}</TableCell>
+                                            <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
+
                                         </TableRow>
                                     ))
                                 )}

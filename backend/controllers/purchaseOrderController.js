@@ -1,6 +1,23 @@
 const PurchaseOrder = require('../models/PurchaseOrder');
 const RawMaterial = require('../models/RawMaterial');
 
+const updateInventoryStock = async (items) => {
+    for (const item of items) {
+        const material = await RawMaterial.findOne({ name: item.name });
+        if (material) {
+            material.stockQuantity += item.quantity;
+            await material.save();
+        } else {
+            // Create material if it doesn't exist
+            await RawMaterial.create({
+                name: item.name,
+                category: 'Others',
+                stockQuantity: item.quantity
+            });
+        }
+    }
+};
+
 // @desc    Get all POs
 // @route   GET /api/purchase-orders
 const getPurchaseOrders = async (req, res) => {
@@ -30,8 +47,13 @@ const createPurchaseOrder = async (req, res) => {
             items,
             totalAmount,
             deliveryDate,
-            notes
+            notes,
+            status: 'Delivered'
         });
+
+        // Automatically update stock as it's created after delivery
+        await updateInventoryStock(items);
+
         res.status(201).json(po);
     } catch (error) {
         console.error(error);
@@ -56,20 +78,7 @@ const updatePOStatus = async (req, res) => {
 
         // If status changed to Delivered, update RawMaterial stock
         if (status === 'Delivered' && oldStatus !== 'Delivered') {
-            for (const item of po.items) {
-                const material = await RawMaterial.findOne({ name: item.name });
-                if (material) {
-                    material.stockQuantity += item.quantity;
-                    await material.save();
-                } else {
-                    // Create material if it doesn't exist
-                    await RawMaterial.create({
-                        name: item.name,
-                        category: 'Others',
-                        stockQuantity: item.quantity
-                    });
-                }
-            }
+            await updateInventoryStock(po.items);
         }
 
         res.status(200).json(po);

@@ -9,6 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -33,6 +40,7 @@ export function ProductDialog({
         category: "",
         stock: "",
         price: "",
+        unit: "pcs",
         cgst: "9",
         sgst: "9",
     });
@@ -45,11 +53,13 @@ export function ProductDialog({
                 category: typeof product.category === 'object' ? product.category._id : product.category || "",
                 stock: product.stock.toString(),
                 price: product.price.toString(),
+                unit: product.unit || "pcs",
                 cgst: (product.cgst || 9).toString(),
                 sgst: (product.sgst || 9).toString(),
             });
             // Map customFields to category fields if needed, 
             // but for simplicity I'll just load them into the state.
+            // When category changes, we'll reset or populate these.
             // When category changes, we'll reset or populate these.
         } else {
             setFormData({
@@ -57,12 +67,14 @@ export function ProductDialog({
                 category: "",
                 stock: "",
                 price: "",
+                unit: "pcs",
                 cgst: "9",
                 sgst: "9",
             });
             setCategoryFields([]);
         }
     }, [product, open]);
+
 
     useEffect(() => {
         if (formData.category) {
@@ -93,7 +105,11 @@ export function ProductDialog({
                 price: Number(formData.price),
                 cgst: Number(formData.cgst),
                 sgst: Number(formData.sgst),
-                customFields: categoryFields.map(f => ({ label: f.label, value: f.value, unit: f.unit }))
+                customFields: categoryFields.map(f => ({
+                    label: f.label,
+                    value: f.label.toLowerCase() === 'unit' ? 'pieces' : f.value,
+                    unit: f.unit
+                }))
             });
             onOpenChange(false);
         } finally {
@@ -128,20 +144,36 @@ export function ProductDialog({
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
-                                    <select
-                                        id="category"
-                                        className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background"
+                                    <Select
                                         value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        required
+                                        onValueChange={(value) => setFormData({ ...formData, category: value })}
                                     >
-                                        <option value="">Select Category</option>
-                                        {categories.map((cat) => (
-                                            <option key={cat._id} value={cat._id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map((cat) => (
+                                                <SelectItem key={cat._id} value={cat._id}>
+                                                    {cat.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="unit">Unit of Measurement</Label>
+                                    <Select
+                                        value={formData.unit}
+                                        onValueChange={(value) => setFormData({ ...formData, unit: value })}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Unit" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                                            <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -155,7 +187,7 @@ export function ProductDialog({
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="price">Price</Label>
+                                        <Label htmlFor="price">Price (per unit)</Label>
                                         <Input
                                             id="price"
                                             type="number"
@@ -167,25 +199,29 @@ export function ProductDialog({
                                 </div>
                             </div>
 
+
                             <div className="space-y-4">
                                 <h3 className="text-sm font-medium border-b pb-2">Category Specific Fields</h3>
                                 {categoryFields.length > 0 ? (
                                     <div className="space-y-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
-                                        {categoryFields.map((field, index) => (
-                                            <div key={index} className="space-y-2">
-                                                <Label className="text-blue-900/70">{field.label} {field.unit ? `(${field.unit})` : ""}</Label>
-                                                <Input
-                                                    className="bg-white/50 border-blue-100"
-                                                    value={field.value}
-                                                    onChange={(e) => {
-                                                        const newFields = [...categoryFields];
-                                                        newFields[index].value = e.target.value;
-                                                        setCategoryFields(newFields);
-                                                    }}
-                                                    placeholder={`Enter ${field.label.toLowerCase()}`}
-                                                />
-                                            </div>
-                                        ))}
+                                        {categoryFields.map((field, index) => {
+                                            if (field.label.toLowerCase() === 'unit') return null;
+                                            return (
+                                                <div key={index} className="space-y-2">
+                                                    <Label className="text-blue-900/70">{field.label} {field.unit ? `(${field.unit})` : ""}</Label>
+                                                    <Input
+                                                        className="bg-white/50 border-blue-100"
+                                                        value={field.value}
+                                                        onChange={(e) => {
+                                                            const newFields = [...categoryFields];
+                                                            newFields[index].value = e.target.value;
+                                                            setCategoryFields(newFields);
+                                                        }}
+                                                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="text-xs text-muted-foreground italic py-2">

@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,7 @@ interface OrderItem {
     quantity: number;
     price: number;
     category: string;
+    unit: string;
 }
 
 const Estimations = () => {
@@ -98,7 +100,7 @@ const Estimations = () => {
     }, [items, discount]);
 
     const addItem = () => {
-        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, category: "" }, ...items]);
+        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, category: "", unit: "pcs" }, ...items]);
     };
 
     const removeItem = (id: string) => {
@@ -120,6 +122,7 @@ const Estimations = () => {
                     const product = availableProducts.find(p => p._id === value);
                     if (product) {
                         updatedItem.price = product.price;
+                        updatedItem.unit = product.unit || "pcs";
                     }
                 }
                 return updatedItem;
@@ -173,9 +176,11 @@ const Estimations = () => {
                     ...item,
                     category: product ? (product.category?.name || "No Category") : item.category,
                     productName: product ? product.name : item.productName,
-                    customFields: product ? product.customFields : []
+                    customFields: product ? product.customFields : [],
+                    unit: item.unit || product?.unit || 'pcs'
                 };
             });
+
 
             const estimationData = {
                 customerName: isBusiness ? companyName : customerName,
@@ -444,12 +449,12 @@ const Estimations = () => {
                                                                     {availableProducts.map((p) => (
                                                                         <CommandItem
                                                                             key={p._id}
-                                                                            value={p.name}
+                                                                            value={`${p.name} ${p.category?.name || ""} ${p.customFields?.filter((f: any) => f.value && f.value.toString().trim() !== "").map((f: any) => f.value).join(" ")}`.trim()}
                                                                             onSelect={() => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="cursor-pointer"
+                                                                            className="group cursor-pointer transition-colors aria-selected:bg-slate-100 hover:bg-blue-600"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -458,8 +463,26 @@ const Estimations = () => {
                                                                                 )}
                                                                             />
                                                                             <div className="flex flex-col">
-                                                                                <span className="font-medium">{p.name}</span>
-                                                                                <span className="text-xs text-muted-foreground">Price: ₹{p.price}</span>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="font-bold text-foreground group-hover:!text-white transition-colors">{p.name}</span>
+                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 group-hover:!border-white group-hover:!text-white uppercase transition-colors">
+                                                                                        {p.unit || 'pcs'}
+                                                                                    </Badge>
+                                                                                </div>
+                                                                                <span className="text-xs text-muted-foreground group-hover:!text-white transition-colors">
+                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-hover:!text-white">{p.category?.name || "No Category"}</span>
+                                                                                </span>
+                                                                                {p.customFields && p.customFields.filter((f: any) => f.value && f.value.toString().trim() !== "").length > 0 && (
+                                                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                                                        {p.customFields
+                                                                                            .filter((f: any) => f.value && f.value.toString().trim() !== "")
+                                                                                            .map((f: any, i: number) => (
+                                                                                                <span key={i} className="text-[10px] bg-muted px-1.5 py-0.5 rounded group-hover:!bg-white/20 group-hover:!text-white transition-all">
+                                                                                                    {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         </CommandItem>
                                                                     ))}
@@ -473,9 +496,11 @@ const Estimations = () => {
                                                 <Label className="text-xs font-semibold">Price</Label>
                                                 <Input
                                                     type="number"
+                                                    min="0"
                                                     value={item.price}
-                                                    readOnly
-                                                    className="bg-muted"
+                                                    onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                                                    onWheel={(e) => e.currentTarget.blur()}
+                                                    className="bg-background"
                                                 />
                                             </div>
                                             <div className="w-full md:w-24 space-y-2">

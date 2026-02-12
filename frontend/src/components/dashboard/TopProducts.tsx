@@ -28,7 +28,7 @@ export const TopProducts = () => {
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-sm sm:text-base">{product.name}</p>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  {product.sales} units sold
+                  {product.sales} {(product as any).unit || 'units'} sold
                 </p>
               </div>
               <div className="text-right shrink-0">

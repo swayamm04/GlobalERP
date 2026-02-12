@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ interface OrderItem {
     productName: string;
     quantity: number;
     price: number;
+    unit: string;
     category: string;
 }
 
@@ -128,7 +130,7 @@ const CreateOrder = () => {
     }, [items, discount]);
 
     const addItem = () => {
-        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, category: "" }, ...items]);
+        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, unit: "pcs", category: "" }, ...items]);
     };
 
     const removeItem = (id: string) => {
@@ -152,6 +154,7 @@ const CreateOrder = () => {
                     const product = availableProducts.find(p => p._id === value);
                     if (product) {
                         updatedItem.price = product.price;
+                        updatedItem.unit = product.unit || "pcs";
                         // We store the ID in productName for the dropdown, 
                         // but we might want to store the actual name for the final order
                         // For now, let's just keep the reference
@@ -215,9 +218,11 @@ const CreateOrder = () => {
                     ...item,
                     category: product ? (product.category?.name || "No Category") : item.category,
                     productName: product ? product.name : item.productName,
-                    customFields: product ? product.customFields : []
+                    customFields: product ? product.customFields : [],
+                    unit: item.unit || product?.unit || 'pcs'
                 };
             });
+
 
             const orderData = {
                 customerName: isBusiness ? companyName : customerName,
@@ -350,7 +355,7 @@ const CreateOrder = () => {
                                                     />
                                                 </div>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                            <PopoverContent className="w-[90vw] sm:w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                                                 <div className="max-h-[200px] overflow-y-auto">
                                                     {availableCustomers
                                                         .filter(c => c.customerType === "Individual" && c.name.toLowerCase().includes(customerName.toLowerCase()))
@@ -389,7 +394,7 @@ const CreateOrder = () => {
                                                     />
                                                 </div>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                            <PopoverContent className="w-[90vw] sm:w-[300px] p-1 shadow-lg border-muted-foreground/20" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                                                 <div className="max-h-[200px] overflow-y-auto">
                                                     {availableCustomers
                                                         .filter(c => c.customerType === "Business" && (c.companyName?.toLowerCase().includes(companyName.toLowerCase()) || c.name.toLowerCase().includes(companyName.toLowerCase())))
@@ -475,70 +480,66 @@ const CreateOrder = () => {
                         </div>
 
                         {/* Delivery Credentials Section - Only for Business */}
-                        {customerType === "Business" && (
-                            <div className="space-y-6 pt-4 border-t">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    Delivery Credentials
-                                    <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="deliveryNote">Delivery Note</Label>
-                                        <Input
-                                            id="deliveryNote"
-                                            value={deliveryNote}
-                                            onChange={(e) => setDeliveryNote(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="deliveryNoteDate">Delivery Note Date</Label>
-                                        <Input
-                                            id="deliveryNoteDate"
-                                            type="date"
-                                            value={deliveryNoteDate}
-                                            onChange={(e) => setDeliveryNoteDate(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="dispatchedThrough">Dispatched through</Label>
-                                        <Input
-                                            id="dispatchedThrough"
-                                            value={dispatchedThrough}
-                                            onChange={(e) => setDispatchedThrough(e.target.value)}
-                                            placeholder="e.g. VEHICLE"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="destination">Destination</Label>
-                                        <Input
-                                            id="destination"
-                                            value={destination}
-                                            onChange={(e) => setDestination(e.target.value)}
-                                            placeholder="e.g. SHIVAMOGGA"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="motorVehicleNo">Motor Vehicle No.</Label>
-                                        <Input
-                                            id="motorVehicleNo"
-                                            value={motorVehicleNo}
-                                            onChange={(e) => setMotorVehicleNo(e.target.value)}
-                                            placeholder="e.g. KA17B1810"
-                                        />
-                                    </div>
-                                    <div className="col-span-full space-y-2">
-                                        <Label htmlFor="termsOfDelivery">Terms of Delivery</Label>
-                                        <Input
-                                            id="termsOfDelivery"
-                                            value={termsOfDelivery}
-                                            onChange={(e) => setTermsOfDelivery(e.target.value)}
-                                        />
-                                    </div>
+                        <div className="space-y-6 pt-4 border-t">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                Delivery Credentials
+                                <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="deliveryNote">Delivery Note</Label>
+                                    <Input
+                                        id="deliveryNote"
+                                        value={deliveryNote}
+                                        onChange={(e) => setDeliveryNote(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="deliveryNoteDate">Delivery Note Date</Label>
+                                    <Input
+                                        id="deliveryNoteDate"
+                                        type="date"
+                                        value={deliveryNoteDate}
+                                        onChange={(e) => setDeliveryNoteDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dispatchedThrough">Dispatched through</Label>
+                                    <Input
+                                        id="dispatchedThrough"
+                                        value={dispatchedThrough}
+                                        onChange={(e) => setDispatchedThrough(e.target.value)}
+                                        placeholder="e.g. VEHICLE"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="destination">Destination</Label>
+                                    <Input
+                                        id="destination"
+                                        value={destination}
+                                        onChange={(e) => setDestination(e.target.value)}
+                                        placeholder="e.g. SHIVAMOGGA"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="motorVehicleNo">Motor Vehicle No.</Label>
+                                    <Input
+                                        id="motorVehicleNo"
+                                        value={motorVehicleNo}
+                                        onChange={(e) => setMotorVehicleNo(e.target.value)}
+                                        placeholder="e.g. KA17B1810"
+                                    />
+                                </div>
+                                <div className="col-span-full space-y-2">
+                                    <Label htmlFor="termsOfDelivery">Terms of Delivery</Label>
+                                    <Input
+                                        id="termsOfDelivery"
+                                        value={termsOfDelivery}
+                                        onChange={(e) => setTermsOfDelivery(e.target.value)}
+                                    />
                                 </div>
                             </div>
-                        )}
-
-                        {/* Order Items */}
+                        </div>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold">Order Items</h3>
@@ -574,7 +575,7 @@ const CreateOrder = () => {
                                                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                         </Button>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-[400px] p-0" align="start">
+                                                    <PopoverContent className="w-[90vw] sm:w-[500px] p-0" align="start">
                                                         <Command className="border-0">
                                                             <CommandInput placeholder="Type a product name..." autoComplete="off" className="border-none focus:ring-0" />
                                                             <CommandList className="max-h-[300px]">
@@ -583,12 +584,12 @@ const CreateOrder = () => {
                                                                     {availableProducts.map((p) => (
                                                                         <CommandItem
                                                                             key={p._id}
-                                                                            value={p.name}
+                                                                            value={`${p.name} ${p.category?.name || ""} ${p.customFields?.filter((f: any) => f.value && f.value.toString().trim() !== "").map((f: any) => f.value).join(" ")}`.trim()}
                                                                             onSelect={() => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="group aria-selected:bg-transparent hover:!bg-blue-600 hover:!text-white data-[selected='true']:bg-transparent cursor-pointer transition-colors"
+                                                                            className="group cursor-pointer transition-colors aria-selected:bg-slate-100 hover:!bg-blue-600 active:bg-blue-700"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -597,8 +598,26 @@ const CreateOrder = () => {
                                                                                 )}
                                                                             />
                                                                             <div className="flex flex-col">
-                                                                                <span className="font-medium text-foreground group-hover:text-white">{p.name}</span>
-                                                                                <span className="text-xs text-muted-foreground group-hover:text-blue-50">Price: ₹{p.price} | Category: {p.category?.name || "No Category"}</span>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="font-bold text-foreground group-hover:!text-white transition-colors">{p.name}</span>
+                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 group-hover:!border-white group-hover:!text-white uppercase transition-colors">
+                                                                                        {p.unit || 'pcs'}
+                                                                                    </Badge>
+                                                                                </div>
+                                                                                <span className="text-xs text-muted-foreground group-hover:!text-white transition-colors">
+                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-hover:!text-white">{p.category?.name || "No Category"}</span>
+                                                                                </span>
+                                                                                {p.customFields && p.customFields.filter((f: any) => f.value && f.value.toString().trim() !== "").length > 0 && (
+                                                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                                                        {p.customFields
+                                                                                            .filter((f: any) => f.value && f.value.toString().trim() !== "")
+                                                                                            .map((f: any, i: number) => (
+                                                                                                <span key={i} className="text-[10px] bg-muted px-1.5 py-0.5 rounded transition-all border group-hover:!bg-white/20 group-hover:!text-white group-hover:border-white/30">
+                                                                                                    {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         </CommandItem>
                                                                     ))}
@@ -614,12 +633,13 @@ const CreateOrder = () => {
                                                     type="number"
                                                     min="0"
                                                     value={item.price}
-                                                    readOnly
-                                                    className="bg-muted cursor-not-allowed"
+                                                    onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                                                    onWheel={(e) => e.currentTarget.blur()}
+                                                    className="bg-background"
                                                 />
                                             </div>
                                             <div className="w-full md:w-24 space-y-2">
-                                                <Label>Qty</Label>
+                                                <Label>Qty ({item.unit || 'pcs'})</Label>
                                                 <Input
                                                     type="number"
                                                     min="1"

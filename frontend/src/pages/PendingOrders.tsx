@@ -304,104 +304,106 @@ const PendingOrders = () => {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="hidden sm:table-cell">Order ID</TableHead>
-                                    <TableHead>Customer</TableHead>
-                                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                                    <TableHead>Total</TableHead>
-                                    <TableHead>Due</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
+                                        <TableHead className="hidden sm:table-cell whitespace-nowrap">Order ID</TableHead>
+                                        <TableHead className="whitespace-nowrap">Customer</TableHead>
+                                        <TableHead className="hidden md:table-cell whitespace-nowrap">Date</TableHead>
+                                        <TableHead className="whitespace-nowrap">Total</TableHead>
+                                        <TableHead className="whitespace-nowrap">Due</TableHead>
+                                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                                     </TableRow>
-                                ) : filteredOrders.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center h-24">No pending orders found</TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredOrders.map((order) => (
-                                        <TableRow
-                                            key={order.id}
-                                            className="hover:bg-muted/50 transition-colors"
-                                        >
-                                            <TableCell className="font-medium hidden sm:table-cell">
-                                                #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
-                                            </TableCell>
-                                            <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
-                                            <TableCell className="hidden md:table-cell whitespace-nowrap">
-                                                {format(new Date(order.date), 'MMM dd, yyyy')}
-                                            </TableCell>
-                                            <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
-                                            <TableCell className={cn("whitespace-nowrap font-semibold", order.balanceDue > 0 ? "text-destructive" : "text-foreground")}>
-                                                {order.balanceDue > 0 ? `₹${order.balanceDue.toLocaleString()}` : "-"}
-                                            </TableCell>
-                                            <TableCell className="whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={getStatusVariant(order.status)}>
-                                                        {order.status}
-                                                    </Badge>
-                                                    {order.balanceDue > 0 && (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="border-destructive text-destructive"
-                                                        >
-                                                            Unpaid
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm">
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {order.balanceDue > 0 && (
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-blue-600 focus:text-blue-600"
-                                                                onClick={() => openPaymentModal(order)}
-                                                            >
-                                                                <CreditCard className="mr-2 h-4 w-4" />
-                                                                <span>Add Payment</span>
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        {order.status !== 'Completed' && (
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-green-600 focus:text-green-600"
-                                                                onClick={() => handleUpdateStatus(order.id, 'Completed')}
-                                                            >
-                                                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                                                <span>Mark as Delivered</span>
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        <DropdownMenuItem
-                                                            className="cursor-pointer text-destructive focus:text-destructive"
-                                                            onClick={() => {
-                                                                setOrderToCancel(order.id);
-                                                                setIsCancelDialogOpen(true);
-                                                            }}
-                                                        >
-                                                            <XCircle className="mr-2 h-4 w-4" />
-                                                            <span>Cancel Order</span>
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
+                                </TableHeader>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center h-24">Loading orders...</TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : filteredOrders.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center h-24">No pending orders found</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredOrders.map((order) => (
+                                            <TableRow
+                                                key={order.id}
+                                                className="hover:bg-muted/50 transition-colors"
+                                            >
+                                                <TableCell className="font-medium hidden sm:table-cell whitespace-nowrap">
+                                                    #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
+                                                <TableCell className="hidden md:table-cell whitespace-nowrap">
+                                                    {format(new Date(order.date), 'MMM dd, yyyy')}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
+                                                <TableCell className={cn("whitespace-nowrap font-semibold", order.balanceDue > 0 ? "text-destructive" : "text-foreground")}>
+                                                    {order.balanceDue > 0 ? `₹${order.balanceDue.toLocaleString()}` : "-"}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant={getStatusVariant(order.status)}>
+                                                            {order.status}
+                                                        </Badge>
+                                                        {order.balanceDue > 0 && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-destructive text-destructive"
+                                                            >
+                                                                Unpaid
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right whitespace-nowrap">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {order.balanceDue > 0 && (
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer text-blue-600 focus:text-blue-600"
+                                                                    onClick={() => openPaymentModal(order)}
+                                                                >
+                                                                    <CreditCard className="mr-2 h-4 w-4" />
+                                                                    <span>Add Payment</span>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {order.status !== 'Completed' && (
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer text-green-600 focus:text-green-600"
+                                                                    onClick={() => handleUpdateStatus(order.id, 'Completed')}
+                                                                >
+                                                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                                                    <span>Mark as Delivered</span>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer text-destructive focus:text-destructive"
+                                                                onClick={() => {
+                                                                    setOrderToCancel(order.id);
+                                                                    setIsCancelDialogOpen(true);
+                                                                }}
+                                                            >
+                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                                <span>Cancel Order</span>
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
 

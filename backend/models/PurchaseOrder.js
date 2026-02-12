@@ -14,6 +14,7 @@ const purchaseOrderSchema = mongoose.Schema({
     items: [{
         name: { type: String, required: true },
         quantity: { type: Number, required: true },
+        unit: { type: String, default: 'pieces' },
         unitPrice: { type: Number, required: true },
         amount: { type: Number, required: true }
     }],
@@ -24,7 +25,7 @@ const purchaseOrderSchema = mongoose.Schema({
     status: {
         type: String,
         enum: ['Draft', 'Pending', 'Approved', 'In Transit', 'Delivered', 'Cancelled'],
-        default: 'Pending'
+        default: 'Delivered'
     },
     orderedDate: {
         type: Date,

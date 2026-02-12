@@ -75,6 +75,8 @@ export interface StatementData {
         method: string;
     }[];
     companyDetails?: InvoiceData['companyDetails'];
+    projectName?: string;
+    isProject?: boolean;
 }
 
 export const generateInvoice = (data: InvoiceData) => {
@@ -277,12 +279,13 @@ export const generateInvoice = (data: InvoiceData) => {
             index + 1,
             description,
             companyDetails?.hsnCode || item.category || "N/A", // Using global HSN first, then category as fallback
-            `${item.quantity} NO`,
+            `${item.quantity} ${(item.unit || 'pcs').toUpperCase()}`,
             item.price.toFixed(2),
             rateExclTax.toFixed(2),
-            "NO",
+            (item.unit || 'pcs').toUpperCase(),
             (rateExclTax * item.quantity).toFixed(2)
         ];
+
     });
 
     autoTable(doc, {
@@ -479,7 +482,9 @@ export const generatePaymentStatement = (data: StatementData) => {
         orderId,
         totalAmount,
         paymentHistory,
-        companyDetails
+        companyDetails,
+        projectName,
+        isProject
     } = data;
 
     const doc = new jsPDF();
@@ -501,7 +506,8 @@ export const generatePaymentStatement = (data: StatementData) => {
     // Header
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("PAYMENT LEDGER / STATEMENT", pageWidth / 2, 15, { align: "center" });
+    const headerTitle = isProject ? "PROJECT PAYMENT LEDGER" : "PAYMENT LEDGER / STATEMENT";
+    doc.text(headerTitle, pageWidth / 2, 15, { align: "center" });
     doc.line(5, 20, pageWidth - 5, 20);
 
     // Company & Statement Info
@@ -515,9 +521,16 @@ export const generatePaymentStatement = (data: StatementData) => {
     doc.setFont("helvetica", "bold");
     doc.text("Statement Details:", rightCol, 30);
     doc.setFont("helvetica", "normal");
-    doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
-    doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
-    doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
+    if (isProject && projectName) {
+        doc.text(`Project: ${projectName}`, rightCol, 36);
+        doc.text(`Ref ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 42);
+        doc.text(`Date: ${formatDate(new Date())}`, rightCol, 48);
+        doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 54);
+    } else {
+        doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
+        doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
+        doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
+    }
 
     doc.line(5, 60, pageWidth - 5, 60);
 

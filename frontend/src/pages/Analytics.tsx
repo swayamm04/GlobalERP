@@ -295,7 +295,7 @@ const Analytics = () => {
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {product.sales.toLocaleString()} units sold
+                          {product.sales.toLocaleString()} {(product as any).unit || 'units'} sold
                         </p>
                       </div>
                     </div>

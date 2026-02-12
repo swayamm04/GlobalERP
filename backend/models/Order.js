@@ -22,7 +22,9 @@ const orderSchema = mongoose.Schema({
             productName: String,
             quantity: Number,
             price: Number,
+            unit: String,
             category: String,
+
             customFields: [
                 {
                     label: String,

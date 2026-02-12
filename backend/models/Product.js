@@ -20,7 +20,13 @@ const productSchema = mongoose.Schema({
         required: [true, 'Please add stock quantity'],
         default: 0
     },
+    unit: {
+        type: String,
+        enum: ['pcs', 'kg'],
+        default: 'pcs'
+    },
     price: {
+
         type: Number,
         required: [true, 'Please add a price'],
         default: 0

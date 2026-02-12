@@ -124,7 +124,7 @@ const Inventory = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-warning">
-                          {item.stock} units
+                          {item.stock} {item.unit || 'pcs'}
                         </p>
                         <p className="text-xs text-muted-foreground">remaining</p>
                       </div>
@@ -160,7 +160,7 @@ const Inventory = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-destructive">
-                          {item.stock} units
+                          {item.stock} {item.unit || 'pcs'}
                         </p>
                         <p className="text-xs text-muted-foreground">remaining</p>
                       </div>

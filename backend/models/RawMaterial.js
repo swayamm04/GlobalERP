@@ -12,8 +12,9 @@ const rawMaterialSchema = mongoose.Schema({
     },
     unit: {
         type: String,
-        required: true, // e.g., kg, meter, piece
-        default: 'kg'
+        required: true,
+        enum: ['pieces', 'kg', 'quintal', 'ton'],
+        default: 'pieces'
     },
     stockQuantity: {
         type: Number,
@@ -23,7 +24,11 @@ const rawMaterialSchema = mongoose.Schema({
     minStockLevel: {
         type: Number,
         default: 10
-    }
+    },
+    specifications: [{
+        label: String,
+        value: String
+    }]
 }, {
     timestamps: true
 });

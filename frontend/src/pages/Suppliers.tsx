@@ -199,74 +199,76 @@ const Suppliers = () => {
           <CardHeader>
             <CardTitle>All Suppliers</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Supplier ID</TableHead>
-                  <TableHead>Company Name</TableHead>
-                  <TableHead>Contact Person</TableHead>
-                  <TableHead>Contact Info</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Products</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+          <CardContent className="p-0">
+            <div className="overflow-x-auto custom-scrollbar">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                    </TableCell>
+                    <TableHead className="whitespace-nowrap">Supplier ID</TableHead>
+                    <TableHead className="whitespace-nowrap">Company Name</TableHead>
+                    <TableHead className="whitespace-nowrap">Contact Person</TableHead>
+                    <TableHead className="whitespace-nowrap">Contact Info</TableHead>
+                    <TableHead className="whitespace-nowrap">Location</TableHead>
+                    <TableHead className="whitespace-nowrap">Products</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                   </TableRow>
-                ) : filteredSuppliers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                      No suppliers found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredSuppliers.map((supplier) => (
-                    <TableRow key={supplier._id}>
-                      <TableCell className="font-medium">{supplier.supplierId}</TableCell>
-                      <TableCell className="font-semibold">
-                        {supplier.companyName}
-                      </TableCell>
-                      <TableCell>{supplier.contactPerson}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1 text-sm">
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {supplier.email}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {supplier.phone}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {supplier.location}
-                        </span>
-                      </TableCell>
-                      <TableCell>{supplier.products || 0}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(supplier._id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredSuppliers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                        No suppliers found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredSuppliers.map((supplier) => (
+                      <TableRow key={supplier._id} className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap">{supplier.supplierId}</TableCell>
+                        <TableCell className="font-semibold whitespace-nowrap">
+                          {supplier.companyName}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{supplier.contactPerson}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="flex flex-col gap-1 text-sm">
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3 text-muted-foreground" />
+                              {supplier.email}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3 text-muted-foreground" />
+                              {supplier.phone}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            {supplier.location}
+                          </span>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{supplier.products || 0}</TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(supplier._id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

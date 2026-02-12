@@ -53,6 +53,8 @@ const menuItems = [
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: ClipboardList, label: "Stock Management", path: "/stock-management" },
+  { icon: ClipboardList, label: "Projects", path: "/projects" },
   { icon: UserPlus, label: "Create Admins", path: "/users", roles: ["super_admin"] },
 ];
 

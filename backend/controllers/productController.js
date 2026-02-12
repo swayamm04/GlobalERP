@@ -20,7 +20,7 @@ const createProduct = async (req, res) => {
     let status = 'In Stock';
     if (req.body.stock === 0) {
         status = 'Out of Stock';
-    } else if (req.body.stock < 5) {
+    } else if (req.body.stock < 10) {
         status = 'Low Stock';
     }
 
@@ -76,6 +76,41 @@ const updateProduct = async (req, res) => {
     res.status(200).json(updatedProduct);
 };
 
+// @desc    Add stock to product
+// @route   PUT /api/products/:id/add-stock
+const addProductStock = async (req, res) => {
+    try {
+        const { quantity } = req.body;
+        if (!quantity || isNaN(quantity)) {
+            return res.status(400).json({ message: 'Valid quantity is required' });
+        }
+
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        product.stock += Number(quantity);
+
+        // Update status based on new stock
+        if (product.stock === 0) {
+            product.status = 'Out of Stock';
+        } else if (product.stock < 10) {
+            product.status = 'Low Stock';
+        } else {
+            product.status = 'In Stock';
+        }
+
+        await product.save();
+
+        const populatedProduct = await Product.findById(product._id).populate('category');
+        res.status(200).json(populatedProduct);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // @desc    Delete product
 // @route   DELETE /api/products/:id
 // @access  Private
@@ -102,5 +137,6 @@ module.exports = {
     getProducts,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    addProductStock
 };

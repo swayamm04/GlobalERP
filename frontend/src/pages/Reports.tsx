@@ -119,22 +119,22 @@ const Reports = () => {
             <CardDescription>Frequently accessed reports ready to download</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {quickReports.map((report) => (
                 <div
                   key={report.name}
                   className="flex items-center justify-between rounded-lg border p-4"
                 >
                   <div>
-                    <p className="font-medium">{report.name}</p>
-                    <p className="text-sm text-muted-foreground">{report.type}</p>
+                    <p className="font-medium text-sm sm:text-base">{report.name}</p>
+                    <p className="text-xs text-muted-foreground">{report.type}</p>
                   </div>
                   {report.status === "Ready" ? (
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="shrink-0">
                       <Download className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Badge variant="secondary">Generating...</Badge>
+                    <Badge variant="secondary" className="whitespace-nowrap text-[10px]">Generating...</Badge>
                   )}
                 </div>
               ))}
@@ -143,15 +143,15 @@ const Reports = () => {
         </Card>
 
         {/* Report Categories */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {reportCategories.map((category) => (
             <Card key={category.title}>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <category.icon className="h-5 w-5 text-primary" />
                   {category.title}
                 </CardTitle>
-                <CardDescription>{category.description}</CardDescription>
+                <CardDescription className="text-xs">{category.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -160,13 +160,13 @@ const Reports = () => {
                       key={report.name}
                       className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
                     >
-                      <div>
-                        <p className="text-sm font-medium">{report.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{report.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
                           Last: {report.lastGenerated}
                         </p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
@@ -178,7 +178,7 @@ const Reports = () => {
         </div>
 
         {/* Report Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -187,7 +187,7 @@ const Reports = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold">156</div>
-                  <p className="text-sm text-muted-foreground">Reports Generated</p>
+                  <p className="text-xs text-muted-foreground">Reports Generated</p>
                 </div>
               </div>
             </CardContent>
@@ -200,7 +200,7 @@ const Reports = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold">89</div>
-                  <p className="text-sm text-muted-foreground">Downloads This Month</p>
+                  <p className="text-xs text-muted-foreground">Downloads This Month</p>
                 </div>
               </div>
             </CardContent>
@@ -213,7 +213,7 @@ const Reports = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold">12</div>
-                  <p className="text-sm text-muted-foreground">Scheduled Reports</p>
+                  <p className="text-xs text-muted-foreground">Scheduled Reports</p>
                 </div>
               </div>
             </CardContent>
@@ -226,7 +226,7 @@ const Reports = () => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold">24</div>
-                  <p className="text-sm text-muted-foreground">Custom Templates</p>
+                  <p className="text-xs text-muted-foreground">Custom Templates</p>
                 </div>
               </div>
             </CardContent>
