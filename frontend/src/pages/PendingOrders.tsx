@@ -121,7 +121,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                 typeFilter === "all" ||
                 order.customerType.toLowerCase() === typeFilter.toLowerCase();
 
-            const isNotDone = order.status !== "Completed" || order.balanceDue > 0;
+            const isNotDone = (order.status !== "Completed" && order.status !== "Cancelled") || order.balanceDue > 0;
 
             // Filter by GST status (secret/non-secret)
             const matchesSecret = isSecret ? order.includeGST === false : (order.includeGST === true || order.includeGST === undefined);

@@ -13,7 +13,29 @@ import {
   Truck,
   BarChart3,
   PieChart,
+  History,
+  Loader2,
+  Table as TableIcon
 } from "lucide-react";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const reportCategories = [
   {
@@ -86,6 +108,31 @@ const quickReports = [
 ];
 
 const Reports = () => {
+  /* Cancel History State */
+  const [showCancelHistory, setShowCancelHistory] = React.useState(false);
+  const [cancelledOrders, setCancelledOrders] = React.useState<any[]>([]);
+  const [loadingCancelled, setLoadingCancelled] = React.useState(false);
+
+  const fetchCancelledOrders = async () => {
+    setLoadingCancelled(true);
+    try {
+      const { data } = await api.get("/api/orders");
+      // Filter for cancelled orders containing both secret and non-secret
+      const cancelled = data.filter((o: any) => o.status === "Cancelled");
+      setCancelledOrders(cancelled);
+    } catch (error) {
+      console.error("Failed to fetch cancelled orders", error);
+      toast.error("Failed to load cancel history");
+    } finally {
+      setLoadingCancelled(false);
+    }
+  };
+  React.useEffect(() => {
+    if (showCancelHistory) {
+      fetchCancelledOrders();
+    }
+  }, [showCancelHistory]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -138,6 +185,27 @@ const Reports = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cancel History Quick Access */}
+        <Card
+          className="cursor-pointer hover:bg-muted/50 transition-colors border-destructive/20"
+          onClick={() => setShowCancelHistory(true)}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-full bg-destructive/10 p-2">
+                <History className="h-5 w-5 text-destructive" />
+              </div>
+              <Badge variant="secondary" className="bg-destructive/10 text-destructive">
+                View History
+              </Badge>
+            </div>
+            <div className="mt-4">
+              <div className="text-2xl font-bold">Cancel History</div>
+              <p className="text-sm text-muted-foreground">View a complete log of all cancelled orders</p>
             </div>
           </CardContent>
         </Card>
@@ -233,6 +301,60 @@ const Reports = () => {
           </Card>
         </div>
       </div>
+
+      {/* Cancel History Modal */}
+      {/* Cancel History Modal */}
+      <Dialog open={showCancelHistory} onOpenChange={setShowCancelHistory}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cancelled Orders History</DialogTitle>
+            <DialogDescription>
+              A complete list of all orders that have been cancelled.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4">
+            {loadingCancelled ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : cancelledOrders.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                No cancelled orders found.
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Reason</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cancelledOrders.map((order) => (
+                      <TableRow key={order._id}>
+                        <TableCell className="font-medium">{order.orderId || order._id?.substring(0, 8)}</TableCell>
+                        <TableCell>{order.customer}</TableCell>
+                        <TableCell>
+                          {order.createdAt ? format(new Date(order.createdAt), "dd MMM yyyy") : "-"}
+                        </TableCell>
+                        <TableCell>₹{order.totalAmount?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">Cancelled</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

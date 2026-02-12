@@ -1,4 +1,3 @@
-"use client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
+  Loader2
 } from "lucide-react";
 import {
   LineChart,
@@ -101,6 +101,7 @@ const kpiCards = [
   },
 ];
 
+/* Cancel History State */
 const Analytics = () => {
   return (
     <DashboardLayout>
@@ -132,36 +133,38 @@ const Analytics = () => {
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          {kpiCards.map((kpi) => (
-            <Card key={kpi.title}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <kpi.icon className="h-5 w-5 text-primary" />
+          {
+            kpiCards.map((kpi) => (
+              <Card key={kpi.title}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="rounded-full bg-primary/10 p-2">
+                      <kpi.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={
+                        kpi.trend === "up"
+                          ? "bg-success/10 text-success"
+                          : "bg-destructive/10 text-destructive"
+                      }
+                    >
+                      {kpi.trend === "up" ? (
+                        <ArrowUpRight className="mr-1 h-3 w-3" />
+                      ) : (
+                        <ArrowDownRight className="mr-1 h-3 w-3" />
+                      )}
+                      {kpi.change}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className={
-                      kpi.trend === "up"
-                        ? "bg-success/10 text-success"
-                        : "bg-destructive/10 text-destructive"
-                    }
-                  >
-                    {kpi.trend === "up" ? (
-                      <ArrowUpRight className="mr-1 h-3 w-3" />
-                    ) : (
-                      <ArrowDownRight className="mr-1 h-3 w-3" />
-                    )}
-                    {kpi.change}
-                  </Badge>
-                </div>
-                <div className="mt-4">
-                  <div className="text-2xl font-bold">{kpi.value}</div>
-                  <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="mt-4">
+                    <div className="text-2xl font-bold">{kpi.value}</div>
+                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          }
         </div>
 
         {/* Charts Row 1 */}
