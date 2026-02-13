@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Package,
@@ -161,8 +162,13 @@ export const Sidebar = ({
           className="flex items-center gap-2 cursor-pointer"
           onClick={handleLogoClick}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">VM</span>
+          <div className="relative h-8 w-28 overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              fill
+              className="object-contain"
+            />
           </div>
           {!collapsed && (
             <span className="text-lg font-semibold text-primary">Vasantha Metal Industry</span>

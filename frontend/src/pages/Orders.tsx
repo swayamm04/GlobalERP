@@ -105,7 +105,7 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
       const { data: order } = await api.get(`/api/orders/${orderId}`);
       const { data: settings } = await api.get("/api/company-settings");
 
-      generateInvoice({
+      await generateInvoice({
         customerName: order.customerName,
         contact: order.contact,
         address: order.address,

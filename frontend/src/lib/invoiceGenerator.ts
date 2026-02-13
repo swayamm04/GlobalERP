@@ -1,6 +1,32 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper to load image
+const loadImage = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        if (typeof window === 'undefined') {
+            resolve('');
+            return;
+        }
+        const img = new Image();
+        img.src = url;
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                reject(new Error("Could not get canvas context"));
+                return;
+            }
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = (err) => reject(err);
+    });
+};
+
 export interface InvoiceData {
     customerName: string;
     contact: string;
@@ -80,7 +106,7 @@ export interface StatementData {
     isProject?: boolean;
 }
 
-export const generateInvoice = (data: InvoiceData) => {
+export const generateInvoice = async (data: InvoiceData) => {
     const {
         customerName,
         contact,
@@ -147,6 +173,17 @@ export const generateInvoice = (data: InvoiceData) => {
             doc.text(`Page ${tableData.pageNumber}`, pageWidth - 15, pageHeight - 8);
         }
     };
+
+    // Load Logo
+    try {
+        const logoBase64 = await loadImage("/logo.png");
+        if (logoBase64) {
+            // Add logo at top left: x=6, y=6, w=25, h=8 (keeping aspect ratio approx 3:1)
+            doc.addImage(logoBase64, 'PNG', 6, 6, 25, 8);
+        }
+    } catch (error) {
+        console.error("Error loading logo for invoice:", error);
+    }
 
     // Header - Tax Invoice (First Page)
     doc.setFontSize(14);
@@ -392,7 +429,7 @@ export const generateInvoice = (data: InvoiceData) => {
     doc.save(`${data.isEstimation ? 'Estimation' : 'Invoice'}_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
 };
 
-export const generateReceipt = (data: PaymentReceiptData) => {
+export const generateReceipt = async (data: PaymentReceiptData) => {
     const {
         customerName,
         contact,
@@ -417,6 +454,17 @@ export const generateReceipt = (data: PaymentReceiptData) => {
         if (isNaN(d.getTime())) return dateInput.toString();
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
     };
+
+    // Load Logo
+    try {
+        const logoBase64 = await loadImage("/logo.png");
+        if (logoBase64) {
+            // Add logo at top left
+            doc.addImage(logoBase64, 'PNG', 6, 6, 25, 8);
+        }
+    } catch (error) {
+        console.error("Error loading logo for receipt:", error);
+    }
 
     // Draw Main Border
     doc.setDrawColor(0);
@@ -499,7 +547,7 @@ export const generateReceipt = (data: PaymentReceiptData) => {
     doc.save(`Receipt_${customerName.replace(/\s+/g, '_')}_${orderId.slice(-6)}.pdf`);
 };
 
-export const generatePaymentStatement = (data: StatementData) => {
+export const generatePaymentStatement = async (data: StatementData) => {
     const {
         customerName,
         contact,
@@ -522,6 +570,17 @@ export const generatePaymentStatement = (data: StatementData) => {
         if (isNaN(d.getTime())) return dateInput.toString();
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
     };
+
+    // Load Logo
+    try {
+        const logoBase64 = await loadImage("/logo.png");
+        if (logoBase64) {
+            // Add logo at top left
+            doc.addImage(logoBase64, 'PNG', 6, 6, 25, 8);
+        }
+    } catch (error) {
+        console.error("Error loading logo for statement:", error);
+    }
 
     // Main Border
     doc.setDrawColor(0);
@@ -617,3 +676,4 @@ export const generatePaymentStatement = (data: StatementData) => {
 
     doc.save(`Statement_${customerName.replace(/\s+/g, '_')}_${orderId.slice(-6)}.pdf`);
 };
+

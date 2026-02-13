@@ -115,15 +115,15 @@ const Customers = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto custom-scrollbar">
+            <div className="overflow-auto custom-scrollbar h-[60vh] w-full relative">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Customer</TableHead>
                     <TableHead className="whitespace-nowrap">Type</TableHead>
-                    <TableHead className="hidden md:table-cell whitespace-nowrap">Contact Info</TableHead>
-                    <TableHead className="hidden lg:table-cell text-center whitespace-nowrap">Orders</TableHead>
-                    <TableHead className="hidden sm:table-cell text-right whitespace-nowrap">Total Business</TableHead>
+                    <TableHead className="whitespace-nowrap">Contact Info</TableHead>
+                    <TableHead className="text-center whitespace-nowrap">Orders</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Total Business</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -172,7 +172,7 @@ const Customers = () => {
                             <span className="text-sm font-medium">{customer.customerType}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell whitespace-nowrap">
+                        <TableCell className="whitespace-nowrap">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3.5 w-3.5 text-muted-foreground" />
@@ -186,10 +186,10 @@ const Customers = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center font-medium whitespace-nowrap">
+                        <TableCell className="text-center font-medium whitespace-nowrap">
                           {customer.totalOrders}
                         </TableCell>
-                        <TableCell className="font-bold text-right hidden sm:table-cell text-primary whitespace-nowrap">
+                        <TableCell className="font-bold text-right text-primary whitespace-nowrap">
                           ₹{(customer.totalSpent || 0).toLocaleString()}
                         </TableCell>
                       </TableRow>

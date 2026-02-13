@@ -183,8 +183,8 @@ const AdvanceOrder = () => {
         toast.info(`Details pre-filled for ${customerType === "Business" ? (customer.companyName || customer.name) : customer.name}`);
     };
 
-    const generateInvoicePDF = (orderData: any) => {
-        generateInvoice({
+    const generateInvoicePDF = async (orderData: any) => {
+        await generateInvoice({
             ...orderData,
             paymentMethod,
             companyDetails,
@@ -263,7 +263,7 @@ const AdvanceOrder = () => {
             };
 
             await api.post("/api/orders", orderData);
-            generateInvoicePDF(orderData);
+            await generateInvoicePDF(orderData);
             toast.success("Advance order placed and invoice generated!");
 
             // Reset form
@@ -586,7 +586,7 @@ const AdvanceOrder = () => {
                                                                                 updateItem(item.id, 'productName', p._id);
                                                                                 setOpenPopoverId(null);
                                                                             }}
-                                                                            className="group cursor-pointer transition-colors data-[selected=true]:bg-slate-100 hover:bg-blue-600"
+                                                                            className="group cursor-pointer transition-colors data-[selected=true]:bg-slate-100 hover:bg-slate-100 active:bg-slate-200"
                                                                         >
                                                                             <Check
                                                                                 className={cn(
@@ -596,13 +596,13 @@ const AdvanceOrder = () => {
                                                                             />
                                                                             <div className="flex flex-col">
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <span className="font-bold text-foreground group-data-[selected=true]:text-foreground group-hover:text-white transition-colors">{p.name}</span>
-                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 border-muted-foreground/30 text-muted-foreground group-data-[selected=true]:text-foreground group-data-[selected=true]:border-foreground/20 group-hover:border-white group-hover:text-white uppercase transition-colors">
+                                                                                    <span className="font-bold text-foreground group-data-[selected=true]:text-foreground transition-colors">{p.name}</span>
+                                                                                    <Badge variant="outline" className="text-[10px] h-4 px-1 border-muted-foreground/30 text-muted-foreground group-data-[selected=true]:text-foreground group-data-[selected=true]:border-foreground/20 uppercase transition-colors">
                                                                                         {p.unit || 'pcs'}
                                                                                     </Badge>
                                                                                 </div>
-                                                                                <span className="text-xs text-muted-foreground group-data-[selected=true]:text-muted-foreground group-hover:text-white transition-colors">
-                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-data-[selected=true]:text-foreground group-hover:text-white">{p.category?.name || "No Category"}</span>
+                                                                                <span className="text-xs text-muted-foreground group-data-[selected=true]:text-muted-foreground transition-colors">
+                                                                                    Price: ₹{p.price} | Category: <span className="font-semibold group-data-[selected=true]:text-foreground">{p.category?.name || "No Category"}</span>
                                                                                 </span>
                                                                                 {p.customFields && p.customFields.filter((f: any) => f.value && f.value.toString().trim() !== "").length > 0 && (
                                                                                     <div className="flex flex-wrap gap-1 mt-1">

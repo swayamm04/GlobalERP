@@ -227,7 +227,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
             const fullOrder = orderRes.data;
             const companyDetails = settingsRes.data;
 
-            generateInvoice({
+            await generateInvoice({
                 ...fullOrder,
                 orderId: fullOrder._id,
                 companyDetails: companyDetails
@@ -252,7 +252,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
             const fullOrder = orderRes.data;
             const companyDetails = settingsRes.data;
 
-            generatePaymentStatement({
+            await generatePaymentStatement({
                 customerName: fullOrder.customerName,
                 contact: fullOrder.contact,
                 address: fullOrder.address,

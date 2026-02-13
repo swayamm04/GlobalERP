@@ -136,8 +136,8 @@ const Estimations = () => {
         }));
     };
 
-    const handleGeneratePDF = (est: any) => {
-        generateInvoice({
+    const handleGeneratePDF = async (est: any) => {
+        await generateInvoice({
             ...est,
             isEstimation: true,
             companyDetails
@@ -209,7 +209,7 @@ const Estimations = () => {
             const response = await api.post("/api/estimations", estimationData);
 
             // Auto download PDF
-            handleGeneratePDF(response.data);
+            await handleGeneratePDF(response.data);
 
             toast.success("Estimation created and downloaded!");
 

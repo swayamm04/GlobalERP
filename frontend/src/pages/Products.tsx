@@ -146,7 +146,7 @@ const Products = () => {
             <h1 className="text-2xl font-bold">Manage Products</h1>
             <p className="text-muted-foreground">Manage your product inventory</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Category

@@ -180,7 +180,7 @@ const Projects = () => {
         try {
             const { data: companyDetails } = await api.get("/api/company-settings");
 
-            generatePaymentStatement({
+            await generatePaymentStatement({
                 customerName: project.customerName,
                 contact: project.location, // Using location as a substitute if contact is missing
                 address: project.location,

@@ -39,7 +39,7 @@ const getStatusVariant = (status: string) => {
 
 export const RecentOrders = ({ orders }: RecentOrdersProps) => {
   return (
-    <Card className="flex flex-col h-full border-none shadow-sm">
+    <Card className="flex flex-col h-full border-none shadow-sm max-w-[calc(100vw-2rem)] sm:max-w-full mx-auto w-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="space-y-1">
           <CardTitle className="text-xl font-bold">Recent Orders</CardTitle>
@@ -50,9 +50,9 @@ export const RecentOrders = ({ orders }: RecentOrdersProps) => {
         </Button>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto custom-scrollbar">
+        <div className="overflow-auto custom-scrollbar h-[400px] sm:h-auto w-full relative">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="w-[100px] hidden sm:table-cell">Order ID</TableHead>
                 <TableHead>Customer</TableHead>
