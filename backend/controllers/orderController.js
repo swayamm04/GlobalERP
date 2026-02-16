@@ -136,11 +136,11 @@ const createOrder = async (req, res) => {
             termsOfDelivery,
             includeGST: includeGST === false ? false : true,
             status: status || 'Pending',
-            paymentHistory: paidAmount > 0 ? [{
-                amount: paidAmount,
-                method: paymentMethod,
+            paymentHistory: [{
+                amount: paidAmount || 0,
+                method: paymentMethod || modeOfPayment || 'Cash',
                 date: new Date()
-            }] : []
+            }]
         };
 
         if (req.user) {

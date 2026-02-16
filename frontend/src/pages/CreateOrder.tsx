@@ -76,6 +76,7 @@ const CreateOrder = () => {
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
     const [subtotal, setSubtotal] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -214,6 +215,7 @@ const CreateOrder = () => {
         }
 
         try {
+            setIsSubmitting(true);
             // Map items to include actual product names if necessary before sending to API
             const formattedItems = items.map(item => {
                 const product = availableProducts.find(p => p._id === item.productName);
@@ -301,6 +303,8 @@ const CreateOrder = () => {
         } catch (error) {
             console.error("Error creating order:", error);
             toast.error("Failed to place order");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -770,8 +774,9 @@ const CreateOrder = () => {
                         onClick={handleSubmit}
                         className="w-full py-6 text-lg mt-8"
                         size="lg"
+                        disabled={isSubmitting}
                     >
-                        Place Order
+                        {isSubmitting ? "Placing Order..." : "Place Order"}
                     </Button>
 
                 </CardContent>

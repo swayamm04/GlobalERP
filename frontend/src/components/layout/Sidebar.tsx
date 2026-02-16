@@ -22,6 +22,8 @@ import {
   History,
   Boxes,
   Receipt,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +32,14 @@ import Cookies from "js-cookie";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { X } from "lucide-react";
 
+interface MenuItem {
+  icon: any;
+  label: string;
+  path: string;
+  roles?: string[];
+  children?: MenuItem[];
+}
+
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -37,26 +47,53 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-const menuItems = [
+const menuItems: MenuItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Package, label: "Product Catalog", path: "/product-catalog" },
-  { icon: Tags, label: "Manage Products", path: "/products" },
-  { icon: Warehouse, label: "Inventory", path: "/inventory" },
-  { icon: Boxes, label: "Raw Inventory", path: "/raw-inventory" },
-  { icon: PlusCircle, label: "Create Order", path: "/create-order" },
-  { icon: ShoppingCart, label: "Orders", path: "/orders" },
-  { icon: ClipboardList, label: "Pending Orders", path: "/pending-orders" },
-  { icon: History, label: "Advance Orders", path: "/advance-order" },
-  { icon: FileText, label: "Create Estimations", path: "/estimations" },
-  { icon: Truck, label: "Suppliers", path: "/suppliers" },
-  { icon: Users, label: "Customers", path: "/customers" },
-  { icon: Receipt, label: "Purchase Orders", path: "/purchase-orders" },
-  { icon: FileText, label: "Reports", path: "/reports" },
-  { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+  {
+    icon: Package,
+    label: "Products",
+    path: "#",
+    children: [
+      { icon: Package, label: "Product Catalog", path: "/product-catalog" },
+      { icon: Tags, label: "Manage Products", path: "/products" },
+    ],
+  },
+  {
+    icon: Warehouse,
+    label: "Inventory",
+    path: "#",
+    children: [
+      { icon: Warehouse, label: "Product Inventory", path: "/inventory" },
+      { icon: Boxes, label: "Raw Inventory", path: "/raw-inventory" },
+    ],
+  },
+  {
+    icon: ShoppingCart,
+    label: "POS",
+    path: "#",
+    children: [
+      { icon: PlusCircle, label: "Create Order", path: "/create-order" },
+      { icon: History, label: "Create Advance Order", path: "/advance-order" },
+      { icon: ShoppingCart, label: "Orders", path: "/orders" },
+      { icon: ClipboardList, label: "Pending Orders", path: "/pending-orders" },
+      { icon: Receipt, label: "Purchase Orders", path: "/purchase-orders" },
+    ],
+  },
+  {
+    icon: Users,
+    label: "Users",
+    path: "#",
+    children: [
+      { icon: Truck, label: "Suppliers", path: "/suppliers" },
+      { icon: Users, label: "Customers", path: "/customers" },
+      { icon: UserPlus, label: "Create Admins", path: "/users", roles: ["super_admin"] },
+    ],
+  },
   { icon: ClipboardList, label: "Stock Management", path: "/stock-management" },
   { icon: ClipboardList, label: "Projects", path: "/projects" },
-  { icon: UserPlus, label: "Create Admins", path: "/users", roles: ["super_admin"] },
+  { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: FileText, label: "Reports", path: "/reports" },
+  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 const SidebarNav = ({
@@ -69,11 +106,26 @@ const SidebarNav = ({
   onItemClick?: () => void;
 }) => {
   const [mounted, setMounted] = useState(false);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
   const userRole = Cookies.get("user_role");
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // Auto-expand menu if sub-item is active
+    const activeMenu = menuItems.find(item =>
+      item.children?.some(child => child.path === pathname)
+    );
+    if (activeMenu) {
+      setOpenMenus(prev => prev.includes(activeMenu.label) ? prev : [...prev, activeMenu.label]);
+    }
+  }, [pathname]);
+
+  const toggleMenu = (label: string) => {
+    setOpenMenus(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  };
 
   const filteredMenuItems = menuItems.filter(item => {
     if (!item.roles) return true;
@@ -85,7 +137,63 @@ const SidebarNav = ({
     <nav className="mt-4 px-2 flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-default">
       <ul className="space-y-1">
         {filteredMenuItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
+          const hasChildren = item.children && item.children.length > 0;
+          const isOpen = openMenus.includes(item.label);
+          const isChildActive = hasChildren && item.children?.some(child => pathname === child.path);
+          const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path)) || isChildActive;
+
+          if (hasChildren) {
+            return (
+              <li key={item.label} className="space-y-1">
+                <button
+                  onClick={() => toggleMenu(item.label)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+                    isActive && !isOpen
+                      ? "bg-sidebar-accent text-sidebar-primary"
+                      : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className={cn("h-5 w-5 flex-shrink-0")} />
+                    {!collapsed && <span>{item.label}</span>}
+                  </div>
+                  {!collapsed && (
+                    isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {isOpen && !collapsed && (
+                  <ul className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-2">
+                    {item.children?.filter(child => {
+                      if (!child.roles) return true;
+                      if (!mounted) return false;
+                      return child.roles.includes(userRole || "");
+                    }).map((child) => {
+                      const isChildLinkActive = pathname === child.path;
+                      return (
+                        <li key={child.path}>
+                          <Link
+                            href={child.path}
+                            onClick={onItemClick}
+                            className={cn(
+                              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+                              isChildLinkActive
+                                ? "bg-sidebar-accent text-sidebar-primary"
+                                : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                            )}
+                          >
+                            <child.icon className={cn("h-4 w-4 flex-shrink-0")} />
+                            <span>{child.label}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          }
+
           return (
             <li key={item.path}>
               <Link
