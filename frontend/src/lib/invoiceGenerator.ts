@@ -102,8 +102,6 @@ export interface StatementData {
         method: string;
     }[];
     companyDetails?: InvoiceData['companyDetails'];
-    projectName?: string;
-    isProject?: boolean;
 }
 
 export const generateInvoice = async (data: InvoiceData) => {
@@ -555,9 +553,7 @@ export const generatePaymentStatement = async (data: StatementData) => {
         orderId,
         totalAmount,
         paymentHistory,
-        companyDetails,
-        projectName,
-        isProject
+        companyDetails
     } = data;
 
     const doc = new jsPDF();
@@ -590,7 +586,7 @@ export const generatePaymentStatement = async (data: StatementData) => {
     // Header
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    const headerTitle = isProject ? "PROJECT PAYMENT LEDGER" : "PAYMENT LEDGER / STATEMENT";
+    const headerTitle = "PAYMENT LEDGER / STATEMENT";
     doc.text(headerTitle, pageWidth / 2, 15, { align: "center" });
     doc.line(5, 20, pageWidth - 5, 20);
 
@@ -605,16 +601,9 @@ export const generatePaymentStatement = async (data: StatementData) => {
     doc.setFont("helvetica", "bold");
     doc.text("Statement Details:", rightCol, 30);
     doc.setFont("helvetica", "normal");
-    if (isProject && projectName) {
-        doc.text(`Project: ${projectName}`, rightCol, 36);
-        doc.text(`Ref ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 42);
-        doc.text(`Date: ${formatDate(new Date())}`, rightCol, 48);
-        doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 54);
-    } else {
-        doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
-        doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
-        doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
-    }
+    doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
+    doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
+    doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
 
     doc.line(5, 60, pageWidth - 5, 60);
 

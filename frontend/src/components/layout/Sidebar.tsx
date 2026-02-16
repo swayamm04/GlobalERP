@@ -24,7 +24,6 @@ import {
   Receipt,
   ChevronDown,
   ChevronUp,
-  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +90,6 @@ const menuItems: MenuItem[] = [
     ],
   },
   { icon: ClipboardList, label: "Stock Management", path: "/stock-management" },
-  { icon: HardHat, label: "Projects", path: "/projects" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: Settings, label: "Settings", path: "/settings" },
