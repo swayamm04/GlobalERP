@@ -1,5 +1,4 @@
 "use client";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
@@ -53,67 +52,63 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex h-screen items-center justify-center">
-          Loading...
-        </div>
-      </DashboardLayout>
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's what's happening with your inventory.
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <StatsCard
-            title="Total Products"
-            value={(stats?.totalProducts ?? 0).toString()}
-            icon={Package}
-            iconColor="bg-primary/10 text-primary"
-          />
-          <StatsCard
-            title="Total Orders"
-            value={(stats?.totalOrders ?? 0).toString()}
-            icon={ShoppingCart}
-            iconColor="bg-success/10 text-success"
-          />
-          <StatsCard
-            title="Revenue"
-            value={`₹${(stats?.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            icon={IndianRupee}
-            iconColor="bg-warning/10 text-warning"
-          />
-          <StatsCard
-            title="Active Orders"
-            value={(stats?.totalActiveOrders ?? 0).toString()}
-            icon={Activity}
-            iconColor="bg-blue-500/10 text-blue-500"
-          />
-          <StatsCard
-            title="Active Customers"
-            value={(stats?.activeCustomers ?? 0).toString()}
-            icon={Users}
-            iconColor="bg-info/10 text-info"
-          />
-        </div>
-
-        {/* Charts Row Removed */}
-
-        {/* Bottom Row */}
-        <div className="grid gap-6">
-          <RecentOrders orders={stats.recentOrders} />
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Here's what's happening with your inventory.
+        </p>
       </div>
-    </DashboardLayout>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <StatsCard
+          title="Total Products"
+          value={(stats?.totalProducts ?? 0).toString()}
+          icon={Package}
+          iconColor="bg-primary/10 text-primary"
+        />
+        <StatsCard
+          title="Total Orders"
+          value={(stats?.totalOrders ?? 0).toString()}
+          icon={ShoppingCart}
+          iconColor="bg-success/10 text-success"
+        />
+        <StatsCard
+          title="Revenue"
+          value={`₹${(stats?.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          icon={IndianRupee}
+          iconColor="bg-warning/10 text-warning"
+        />
+        <StatsCard
+          title="Active Orders"
+          value={(stats?.totalActiveOrders ?? 0).toString()}
+          icon={Activity}
+          iconColor="bg-blue-500/10 text-blue-500"
+        />
+        <StatsCard
+          title="Active Customers"
+          value={(stats?.activeCustomers ?? 0).toString()}
+          icon={Users}
+          iconColor="bg-info/10 text-info"
+        />
+      </div>
+
+      {/* Charts Row Removed */}
+
+      {/* Bottom Row */}
+      <div className="grid gap-6">
+        <RecentOrders orders={stats.recentOrders} />
+      </div>
+    </div>
   );
 };
 

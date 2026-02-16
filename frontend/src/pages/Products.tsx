@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -139,136 +138,134 @@ const Products = () => {
   });
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Manage Products</h1>
-            <p className="text-muted-foreground">Manage your product inventory</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Category
-            </Button>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Manage Products</h1>
+          <p className="text-muted-foreground">Manage your product inventory</p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search products..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filter by Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product._id}>
-                    <TableCell className="font-medium">
-                      <div>
-                        {product.name}
-                        {product.customFields && product.customFields.length > 0 && (
-                          <div className="flex flex-wrap gap-x-2 mt-1">
-                            {product.customFields.map((f: any, i: number) => (
-                              <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
-                                {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.category?.name || "No Category"}</TableCell>
-                    <TableCell>{product.stock} {product.unit || 'pcs'}</TableCell>
-                    <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
-
-                    <TableCell>
-                      <Badge variant={getStatusVariant(product.status)}>
-                        {product.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(product)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive"
-                        onClick={() => handleDelete(product._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredProducts.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4">
-                      No products found. Add a new product to get started.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <ProductDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          onSubmit={editingProduct ? handleUpdate : handleCreate}
-          product={editingProduct}
-          categories={categories}
-        />
-        <CategoryDialog
-          open={isCategoryDialogOpen}
-          onOpenChange={setIsCategoryDialogOpen}
-          onSuccess={fetchCategories}
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
-    </DashboardLayout>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[180px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filter by Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.map((product) => (
+                <TableRow key={product._id}>
+                  <TableCell className="font-medium">
+                    <div>
+                      {product.name}
+                      {product.customFields && product.customFields.length > 0 && (
+                        <div className="flex flex-wrap gap-x-2 mt-1">
+                          {product.customFields.map((f: any, i: number) => (
+                            <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
+                              {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{product.category?.name || "No Category"}</TableCell>
+                  <TableCell>{product.stock} {product.unit || 'pcs'}</TableCell>
+                  <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
+
+                  <TableCell>
+                    <Badge variant={getStatusVariant(product.status)}>
+                      {product.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(product)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => handleDelete(product._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredProducts.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-4">
+                    No products found. Add a new product to get started.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <ProductDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSubmit={editingProduct ? handleUpdate : handleCreate}
+        product={editingProduct}
+        categories={categories}
+      />
+      <CategoryDialog
+        open={isCategoryDialogOpen}
+        onOpenChange={setIsCategoryDialogOpen}
+        onSuccess={fetchCategories}
+      />
+    </div>
   );
 };
 

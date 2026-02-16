@@ -1,5 +1,6 @@
 const PurchaseOrder = require('../models/PurchaseOrder');
 const RawMaterial = require('../models/RawMaterial');
+const logActivity = require('../utils/activityLogger');
 
 const updateInventoryStock = async (items) => {
     for (const item of items) {
@@ -54,6 +55,16 @@ const createPurchaseOrder = async (req, res) => {
         // Automatically update stock as it's created after delivery
         await updateInventoryStock(items);
 
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CREATED_PURCHASE_ORDER',
+                `Created purchase order: ${po.poNumber} for supplier ID: ${supplier}`,
+                req
+            );
+        }
+
         res.status(201).json(po);
     } catch (error) {
         console.error(error);
@@ -79,6 +90,16 @@ const updatePOStatus = async (req, res) => {
         // If status changed to Delivered, update RawMaterial stock
         if (status === 'Delivered' && oldStatus !== 'Delivered') {
             await updateInventoryStock(po.items);
+        }
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'UPDATED_PO_STATUS',
+                `Updated PO: ${po.poNumber} status to ${status}`,
+                req
+            );
         }
 
         res.status(200).json(po);

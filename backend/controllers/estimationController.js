@@ -1,4 +1,5 @@
 const Estimation = require('../models/Estimation');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get all estimations
 // @route   GET /api/estimations
@@ -25,6 +26,16 @@ const createEstimation = async (req, res) => {
 
         const estimation = new Estimation(estimationData);
         const createdEstimation = await estimation.save();
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CREATED_ESTIMATION',
+                `Created new estimation for customer: ${req.body.customerName || 'N/A'}`,
+                req
+            );
+        }
 
         res.status(201).json(createdEstimation);
     } catch (error) {

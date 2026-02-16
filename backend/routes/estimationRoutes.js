@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getEstimations, createEstimation } = require('../controllers/estimationController');
-// Assuming authMiddleware exists based on other routes
-// const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
-router.get('/', getEstimations);
-router.post('/', createEstimation);
+router.get('/', protect, getEstimations);
+router.post('/', protect, createEstimation);
 
 module.exports = router;

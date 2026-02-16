@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { Sheet, SheetContent, SheetClose } from "@/components/ui/sheet";
 import { X } from "lucide-react";
@@ -84,7 +85,7 @@ const SidebarNav = ({
     <nav className="mt-4 px-2 flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-default">
       <ul className="space-y-1">
         {filteredMenuItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
           return (
             <li key={item.path}>
               <Link
@@ -108,21 +109,16 @@ const SidebarNav = ({
   );
 };
 
+
 export const Sidebar = ({
   collapsed,
   onToggle,
   mobileOpen,
   onMobileClose,
 }: SidebarProps) => {
-  const [pathname, setPathname] = useState("");
+  const pathname = usePathname() || "";
   const clickRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setPathname(window.location.pathname);
-    }
-  }, []);
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -145,7 +141,7 @@ export const Sidebar = ({
 
     // Set a timer to either navigate home (if single click) or reset the count
     timerRef.current = setTimeout(() => {
-      if (clickRef.current === 1 && !pathname.startsWith("/secret")) {
+      if (clickRef.current === 1 && !(pathname || "").startsWith("/secret")) {
         if (typeof window !== 'undefined') {
           window.location.href = "/";
         }
@@ -181,6 +177,12 @@ export const Sidebar = ({
         pathname={pathname}
         onItemClick={onMobileClose}
       />
+      {!collapsed && (
+        <div className="relative p-4 text-xs text-center text-muted-foreground bg-sidebar/50 backdrop-blur-sm">
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-sidebar-border to-transparent opacity-50" />
+          <p>© {new Date().getFullYear()} Vasantha Metal Industry</p>
+        </div>
+      )}
     </div>
   );
 

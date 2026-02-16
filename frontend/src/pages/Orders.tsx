@@ -1,5 +1,4 @@
 "use client";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -66,9 +65,12 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
+      const sanitizedSearch = searchTerm.replace(/^#/, "").toLowerCase().trim();
+      const orderId = order.id ? order.id.toLowerCase() : "";
+
       const matchesSearch =
-        order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase());
+        order.customer.toLowerCase().includes(sanitizedSearch) ||
+        orderId.includes(sanitizedSearch);
 
       const matchesType =
         typeFilter === "all" ||
@@ -240,11 +242,7 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
 
   if (isStandalone) return Content;
 
-  return (
-    <DashboardLayout>
-      {Content}
-    </DashboardLayout>
-  );
+  return Content;
 };
 
 export default Orders;

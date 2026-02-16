@@ -1,4 +1,5 @@
 const RawMaterial = require('../models/RawMaterial');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get all raw materials
 // @route   GET /api/raw-materials
@@ -44,6 +45,17 @@ const createRawMaterial = async (req, res) => {
             }
 
             const createdMaterials = await RawMaterial.insertMany(materialsToCreate);
+
+            // Log Activity
+            if (req.user) {
+                await logActivity(
+                    req.user._id,
+                    'BULK_CREATED_RAW_MATERIALS',
+                    `Created ${createdMaterials.length} raw materials in bulk`,
+                    req
+                );
+            }
+
             return res.status(201).json(createdMaterials);
         }
 
@@ -61,6 +73,16 @@ const createRawMaterial = async (req, res) => {
             stockQuantity: stockQuantity || 0,
             specifications: specifications || []
         });
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CREATED_RAW_MATERIAL',
+                `Created raw material: ${material.name}`,
+                req
+            );
+        }
+
         res.status(201).json(material);
     } catch (error) {
         console.error(error);
@@ -73,6 +95,16 @@ const createRawMaterial = async (req, res) => {
 const updateRawMaterial = async (req, res) => {
     try {
         const material = await RawMaterial.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'UPDATED_RAW_MATERIAL',
+                `Updated raw material: ${material.name}`,
+                req
+            );
+        }
+
         res.status(200).json(material);
     } catch (error) {
         console.error(error);
@@ -96,6 +128,16 @@ const addRawMaterialStock = async (req, res) => {
 
         material.stockQuantity += Number(quantity);
         await material.save();
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'ADDED_RAW_MATERIAL_STOCK',
+                `Added ${quantity} stock to raw material: ${material.name}`,
+                req
+            );
+        }
 
         res.status(200).json(material);
     } catch (error) {

@@ -1,5 +1,5 @@
 "use client";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -113,9 +113,12 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
 
     const filteredOrders = useMemo(() => {
         return orders.filter((order) => {
+            const sanitizedSearch = searchTerm.replace(/^#/, "").toLowerCase().trim();
+            const orderId = order.id ? order.id.toLowerCase() : "";
+
             const matchesSearch =
-                order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.id.toLowerCase().includes(searchTerm.toLowerCase());
+                order.customer.toLowerCase().includes(sanitizedSearch) ||
+                orderId.includes(sanitizedSearch);
 
             const matchesType =
                 typeFilter === "all" ||
@@ -185,9 +188,18 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
             return;
         }
 
-        const amount = parseFloat(newPaymentAmount);
-        if (amount > selectedOrder.balanceDue) {
-            toast.error("Payment amount cannot exceed balance due");
+        let amount = parseFloat(newPaymentAmount);
+
+        // Handle floating point precision (e.g. 0.96 > 0.9600000000000001)
+        // If amount is very close to balanceDue, consider them equal
+        const epsilon = 0.001;
+        if (Math.abs(amount - selectedOrder.balanceDue) < epsilon) {
+            amount = selectedOrder.balanceDue;
+        }
+
+        if (amount > selectedOrder.balanceDue + epsilon) {
+            setNewPaymentAmount(selectedOrder.balanceDue.toString());
+            toast.warning("Payment amount cannot exceed balance due. Adjusted to maximum.");
             return;
         }
 
@@ -595,11 +607,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
 
     if (isStandalone) return Content;
 
-    return (
-        <DashboardLayout>
-            {Content}
-        </DashboardLayout>
-    );
+    return Content;
 };
 
 export default PendingOrders;

@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const { getRawMaterials, createRawMaterial, updateRawMaterial, addRawMaterialStock } = require('../controllers/rawMaterialController');
+const { protect } = require('../middleware/authMiddleware');
 
 router.route('/')
-    .get(getRawMaterials)
-    .post(createRawMaterial);
+    .get(protect, getRawMaterials)
+    .post(protect, createRawMaterial);
 
 router.route('/:id')
-    .put(updateRawMaterial);
+    .put(protect, updateRawMaterial);
 
 router.route('/:id/add-stock')
-    .put(addRawMaterialStock);
+    .put(protect, addRawMaterialStock);
 
 module.exports = router;

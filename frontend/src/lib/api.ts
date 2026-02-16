@@ -15,6 +15,15 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add secret context header if 'secret=true' is in the URL
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('secret') === 'true') {
+                config.headers['X-Secret-Context'] = 'true';
+            }
+        }
+
         return config;
     },
     (error) => {

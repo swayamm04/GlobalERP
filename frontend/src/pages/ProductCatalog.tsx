@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -138,112 +137,110 @@ const ProductCatalog = () => {
     };
 
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Product Catalog</h1>
-                        <p className="text-muted-foreground">View your product catalog</p>
-                    </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                <Download className="mr-2 h-4 w-4" />
-                                Export
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={exportToExcel}>
-                                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                                Export to Excel
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={exportToPDF}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                Export to PDF
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">Product Catalog</h1>
+                    <p className="text-muted-foreground">View your product catalog</p>
                 </div>
-
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search products..."
-                                    className="pl-10"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="w-[180px]">
-                                    <Filter className="mr-2 h-4 w-4" />
-                                    <SelectValue placeholder="Filter by Category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Categories</SelectItem>
-                                    {categories.map((cat) => (
-                                        <SelectItem key={cat._id} value={cat._id}>
-                                            {cat.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[80px]">Sl No.</TableHead>
-                                    <TableHead>Product Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Price</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-4">Loading catalog...</TableCell>
-                                    </TableRow>
-                                ) : filteredProducts.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-4">
-                                            No products found.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredProducts.map((product, index) => (
-                                        <TableRow key={product._id || index}>
-                                            <TableCell className="font-medium">{index + 1}</TableCell>
-                                            <TableCell className="font-medium">
-                                                <div>
-                                                    {product.name}
-                                                    {product.customFields && product.customFields.length > 0 && (
-                                                        <div className="flex flex-wrap gap-x-2 mt-1">
-                                                            {product.customFields.map((f: any, i: number) => (
-                                                                <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
-                                                                    {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{product.category?.name || "No Category"}</TableCell>
-                                            <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
-
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                            <Download className="mr-2 h-4 w-4" />
+                            Export
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={exportToExcel}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Export to Excel
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={exportToPDF}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export to PDF
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
-        </DashboardLayout>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-4">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                placeholder="Search products..."
+                                className="pl-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                            <SelectTrigger className="w-[180px]">
+                                <Filter className="mr-2 h-4 w-4" />
+                                <SelectValue placeholder="Filter by Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {categories.map((cat) => (
+                                    <SelectItem key={cat._id} value={cat._id}>
+                                        {cat.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[80px]">Sl No.</TableHead>
+                                <TableHead>Product Name</TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead>Price</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-4">Loading catalog...</TableCell>
+                                </TableRow>
+                            ) : filteredProducts.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-4">
+                                        No products found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredProducts.map((product, index) => (
+                                    <TableRow key={product._id || index}>
+                                        <TableCell className="font-medium">{index + 1}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div>
+                                                {product.name}
+                                                {product.customFields && product.customFields.length > 0 && (
+                                                    <div className="flex flex-wrap gap-x-2 mt-1">
+                                                        {product.customFields.map((f: any, i: number) => (
+                                                            <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
+                                                                {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>{product.category?.name || "No Category"}</TableCell>
+                                        <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
+
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingCart, ClipboardList, Lock, IndianRupee, Activity } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -34,62 +34,60 @@ const SecretDashboard = () => {
     }, []);
 
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                        <Lock className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">Secret Management</h1>
-                        <p className="text-muted-foreground">Manage orders placed without GST</p>
-                    </div>
+        <div className="space-y-6">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                    <Lock className="h-6 w-6 text-primary" />
                 </div>
-
-                {/* Stats Grid */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-[900px]">
-                    <StatsCard
-                        title="Total Orders"
-                        value={loading ? "..." : (stats?.totalOrders ?? 0).toString()}
-                        icon={ShoppingCart}
-                        iconColor="bg-success/10 text-success"
-                    />
-                    <StatsCard
-                        title="Revenue"
-                        value={loading ? "..." : `₹${(stats?.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        icon={IndianRupee}
-                        iconColor="bg-warning/10 text-warning"
-                    />
-                    <StatsCard
-                        title="Active Orders"
-                        value={loading ? "..." : (stats?.totalActiveOrders ?? 0).toString()}
-                        icon={Activity}
-                        iconColor="bg-blue-500/10 text-blue-500"
-                    />
+                <div>
+                    <h1 className="text-2xl font-bold">Secret Management</h1>
+                    <p className="text-muted-foreground">Manage orders placed without GST</p>
                 </div>
-
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                        <TabsTrigger value="pending" className="gap-2">
-                            <ClipboardList className="h-4 w-4" />
-                            <span>Pending Orders</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="completed" className="gap-2">
-                            <ShoppingCart className="h-4 w-4" />
-                            <span>Completed Orders</span>
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="pending" className="mt-6 border-none p-0">
-                        <PendingOrders isSecret={true} isStandalone={true} />
-                    </TabsContent>
-
-                    <TabsContent value="completed" className="mt-6 border-none p-0">
-                        <Orders isSecret={true} isStandalone={true} />
-                    </TabsContent>
-                </Tabs>
             </div>
-        </DashboardLayout>
+
+            {/* Stats Grid */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-[900px]">
+                <StatsCard
+                    title="Total Orders"
+                    value={loading ? "..." : (stats?.totalOrders ?? 0).toString()}
+                    icon={ShoppingCart}
+                    iconColor="bg-success/10 text-success"
+                />
+                <StatsCard
+                    title="Revenue"
+                    value={loading ? "..." : `₹${(stats?.totalRevenue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    icon={IndianRupee}
+                    iconColor="bg-warning/10 text-warning"
+                />
+                <StatsCard
+                    title="Active Orders"
+                    value={loading ? "..." : (stats?.totalActiveOrders ?? 0).toString()}
+                    icon={Activity}
+                    iconColor="bg-blue-500/10 text-blue-500"
+                />
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+                    <TabsTrigger value="pending" className="gap-2">
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Pending Orders</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="completed" className="gap-2">
+                        <ShoppingCart className="h-4 w-4" />
+                        <span>Completed Orders</span>
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="pending" className="mt-6 border-none p-0">
+                    <PendingOrders isSecret={true} isStandalone={true} />
+                </TabsContent>
+
+                <TabsContent value="completed" className="mt-6 border-none p-0">
+                    <Orders isSecret={true} isStandalone={true} />
+                </TabsContent>
+            </Tabs>
+        </div>
     );
 };
 

@@ -3,14 +3,13 @@ const router = express.Router();
 const { getOrders, createOrder, getOrderById, updateOrderStatus, markOrderAsPaid, addPayment } = require('../controllers/orderController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Temporarily removing protect for smoother dev/testing
 router.route('/')
-    .get(getOrders)
-    .post(createOrder);
+    .get(protect, getOrders)
+    .post(protect, createOrder);
 
-router.get('/:id', getOrderById);
-router.patch('/:id/status', updateOrderStatus);
-router.patch('/:id/pay', markOrderAsPaid);
-router.patch('/:id/payment', addPayment);
+router.get('/:id', protect, getOrderById);
+router.patch('/:id/status', protect, updateOrderStatus);
+router.patch('/:id/pay', protect, markOrderAsPaid);
+router.patch('/:id/payment', protect, addPayment);
 
 module.exports = router;

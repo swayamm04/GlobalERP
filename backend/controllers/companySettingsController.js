@@ -1,4 +1,5 @@
 const CompanySettings = require('../models/CompanySettings');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get company settings
 // @route   GET /api/company-settings
@@ -31,6 +32,16 @@ const updateSettings = async (req, res) => {
             );
         } else {
             settings = await CompanySettings.create(req.body);
+        }
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'UPDATED_SETTINGS',
+                `Updated company settings`,
+                req
+            );
         }
 
         res.status(200).json(settings);

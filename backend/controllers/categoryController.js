@@ -1,4 +1,5 @@
 const Category = require('../models/Category');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get all categories
 // @route   GET /api/categories
@@ -24,6 +25,16 @@ const createCategory = async (req, res) => {
         fields: req.body.fields || []
     });
 
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'CREATED_CATEGORY',
+            `Created category: ${category.name}`,
+            req
+        );
+    }
+
     res.status(201).json(category);
 };
 
@@ -42,6 +53,16 @@ const updateCategory = async (req, res) => {
         new: true,
     });
 
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'UPDATED_CATEGORY',
+            `Updated category: ${updatedCategory.name}`,
+            req
+        );
+    }
+
     res.status(200).json(updatedCategory);
 };
 
@@ -57,6 +78,16 @@ const deleteCategory = async (req, res) => {
     }
 
     await category.deleteOne();
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'DELETED_CATEGORY',
+            `Deleted category: ${category.name}`,
+            req
+        );
+    }
+
     res.status(200).json({ id: req.params.id });
 };
 

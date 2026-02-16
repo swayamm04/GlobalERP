@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get products
 // @route   GET /api/products
@@ -31,6 +32,17 @@ const createProduct = async (req, res) => {
     });
 
     const populatedProduct = await Product.findById(product._id).populate('category');
+
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'CREATED_PRODUCT',
+            `Added new product: ${product.name}`,
+            req
+        );
+    }
+
     res.status(200).json(populatedProduct);
 };
 
@@ -51,13 +63,6 @@ const updateProduct = async (req, res) => {
         return;
     }
 
-    // Make sure the logged in user matches the goal user
-    // Optional: If you want admins to edit everything, skip this check
-    // if (product.user.toString() !== req.user.id) {
-    //     res.status(401).json({ message: 'User not authorized' });
-    //     return;
-    // }
-
     // Calculate status if stock is being updated
     if (req.body.stock !== undefined) {
         let status = 'In Stock';
@@ -72,6 +77,16 @@ const updateProduct = async (req, res) => {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
     }).populate('category');
+
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'UPDATED_PRODUCT',
+            `Updated product: ${product.name}`,
+            req
+        );
+    }
 
     res.status(200).json(updatedProduct);
 };
@@ -104,6 +119,17 @@ const addProductStock = async (req, res) => {
         await product.save();
 
         const populatedProduct = await Product.findById(product._id).populate('category');
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'ADDED_STOCK',
+                `Added ${quantity} stock to ${product.name}`,
+                req
+            );
+        }
+
         res.status(200).json(populatedProduct);
     } catch (error) {
         console.error(error);
@@ -129,6 +155,16 @@ const deleteProduct = async (req, res) => {
     }
 
     await product.deleteOne();
+
+    // Log Activity
+    if (req.user) {
+        await logActivity(
+            req.user._id,
+            'DELETED_PRODUCT',
+            `Deleted product: ${product.name}`,
+            req
+        );
+    }
 
     res.status(200).json({ id: req.params.id });
 };

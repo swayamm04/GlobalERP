@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Customer = require('../models/Customer');
 const Product = require('../models/Product');
+const logActivity = require('../utils/activityLogger');
 
 // Helper to update product stock
 const updateProductStock = async (items, type = 'deduct') => {
@@ -149,6 +150,16 @@ const createOrder = async (req, res) => {
         const order = new Order(orderData);
         const createdOrder = await order.save();
 
+        // Log Activity
+        if (req.user && req.body.includeGST !== false) {
+            await logActivity(
+                req.user._id,
+                'CREATED_ORDER',
+                `Created order with Invoice #${invoiceNo || 'N/A'} for ${customerName}`,
+                req
+            );
+        }
+
         // Deduct stock
         try {
             await updateProductStock(orderData.items, 'deduct');
@@ -213,6 +224,16 @@ const updateOrderStatus = async (req, res) => {
             order.status = status;
             const updatedOrder = await order.save();
 
+            // Log Activity
+            if (req.user && order.includeGST !== false) {
+                await logActivity(
+                    req.user._id,
+                    'UPDATED_ORDER_STATUS',
+                    `Updated order #${order.invoiceNo || order._id} status from ${oldStatus} to ${status}`,
+                    req
+                );
+            }
+
             // Handle stock refill/deduction on status change
             if (status === 'Cancelled' && oldStatus !== 'Cancelled') {
                 await updateProductStock(order.items, 'refill');
@@ -268,6 +289,17 @@ const addPayment = async (req, res) => {
             });
 
             const updatedOrder = await order.save();
+
+            // Log Activity
+            if (req.user && order.includeGST !== false) {
+                await logActivity(
+                    req.user._id,
+                    'ADDED_PAYMENT',
+                    `Added payment of ${paymentAmount} to order #${order.invoiceNo || order._id}`,
+                    req
+                );
+            }
+
             res.status(200).json(updatedOrder);
         } else {
             res.status(404).json({ message: 'Order not found' });
@@ -297,6 +329,17 @@ const markOrderAsPaid = async (req, res) => {
             order.paidAmount = (order.paidAmount || 0) + remainingDue;
             order.balanceDue = 0;
             const updatedOrder = await order.save();
+
+            // Log Activity
+            if (req.user && order.includeGST !== false) {
+                await logActivity(
+                    req.user._id,
+                    'MARKED_ORDER_PAID',
+                    `Marked order #${order.invoiceNo || order._id} as fully paid`,
+                    req
+                );
+            }
+
             res.status(200).json(updatedOrder);
         } else {
             res.status(404).json({ message: 'Order not found' });

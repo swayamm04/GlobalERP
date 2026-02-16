@@ -1,4 +1,5 @@
 const Project = require('../models/Project');
+const logActivity = require('../utils/activityLogger');
 
 // @desc    Get all projects
 // @route   GET /api/projects
@@ -42,6 +43,16 @@ const createProject = async (req, res) => {
             }] : []
         });
 
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CREATED_PROJECT',
+                `Created project: ${projectName} for ${customerName}`,
+                req
+            );
+        }
+
         res.status(201).json(project);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -62,6 +73,16 @@ const updateProjectStatus = async (req, res) => {
 
         project.status = status;
         await project.save();
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'UPDATED_PROJECT_STATUS',
+                `Updated project: ${project.projectName} status to ${status}`,
+                req
+            );
+        }
+
         res.status(200).json(project);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -93,6 +114,17 @@ const addProjectPayment = async (req, res) => {
         });
 
         await project.save();
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'ADDED_PROJECT_PAYMENT',
+                `Added payment of ${amount} to project: ${project.projectName}`,
+                req
+            );
+        }
+
         res.status(200).json(project);
     } catch (error) {
         res.status(500).json({ message: error.message });
