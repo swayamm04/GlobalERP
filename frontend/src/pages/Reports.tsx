@@ -334,24 +334,24 @@ const Reports = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg border">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-muted/50 p-2 rounded-lg border w-full sm:w-auto">
           <span className="text-sm font-medium text-muted-foreground whitespace-nowrap px-2">
             Filter Date:
           </span>
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+            <div className="relative w-full sm:w-auto">
               <input
                 type="date"
-                className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-9 w-full sm:w-auto rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={dateRange.start}
                 onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
               />
             </div>
-            <span className="text-muted-foreground">-</span>
-            <div className="relative">
+            <span className="hidden sm:inline text-muted-foreground">-</span>
+            <div className="relative w-full sm:w-auto">
               <input
                 type="date"
-                className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-9 w-full sm:w-auto rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 value={dateRange.end}
                 max={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
@@ -362,9 +362,9 @@ const Reports = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setDateRange({ start: "", end: "" })}
-                className="ml-2 h-8 px-2 text-muted-foreground hover:text-foreground"
+                className="h-8 px-2 text-muted-foreground hover:text-foreground w-full sm:w-auto mt-1 sm:mt-0"
               >
-                Clear
+                Clear Filters
               </Button>
             )}
           </div>
