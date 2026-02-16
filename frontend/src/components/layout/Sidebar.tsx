@@ -262,22 +262,22 @@ export const Sidebar = ({
   const SidebarContent = () => (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex h-16 items-center justify-between px-4">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={handleLogoClick}
-        >
-          <div className="relative h-8 w-28 overflow-hidden">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              fill
-              className="object-contain"
-            />
-          </div>
-          {!collapsed && (
+        {!collapsed && (
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={handleLogoClick}
+          >
+            <div className="relative h-8 w-28 overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
             <span className="text-lg font-semibold text-primary">Vasantha Metal Industry</span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <SidebarNav
