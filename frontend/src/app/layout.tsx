@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     },
     description: "Enterprise Inventory Management System",
     icons: {
-        icon: "/icon.svg",
+        icon: "/favicon.png",
     },
 };
 
