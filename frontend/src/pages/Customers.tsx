@@ -61,10 +61,13 @@ const Customers = () => {
 
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
+      const sanitizedSearch = searchTerm.toLowerCase().trim();
       const matchesSearch =
-        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.contact.includes(searchTerm) ||
-        (customer.companyName && customer.companyName.toLowerCase().includes(searchTerm.toLowerCase()));
+        customer.name.toLowerCase().includes(sanitizedSearch) ||
+        customer.contact.includes(sanitizedSearch) ||
+        (customer.email && customer.email.toLowerCase().includes(sanitizedSearch)) ||
+        (customer.companyName && customer.companyName.toLowerCase().includes(sanitizedSearch)) ||
+        (customer.address && customer.address.toLowerCase().includes(sanitizedSearch));
 
       const matchesType =
         typeFilter === "all" ||

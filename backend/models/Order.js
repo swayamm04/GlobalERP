@@ -51,6 +51,10 @@ const orderSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    roundOff: {
+        type: Number,
+        default: 0
+    },
     paidAmount: {
         type: Number,
         required: true

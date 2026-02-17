@@ -11,62 +11,54 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Boxes, AlertTriangle, Loader2, Trash2, Edit } from "lucide-react";
+import { Plus, Search, Boxes, AlertTriangle, Loader2, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import AddRawMaterialModal from "@/components/raw-materials/AddRawMaterialModal";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const RawInventory = () => {
     const [materials, setMaterials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-
-    const [modalCategory, setModalCategory] = useState("");
-    const [materialForm, setMaterialForm] = useState({
-        name: "",
-        unit: "pieces",
-        stockQuantity: 0,
-        minStockLevel: 10,
-        specifications: [] as { label: string, value: string }[]
-    });
     const [editingMaterial, setEditingMaterial] = useState<any>(null);
-
-    useEffect(() => {
-        if (!isModalOpen) {
-            setEditingMaterial(null);
-            setModalCategory("");
-            setMaterialForm({
-                name: "",
-                unit: "pieces",
-                stockQuantity: 0,
-                minStockLevel: 10,
-                specifications: []
-            });
-        }
-    }, [isModalOpen]);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [materialToDelete, setMaterialToDelete] = useState<{ id: string, name: string } | null>(null);
 
     const handleEdit = (material: any) => {
         setEditingMaterial(material);
-        setModalCategory(material.category);
-        setMaterialForm({
-            name: material.name,
-            unit: material.unit,
-            stockQuantity: material.stockQuantity,
-            minStockLevel: material.minStockLevel,
-            specifications: material.specifications || []
-        });
         setIsModalOpen(true);
+    };
+
+    const handleDeleteClick = (id: string, name: string) => {
+        setMaterialToDelete({ id, name });
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!materialToDelete) return;
+
+        try {
+            await api.delete(`/api/raw-materials/${materialToDelete.id}`);
+            toast.success("Material deleted successfully");
+            fetchMaterials();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to delete material");
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setMaterialToDelete(null);
+        }
     };
 
     const fetchMaterials = async () => {
@@ -85,56 +77,6 @@ const RawInventory = () => {
         fetchMaterials();
     }, []);
 
-    const addSpecification = () => {
-        setMaterialForm(prev => ({
-            ...prev,
-            specifications: [...prev.specifications, { label: "", value: "" }]
-        }));
-    };
-
-    const removeSpecification = (index: number) => {
-        setMaterialForm(prev => ({
-            ...prev,
-            specifications: prev.specifications.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleSpecChange = (index: number, field: 'label' | 'value', value: string) => {
-        const newSpecs = [...materialForm.specifications];
-        newSpecs[index] = { ...newSpecs[index], [field]: value };
-        setMaterialForm(prev => ({ ...prev, specifications: newSpecs }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!modalCategory) {
-            toast.error("Please enter a category");
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const materialData = {
-                ...materialForm,
-                category: modalCategory
-            };
-
-            if (editingMaterial) {
-                await api.put(`/api/raw-materials/${editingMaterial._id}`, materialData);
-                toast.success("Material updated successfully!");
-            } else {
-                await api.post("/api/raw-materials", materialData);
-                toast.success("Material added successfully!");
-            }
-            setIsModalOpen(false);
-            fetchMaterials();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to save materials");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     const filteredMaterials = materials.filter(m =>
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -151,128 +93,22 @@ const RawInventory = () => {
                     <p className="text-muted-foreground">Manage raw materials and stock levels</p>
                 </div>
 
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Add Material
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>{editingMaterial ? "Edit Raw Material" : "Add New Raw Materials"}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Material Category</Label>
-                                <Input
-                                    id="category"
-                                    value={modalCategory}
-                                    onChange={(e) => setModalCategory(e.target.value)}
-                                    required
-                                    placeholder="e.g. Metals, Plastics, Chemicals"
-                                />
-                            </div>
+                <Button className="gap-2" onClick={() => {
+                    setEditingMaterial(null);
+                    setIsModalOpen(true);
+                }}>
+                    <Plus className="h-4 w-4" />
+                    Add Material
+                </Button>
 
-                            <div className="space-y-4 border-t pt-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm">Material Name</Label>
-                                        <Input
-                                            value={materialForm.name}
-                                            onChange={(e) => setMaterialForm(f => ({ ...f, name: e.target.value }))}
-                                            required
-                                            placeholder="e.g. MS Rod 10mm"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm">Unit</Label>
-                                        <select
-                                            className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background"
-                                            value={materialForm.unit}
-                                            onChange={(e) => setMaterialForm(f => ({ ...f, unit: e.target.value }))}
-                                            required
-                                        >
-                                            <option value="pieces">Pieces (pcs)</option>
-                                            <option value="kg">Kilograms (kg)</option>
-                                            <option value="quintal">Quintal (qtl)</option>
-                                            <option value="ton">Tone (tone)</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-1.5 hidden">
-                                        <Label className="text-sm text-muted-foreground">Min Stock Level</Label>
-                                        <Input
-                                            type="number"
-                                            value={materialForm.minStockLevel}
-                                            onChange={(e) => setMaterialForm(f => ({ ...f, minStockLevel: Number(e.target.value) }))}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-sm">Initial Stock Quantity</Label>
-                                        <Input
-                                            type="number"
-                                            value={materialForm.stockQuantity}
-                                            onChange={(e) => setMaterialForm(f => ({ ...f, stockQuantity: Number(e.target.value) }))}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Specifications Section */}
-                                <div className="space-y-4 pt-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-semibold">Other Specifications (Optional)</h3>
-                                        <Button type="button" variant="outline" size="sm" onClick={addSpecification} className="gap-2">
-                                            <Plus className="h-4 w-4" />
-                                            Add Specification
-                                        </Button>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {materialForm.specifications.map((spec, index) => (
-                                            <div key={index} className="flex gap-3 items-end">
-                                                <div className="flex-1 space-y-1.5">
-                                                    <Label className="text-xs">Label</Label>
-                                                    <Input
-                                                        value={spec.label}
-                                                        onChange={(e) => handleSpecChange(index, 'label', e.target.value)}
-                                                        placeholder="e.g. Color, Size"
-                                                        className="h-9"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 space-y-1.5">
-                                                    <Label className="text-xs">Value</Label>
-                                                    <Input
-                                                        value={spec.value}
-                                                        onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
-                                                        placeholder="e.g. Red, 12mm"
-                                                        className="h-9"
-                                                    />
-                                                </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => removeSpecification(index)}
-                                                    className="h-9 w-9 text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (editingMaterial ? "Save Changes" : "Save Materials")}
-                            </Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <AddRawMaterialModal
+                    open={isModalOpen}
+                    onOpenChange={setIsModalOpen}
+                    onSuccess={fetchMaterials}
+                    editingMaterial={editingMaterial}
+                />
             </div>
+
 
             <div className="grid gap-4 md:grid-cols-4">
                 <Card>
@@ -387,13 +223,23 @@ const RawInventory = () => {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleEdit(m)}
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleEdit(m)}
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleDeleteClick(m._id, m.name)}
+                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -402,6 +248,23 @@ const RawInventory = () => {
                     </Table>
                 </CardContent>
             </Card>
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete <span className="font-semibold text-foreground">"{materialToDelete?.name}"</span> and remove its data from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete Material
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

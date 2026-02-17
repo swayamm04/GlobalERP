@@ -119,10 +119,17 @@ const Suppliers = () => {
     }
   };
 
-  const filteredSuppliers = suppliers.filter(s =>
-    s.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.supplierId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSuppliers = suppliers.filter(s => {
+    const sanitizedSearch = searchTerm.toLowerCase().trim();
+    return (
+      s.companyName.toLowerCase().includes(sanitizedSearch) ||
+      s.supplierId.toLowerCase().includes(sanitizedSearch) ||
+      (s.contactPerson && s.contactPerson.toLowerCase().includes(sanitizedSearch)) ||
+      (s.email && s.email.toLowerCase().includes(sanitizedSearch)) ||
+      (s.phone && s.phone.includes(sanitizedSearch)) ||
+      (s.location && s.location.toLowerCase().includes(sanitizedSearch))
+    );
+  });
 
   return (
     <div className="space-y-6">

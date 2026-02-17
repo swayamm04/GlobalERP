@@ -26,7 +26,6 @@ const Settings = () => {
     gstCode: "",
     invoicePrefix: "",
     financialYear: "",
-    isGstEnabled: true,
     bankDetails: {
       bankName: "",
       accountNumber: "",
@@ -450,18 +449,6 @@ const Settings = () => {
                           disabled={!isEditing}
                         />
                       </div>
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Tax Inclusion (GST)</Label>
-                        <p className="text-sm text-muted-foreground">Show tax breakdown on invoices</p>
-                      </div>
-                      <Switch
-                        checked={settings.isGstEnabled}
-                        onCheckedChange={(checked) => setSettings(prev => ({ ...prev, isGstEnabled: checked }))}
-                        disabled={!isEditing}
-                      />
                     </div>
                   </CardContent>
                 </Card>

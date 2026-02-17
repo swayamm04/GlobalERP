@@ -33,6 +33,7 @@ interface OrderItem {
     price: number;
     unit: string;
     category: string;
+    stock: number;
 }
 
 const AdvanceOrder = () => {
@@ -78,6 +79,7 @@ const AdvanceOrder = () => {
 
     const [subtotal, setSubtotal] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
+    const [roundOff, setRoundOff] = useState(0);
     const [balanceDue, setBalanceDue] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -130,14 +132,19 @@ const AdvanceOrder = () => {
         // Calculate grand total: Add-on GST if enabled
         const taxableValue = Math.max(0, newSubtotal - discount);
         const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
-        const total = taxableValue + gstAmount;
+        const rawTotal = taxableValue + gstAmount;
 
-        setGrandTotal(Math.max(0, total));
-        setBalanceDue(Math.max(0, total - paidAmount));
+        // Round off logic: Round UP to nearest integer if there are decimals
+        const roundedTotal = Math.ceil(rawTotal);
+        const diff = Number((roundedTotal - rawTotal).toFixed(2));
+
+        setGrandTotal(Math.max(0, roundedTotal));
+        setRoundOff(diff > 0 ? diff : 0);
+        setBalanceDue(Math.max(0, roundedTotal - paidAmount));
     }, [items, discount, paidAmount, includeGST]);
 
     const addItem = () => {
-        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, unit: "pcs", category: "" }, ...items]);
+        setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, unit: "pcs", category: "", stock: 0 }, ...items]);
     };
 
     const removeItem = (id: string) => {
@@ -160,6 +167,7 @@ const AdvanceOrder = () => {
                     if (product) {
                         updatedItem.price = product.price;
                         updatedItem.unit = product.unit || "pcs";
+                        updatedItem.stock = product.stock || 0;
                     }
                 }
                 return updatedItem;
@@ -235,6 +243,7 @@ const AdvanceOrder = () => {
                 subtotal,
                 discount,
                 grandTotal,
+                roundOff,
                 paidAmount,
                 paymentMethod,
                 balanceDue,
@@ -660,8 +669,28 @@ const AdvanceOrder = () => {
                                                         if (e.target.value === "") updateItem(item.id, 'quantity', 1);
                                                     }}
                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                    className="bg-background"
+                                                    className={cn(
+                                                        "bg-background",
+                                                        item.productName && item.quantity > item.stock && (
+                                                            item.stock <= 0
+                                                                ? "border-destructive focus-visible:ring-destructive"
+                                                                : "border-orange-500 focus-visible:ring-orange-500"
+                                                        )
+                                                    )}
                                                 />
+                                                {item.productName && item.quantity > item.stock && (
+                                                    <div className="flex items-center gap-1 mt-1 animate-pulse">
+                                                        {item.stock <= 0 ? (
+                                                            <Badge variant="outline" className="text-[9px] py-0 px-1 border-destructive text-destructive font-bold bg-destructive/5 whitespace-nowrap">
+                                                                OUT OF STOCK
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-[9px] py-0 px-1 border-orange-500 text-orange-600 font-bold bg-orange-50 whitespace-nowrap">
+                                                                LOW STOCK: {item.stock}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="w-full md:w-32 space-y-2">
                                                 <Label>Total</Label>
@@ -716,6 +745,13 @@ const AdvanceOrder = () => {
                                     <span className="font-semibold">Subtotal:</span>
                                     <span className="text-muted-foreground">₹ {subtotal.toFixed(2)}</span>
                                 </div>
+
+                                {roundOff > 0 && (
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground italic">
+                                        <span>Round Off:</span>
+                                        <span>+ ₹ {roundOff.toFixed(2)}</span>
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <Label htmlFor="discount" className="text-sm font-semibold">Discount</Label>

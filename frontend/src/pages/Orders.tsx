@@ -29,7 +29,7 @@ interface Order {
   id: string;
   customer: string;
   date: string;
-  items: number;
+  items: any[];
   product: string;
   amount: number;
   status: string;
@@ -70,7 +70,8 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
 
       const matchesSearch =
         order.customer.toLowerCase().includes(sanitizedSearch) ||
-        orderId.includes(sanitizedSearch);
+        orderId.includes(sanitizedSearch) ||
+        (order.product && order.product.toLowerCase().includes(sanitizedSearch));
 
       const matchesType =
         typeFilter === "all" ||
@@ -141,10 +142,6 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
               {isSecret ? "View completed orders created without tax" : "View all delivered and completed orders"}
             </p>
           </div>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export List
-          </Button>
         </div>
       )}
 
@@ -209,7 +206,7 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
                     <TableCell className="hidden md:table-cell whitespace-nowrap">
                       {format(new Date(order.date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">{order.items} Items</TableCell>
+                    <TableCell className="whitespace-nowrap">{order.items?.length || 0} Items</TableCell>
                     <TableCell className="whitespace-nowrap">₹{(order.amount || 0).toLocaleString()}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       <Badge variant={getStatusVariant(order.status)}>

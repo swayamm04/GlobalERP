@@ -146,9 +146,36 @@ const addRawMaterialStock = async (req, res) => {
     }
 };
 
+// @desc    Delete raw material
+// @route   DELETE /api/raw-materials/:id
+const deleteRawMaterial = async (req, res) => {
+    try {
+        const material = await RawMaterial.findByIdAndDelete(req.params.id);
+        if (!material) {
+            return res.status(404).json({ message: 'Material not found' });
+        }
+
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'DELETED_RAW_MATERIAL',
+                `Deleted raw material: ${material.name}`,
+                req
+            );
+        }
+
+        res.status(200).json({ message: 'Material deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getRawMaterials,
     createRawMaterial,
     updateRawMaterial,
-    addRawMaterialStock
+    addRawMaterialStock,
+    deleteRawMaterial
 };

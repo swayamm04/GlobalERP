@@ -74,6 +74,7 @@ export interface InvoiceData {
     estimationNo?: string;
     paidAmount?: number;
     balanceDue?: number;
+    roundOff?: number;
     includeGST?: boolean;
 }
 
@@ -138,6 +139,7 @@ export const generateInvoice = async (data: InvoiceData) => {
         termsOfDelivery,
         paidAmount,
         balanceDue,
+        roundOff = 0,
         includeGST = true
     } = data;
 
@@ -400,6 +402,13 @@ export const generateInvoice = async (data: InvoiceData) => {
         lastY += 10;
     }
 
+    if (roundOff > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.text("Round Off:", summaryX + 20, lastY + 5);
+        doc.text(`Rs. ${roundOff.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
+        lastY += 5;
+    }
+
     doc.line(summaryX - 2, lastY + 3, pageWidth - 5, lastY + 3);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -470,32 +479,30 @@ export const generateReceipt = async (data: PaymentReceiptData) => {
     doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
     // Header - Payment Receipt
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("PAYMENT RECEIPT", pageWidth / 2, 15, { align: "center" });
-    doc.line(5, 20, pageWidth - 5, 20);
+    doc.text("PAYMENT RECEIPT", pageWidth / 2, 12, { align: "center" });
+    doc.line(5, 15, pageWidth - 5, 15);
 
-    // Company Section
-    doc.setFontSize(10);
+    // Company Section (Header style)
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 30);
+    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 22);
     doc.setFont("helvetica", "normal");
-    const addressLines = doc.splitTextToSize(companyDetails?.address || "No 25/11, 2nd Main, 2nd Cross, Industrial Area, Bangalore", 100);
-    doc.text(addressLines, 10, 35);
+    const addressLines = doc.splitTextToSize(companyDetails?.address || "No 25/11, 2nd Main, 2nd Cross, Industrial Area, Bangalore", 80);
+    doc.text(addressLines, 10, 27);
 
-    let currentY = 35 + (addressLines.length * 5);
-    doc.text(`GSTIN: ${companyDetails?.gstin || (companyDetails as any)?.gstNumber || "N/A"}`, 10, currentY);
-    doc.text(`Contact: ${companyDetails?.phone || "N/A"}`, 10, currentY + 5);
-
-    // Receipt Info Section
-    doc.line(pageWidth / 2, 20, pageWidth / 2, 60);
+    // Receipt Info Section (Right side grid)
+    doc.line(pageWidth / 2, 15, pageWidth / 2, 60);
     const rightCol = (pageWidth / 2) + 5;
-    doc.text("Receipt Details:", rightCol, 30);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Receipt No: RCT-${orderId.slice(-6).toUpperCase()}-${Date.now().toString().slice(-4)}`, rightCol, 36);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Date: ${formatDate(paymentDate)}`, rightCol, 42);
-    doc.text(`Order Ref: #${orderId.slice(-6).toUpperCase()}`, rightCol, 48);
+    doc.text("Receipt Details:", rightCol, 22);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Receipt No: RCT-${orderId.slice(-6).toUpperCase()}`, rightCol, 27);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date: ${formatDate(paymentDate)}`, rightCol, 32);
+    doc.text(`Order Ref: #${orderId.slice(-6).toUpperCase()}`, rightCol, 37);
 
     doc.line(5, 60, pageWidth - 5, 60);
 
@@ -584,26 +591,30 @@ export const generatePaymentStatement = async (data: StatementData) => {
     doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
     // Header
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     const headerTitle = "PAYMENT LEDGER / STATEMENT";
-    doc.text(headerTitle, pageWidth / 2, 15, { align: "center" });
-    doc.line(5, 20, pageWidth - 5, 20);
+    doc.text(headerTitle, pageWidth / 2, 12, { align: "center" });
+    doc.line(5, 15, pageWidth - 5, 15);
 
     // Company & Statement Info
-    doc.setFontSize(10);
-    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 30);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(companyDetails?.companyName || "VASANTHA METAL INDUSTRY", 10, 22);
     doc.setFont("helvetica", "normal");
-    const addressLines = doc.splitTextToSize(companyDetails?.address || "Industrial Area, Bangalore", 100);
-    doc.text(addressLines, 10, 35);
+    const addressLines = doc.splitTextToSize(companyDetails?.address || "Industrial Area, Bangalore", 80);
+    doc.text(addressLines, 10, 27);
 
     const rightCol = pageWidth / 2 + 5;
-    doc.setFont("helvetica", "bold");
-    doc.text("Statement Details:", rightCol, 30);
+    doc.line(pageWidth / 2, 15, pageWidth / 2, 60);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 36);
-    doc.text(`Date: ${formatDate(new Date())}`, rightCol, 42);
-    doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 48);
+    doc.text("Statement Details:", rightCol, 22);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Order ID: #${orderId.slice(-6).toUpperCase()}`, rightCol, 27);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date: ${formatDate(new Date())}`, rightCol, 32);
+    doc.text(`Grand Total: Rs. ${totalAmount.toLocaleString()}`, rightCol, 37);
 
     doc.line(5, 60, pageWidth - 5, 60);
 

@@ -5,24 +5,29 @@ const logActivity = require('../utils/activityLogger');
 
 // Helper to update product stock
 const updateProductStock = async (items, type = 'deduct') => {
+    if (!items || !Array.isArray(items)) return;
     for (const item of items) {
-        if (!item.productId) continue;
-        const product = await Product.findById(item.productId);
-        if (product) {
-            if (type === 'deduct') {
-                product.stock -= item.quantity;
-            } else {
-                product.stock += item.quantity;
+        try {
+            if (!item.productId) continue;
+            const product = await Product.findById(item.productId);
+            if (product) {
+                if (type === 'deduct') {
+                    product.stock -= (item.quantity || 0);
+                } else {
+                    product.stock += (item.quantity || 0);
+                }
+                // Update status based on new stock level
+                if (product.stock <= 0) {
+                    product.status = 'Out of Stock';
+                } else if (product.stock <= 5) { // Assuming 5 as low stock threshold
+                    product.status = 'Low Stock';
+                } else {
+                    product.status = 'In Stock';
+                }
+                await product.save();
             }
-            // Update status based on new stock level
-            if (product.stock <= 0) {
-                product.status = 'Out of Stock';
-            } else if (product.stock <= 5) { // Assuming 5 as low stock threshold
-                product.status = 'Low Stock';
-            } else {
-                product.status = 'In Stock';
-            }
-            await product.save();
+        } catch (error) {
+            console.error(`Error updating stock for product ${item.productId}:`, error);
         }
     }
 };
@@ -43,7 +48,12 @@ const getOrders = async (req, res) => {
             id: order._id,
             customer: order.customerName,
             date: order.createdAt,
-            items: order.items.length,
+            itemsCount: order.items.length,
+            items: order.items.map(item => ({
+                name: item.productName,
+                quantity: item.quantity,
+                unit: item.unit
+            })),
             amount: order.grandTotal || 0,
             status: order.status,
             paymentMethod: order.paymentMethod,
@@ -235,10 +245,14 @@ const updateOrderStatus = async (req, res) => {
             }
 
             // Handle stock refill/deduction on status change
-            if (status === 'Cancelled' && oldStatus !== 'Cancelled') {
-                await updateProductStock(order.items, 'refill');
-            } else if (oldStatus === 'Cancelled' && status !== 'Cancelled') {
-                await updateProductStock(order.items, 'deduct');
+            try {
+                if (status === 'Cancelled' && oldStatus !== 'Cancelled') {
+                    await updateProductStock(order.items, 'refill');
+                } else if (oldStatus === 'Cancelled' && status !== 'Cancelled') {
+                    await updateProductStock(order.items, 'deduct');
+                }
+            } catch (stockError) {
+                console.error('Stock update failed during status change:', stockError);
             }
 
             res.status(200).json(updatedOrder);
@@ -246,8 +260,8 @@ const updateOrderStatus = async (req, res) => {
             res.status(404).json({ message: 'Order not found' });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Error in updateOrderStatus:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 

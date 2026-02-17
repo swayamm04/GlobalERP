@@ -237,39 +237,7 @@ export function ProductDialog({
                                     </p>
                                 )}
 
-                                <div className="pt-4 space-y-4 border-t">
-                                    <h3 className="text-sm font-medium">GST Details</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="cgst">CGST (%)</Label>
-                                            <Input
-                                                id="cgst"
-                                                type="number"
-                                                value={formData.cgst}
-                                                onChange={(e) => setFormData({ ...formData, cgst: e.target.value })}
-                                                onFocus={(e) => e.target.select()}
-                                                onBlur={(e) => {
-                                                    if (e.target.value === "") setFormData({ ...formData, cgst: "9" });
-                                                }}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="sgst">SGST (%)</Label>
-                                            <Input
-                                                id="sgst"
-                                                type="number"
-                                                value={formData.sgst}
-                                                onChange={(e) => setFormData({ ...formData, sgst: e.target.value })}
-                                                onFocus={(e) => e.target.select()}
-                                                onBlur={(e) => {
-                                                    if (e.target.value === "") setFormData({ ...formData, sgst: "9" });
-                                                }}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
                     </div>

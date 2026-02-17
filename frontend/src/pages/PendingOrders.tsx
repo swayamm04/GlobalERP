@@ -62,7 +62,7 @@ interface Order {
     id: string;
     customer: string;
     date: string;
-    items: number;
+    items: any[];
     amount: number;
     status: string;
     customerType: string;
@@ -124,7 +124,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                 typeFilter === "all" ||
                 order.customerType.toLowerCase() === typeFilter.toLowerCase();
 
-            const isNotDone = (order.status !== "Completed" && order.status !== "Cancelled") || order.balanceDue > 0;
+            const isNotDone = order.status !== "Completed" && order.status !== "Cancelled";
 
             // Filter by GST status (secret/non-secret)
             const matchesSecret = isSecret ? order.includeGST === false : (order.includeGST === true || order.includeGST === undefined);
@@ -396,6 +396,15 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                                                                 <span>Add Payment</span>
                                                             </DropdownMenuItem>
                                                         )}
+                                                        {order.balanceDue === 0 && (
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer text-blue-600 focus:text-blue-600"
+                                                                onClick={() => openPaymentModal(order)}
+                                                            >
+                                                                <History className="mr-2 h-4 w-4" />
+                                                                <span>Payment History</span>
+                                                            </DropdownMenuItem>
+                                                        )}
                                                         {order.status !== 'Completed' && (
                                                             <DropdownMenuItem
                                                                 className="cursor-pointer text-green-600 focus:text-green-600"
@@ -454,45 +463,47 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                                 </div>
                             </div>
 
-                            {/* Add Payment Section */}
-                            <div className="space-y-4 border rounded-lg p-4">
-                                <h3 className="font-semibold flex items-center gap-2">
-                                    <Plus className="h-4 w-4" /> Add New Payment
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="pay-method">Method</Label>
-                                        <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
-                                            <SelectTrigger id="pay-method">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Cash">Cash</SelectItem>
-                                                <SelectItem value="Online">Online</SelectItem>
-                                                <SelectItem value="Card">Card</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                            {/* Add Payment Section - Only show if balance due */}
+                            {selectedOrder.balanceDue > 0 && (
+                                <div className="space-y-4 border rounded-lg p-4">
+                                    <h3 className="font-semibold flex items-center gap-2">
+                                        <Plus className="h-4 w-4" /> Add New Payment
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="pay-method">Method</Label>
+                                            <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
+                                                <SelectTrigger id="pay-method">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Cash">Cash</SelectItem>
+                                                    <SelectItem value="Online">Online</SelectItem>
+                                                    <SelectItem value="Card">Card</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="pay-amount">Amount</Label>
+                                            <Input
+                                                id="pay-amount"
+                                                type="number"
+                                                placeholder="Enter amount"
+                                                value={newPaymentAmount}
+                                                onChange={(e) => setNewPaymentAmount(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="pay-amount">Amount</Label>
-                                        <Input
-                                            id="pay-amount"
-                                            type="number"
-                                            placeholder="Enter amount"
-                                            value={newPaymentAmount}
-                                            onChange={(e) => setNewPaymentAmount(e.target.value)}
-                                        />
-                                    </div>
+                                    <Button
+                                        className="w-full"
+                                        disabled={isSubmittingPayment}
+                                        onClick={handleAddPayment}
+                                    >
+                                        {isSubmittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                                        Record Payment
+                                    </Button>
                                 </div>
-                                <Button
-                                    className="w-full"
-                                    disabled={isSubmittingPayment}
-                                    onClick={handleAddPayment}
-                                >
-                                    {isSubmittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                                    Record Payment
-                                </Button>
-                            </div>
+                            )}
 
                             {/* Payment History */}
                             <div className="space-y-3">

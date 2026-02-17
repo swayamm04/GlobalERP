@@ -18,7 +18,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
 import {
   LineChart,
@@ -40,10 +41,41 @@ import {
 
 
 
-/* Cancel History State */
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { generateInvoice, generatePaymentStatement } from "@/lib/invoiceGenerator";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Helper to load image
+const loadImage = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      resolve("");
+      return;
+    }
+    const img = new Image();
+    img.src = url;
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = (err) => reject(err);
+  });
+};
+
 
 const Analytics = () => {
   const [period, setPeriod] = useState("year");
@@ -79,17 +111,38 @@ const Analytics = () => {
       const autoTable = (await import("jspdf-autotable")).default;
 
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Header & Logo
-      doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
-      doc.text("VASANTHA METAL INDUSTRY", 14, 22);
+      // Standard Header Layout (similar to Invoice)
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.1);
+      doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Business Analytics Report", 14, 28);
-      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 33);
-      doc.text(`Period: ${period.charAt(0).toUpperCase() + period.slice(1)}`, 14, 38);
+      // Logo
+      try {
+        const logoBase64 = await loadImage("/logo.png");
+        if (logoBase64) {
+          doc.addImage(logoBase64, "PNG", 6, 6, 25, 8);
+        }
+      } catch (e) {
+        console.error("Logo load failed", e);
+      }
+
+      // Header Branding
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("BUSINESS ANALYTICS REPORT", pageWidth / 2, 12, { align: "center" });
+      doc.line(5, 15, pageWidth - 5, 15);
+
+      // Company Info (Left Side - Name Only)
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("VASANTHA METAL INDUSTRY", 10, 22);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(`Period: ${period.charAt(0).toUpperCase() + period.slice(1)}`, 10, 27);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 10, 31);
 
       const captureChart = async (ref: React.RefObject<HTMLDivElement>) => {
         if (!ref.current) return { url: null, width: 0, height: 0 };
@@ -134,7 +187,13 @@ const Analytics = () => {
         head: [kpiData[0]],
         body: kpiData.slice(1),
         theme: 'striped',
-        headStyles: { fillColor: [40, 40, 40] }
+        headStyles: { fillColor: [45, 62, 80] },
+        didDrawPage: (data) => {
+          // Re-draw border on subsequent pages
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.1);
+          doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+        }
       });
 
       let currentY = (doc as any).lastAutoTable.finalY + 15;
@@ -171,7 +230,7 @@ const Analytics = () => {
         head: [["#", "Product Name", "Units Sold", "Revenue"]],
         body: productData,
         theme: 'grid',
-        headStyles: { fillColor: [40, 40, 40] }
+        headStyles: { fillColor: [45, 62, 80] }
       });
 
       currentY = (doc as any).lastAutoTable.finalY + 15;
@@ -220,7 +279,7 @@ const Analytics = () => {
         head: [["Category", "Total Revenue"]],
         body: categoryRows,
         theme: 'striped',
-        headStyles: { fillColor: [40, 40, 40] }
+        headStyles: { fillColor: [45, 62, 80] }
       });
 
       doc.save(`Analytics_Report_${period}_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -309,7 +368,14 @@ const Analytics = () => {
               <SelectItem value="year">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={generatePDF}>Export</Button>
+          <Button
+            variant="default"
+            onClick={generatePDF}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-sm transition-colors group"
+          >
+            <Download className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+            Export
+          </Button>
         </div>
       </div>
 
@@ -320,8 +386,8 @@ const Analytics = () => {
             <Card key={kpi.title}>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <kpi.icon className="h-5 w-5 text-primary" />
+                  <div className="rounded-full bg-blue-50 p-2">
+                    <kpi.icon className="h-5 w-5 text-blue-600" />
                   </div>
                   <Badge
                     variant="secondary"
@@ -354,7 +420,7 @@ const Analytics = () => {
         {/* Revenue Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Revenue Trend</CardTitle>
+            <CardTitle className="text-slate-900 font-bold">Revenue Trend</CardTitle>
             <CardDescription>Sales growth performance over time</CardDescription>
           </CardHeader>
           <CardContent ref={revenueChartRef}>
@@ -375,9 +441,10 @@ const Analytics = () => {
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="hsl(var(--primary))"
+                    stroke="#3b82f6"
                     strokeWidth={2}
-                    fill="hsl(var(--primary) / 0.1)"
+                    fill="#3b82f6"
+                    fillOpacity={0.1}
                     name="Revenue"
                   />
                 </AreaChart>
@@ -389,7 +456,7 @@ const Analytics = () => {
         {/* Category Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
+            <CardTitle className="text-slate-900 font-bold">Sales by Category</CardTitle>
             <CardDescription>Product category distribution</CardDescription>
           </CardHeader>
           <CardContent ref={categoryChartRef}>
@@ -440,7 +507,7 @@ const Analytics = () => {
         {/* Orders Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Order Trends</CardTitle>
+            <CardTitle className="text-slate-900 font-bold">Order Trends</CardTitle>
             <CardDescription>Monthly order volume fluctuation</CardDescription>
           </CardHeader>
           <CardContent ref={orderChartRef}>
@@ -449,7 +516,7 @@ const Analytics = () => {
                 <BarChart data={data?.monthlyTrend || []}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
                   <XAxis dataKey="label" className="text-xs" axisLine={false} tickLine={false} />
-                  <YAxis className="text-xs" axisLine={false} tickLine={false} />
+                  <YAxis className="text-xs" axisLine={false} tickLine={false} tickFormatter={(val) => val.toLocaleString()} />
                   <Tooltip
                     cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                     contentStyle={{
@@ -460,7 +527,7 @@ const Analytics = () => {
                   />
                   <Bar
                     dataKey="orders"
-                    fill="hsl(var(--primary))"
+                    fill="#3b82f6"
                     radius={[4, 4, 0, 0]}
                     name="Orders"
                   />
@@ -473,7 +540,7 @@ const Analytics = () => {
         {/* Top Products */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Performing Products</CardTitle>
+            <CardTitle className="text-slate-900 font-bold">Top Performing Products</CardTitle>
             <CardDescription>Best selling products this period</CardDescription>
           </CardHeader>
           <CardContent>
@@ -484,7 +551,7 @@ const Analytics = () => {
                 data.topProducts.map((product: any, index: number) => (
                   <div key={product.name} className="flex items-center justify-between group">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 text-sm font-bold group-hover:bg-slate-900 group-hover:text-white transition-colors">
                         {index + 1}
                       </div>
                       <div>

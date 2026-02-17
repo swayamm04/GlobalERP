@@ -30,6 +30,32 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Helper to load image
+const loadImage = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        if (typeof window === "undefined") {
+            resolve("");
+            return;
+        }
+        const img = new Image();
+        img.src = url;
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                reject(new Error("Could not get canvas context"));
+                return;
+            }
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = (err) => reject(err);
+    });
+};
+
 const ProductCatalog = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
@@ -64,7 +90,15 @@ const ProductCatalog = () => {
     }, []);
 
     const filteredProducts = products.filter((product) => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const sanitizedSearch = searchTerm.toLowerCase().trim();
+        const categoryName = product.category?.name?.toLowerCase() || "";
+        const specs = product.customFields?.map((f: any) => `${f.label} ${f.value}`).join(" ").toLowerCase() || "";
+
+        const matchesSearch =
+            product.name.toLowerCase().includes(sanitizedSearch) ||
+            categoryName.includes(sanitizedSearch) ||
+            specs.includes(sanitizedSearch);
+
         const matchesCategory = selectedCategory === "all" ||
             (typeof product.category === 'object' ? product.category._id : product.category) === selectedCategory;
         return matchesSearch && matchesCategory;
@@ -94,16 +128,40 @@ const ProductCatalog = () => {
         }
     };
 
-    const exportToPDF = () => {
+    const exportToPDF = async () => {
         try {
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
 
-            doc.setFontSize(18);
-            doc.text("Product Catalog", 14, 22);
+            // Standard Header Layout (similar to Invoice)
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.1);
+            doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
-            doc.setFontSize(11);
-            doc.text("Vasantha Metal Industry", 14, 30);
-            doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`, 14, 36);
+            // Logo
+            try {
+                const logoBase64 = await loadImage("/logo.png");
+                if (logoBase64) {
+                    doc.addImage(logoBase64, "PNG", 6, 6, 25, 8);
+                }
+            } catch (e) {
+                console.error("Logo load failed", e);
+            }
+
+            // Header Branding
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text("PRODUCT CATALOG", pageWidth / 2, 12, { align: "center" });
+            doc.line(5, 15, pageWidth - 5, 15);
+
+            // Company Info (Left Side - Name Only)
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            doc.text("VASANTHA METAL INDUSTRY", 10, 22);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.text(`Generated on: ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`, 10, 27);
 
             const tableData = filteredProducts.map((product, index) => [
                 index + 1,
@@ -115,18 +173,24 @@ const ProductCatalog = () => {
 
 
             autoTable(doc, {
-                head: [["Sl No.", "Product Name", "Category", "Specifications", "Price"]],
+                head: [["SL NO.", "PRODUCT NAME", "CATEGORY", "SPECIFICATIONS", "PRICE"]],
                 body: tableData,
-                startY: 44,
+                startY: 40,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+                margin: { left: 10, right: 10, bottom: 15 },
+                didDrawPage: (data) => {
+                    // Re-draw border on subsequent pages
+                    doc.setDrawColor(0);
+                    doc.setLineWidth(0.1);
+                    doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+
+                    doc.setFontSize(8);
+                    doc.setFont("helvetica", "italic");
+                    doc.text("This is a computer-generated catalog.", pageWidth / 2, pageHeight - 8, { align: "center" });
+                }
             });
-
-            // Add computerized declaration
-            const finalY = (doc as any).lastAutoTable.finalY || 150;
-            doc.setFontSize(10);
-            const declarationText = "This is a computer-generated document. No signature is required.";
-            const pageWidth = doc.internal.pageSize.width;
-
-            doc.text(declarationText, pageWidth / 2, finalY + 20, { align: "center" });
 
             doc.save("products_catalog.pdf");
             toast.success("Products exported to PDF successfully");

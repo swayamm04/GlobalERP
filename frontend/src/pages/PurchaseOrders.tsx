@@ -43,6 +43,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import AddRawMaterialModal from "@/components/raw-materials/AddRawMaterialModal";
 
 const PurchaseOrders = () => {
   const [pos, setPos] = useState<any[]>([]);
@@ -53,6 +54,9 @@ const PurchaseOrders = () => {
 
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [rawMaterials, setRawMaterials] = useState<any[]>([]);
+
+  const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
+  const [activeItemIdx, setActiveItemIdx] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     supplier: "",
@@ -113,12 +117,18 @@ const PurchaseOrders = () => {
     setFormData(prev => {
       const newItems = [...prev.items];
       newItems[index] = { ...newItems[index], [field]: value };
-
-      // No longer calculating amount from quantity * unitPrice
-      // User enters amount directly now
-
       return { ...prev, items: newItems };
     });
+  };
+
+  const handleAddMaterialSuccess = (newMaterial: any) => {
+    fetchOptions();
+    if (activeItemIdx !== null && newMaterial) {
+      handleItemChange(activeItemIdx, 'name', newMaterial.name);
+      handleItemChange(activeItemIdx, 'unit', newMaterial.unit || 'pieces');
+      handleItemChange(activeItemIdx, 'isFetched', true);
+    }
+    setActiveItemIdx(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,14 +156,26 @@ const PurchaseOrders = () => {
   };
 
   const filteredPOs = pos.filter(po => {
+    const sanitizedSearch = searchTerm.toLowerCase().trim();
     const poNum = po.poNumber?.toLowerCase() || "";
     const supplierName = (po.supplier?.companyName || "").toLowerCase();
-    const search = searchTerm.toLowerCase();
-    return poNum.includes(search) || supplierName.includes(search);
+    const items = po.items?.map((i: any) => i.name).join(" ").toLowerCase() || "";
+    const notes = (po.notes || "").toLowerCase();
+
+    return poNum.includes(sanitizedSearch) ||
+      supplierName.includes(sanitizedSearch) ||
+      items.includes(sanitizedSearch) ||
+      notes.includes(sanitizedSearch);
   });
 
   return (
     <div className="space-y-6">
+      <AddRawMaterialModal
+        open={isAddMaterialModalOpen}
+        onOpenChange={setIsAddMaterialModalOpen}
+        onSuccess={handleAddMaterialSuccess}
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -262,23 +284,20 @@ const PurchaseOrders = () => {
                                   <CommandItem
                                     value="Other"
                                     onSelect={() => {
-                                      handleItemChange(idx, 'name', 'Other');
-                                      handleItemChange(idx, 'isFetched', false);
+                                      setActiveItemIdx(idx);
+                                      setIsAddMaterialModalOpen(true);
                                       setOpenPopoverIdx(null);
                                     }}
                                     className="group cursor-pointer text-blue-600 aria-selected:bg-slate-100 hover:!bg-blue-600 hover:!text-white"
                                   >
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Manual Entry
+                                    Add Material
                                   </CommandItem>
                                 </CommandGroup>
                               </CommandList>
                             </Command>
                           </PopoverContent>
                         </Popover>
-                        {item.name === "Other" && (
-                          <Input className="h-10 mt-2" placeholder="Enter Material Name" onChange={(e) => handleItemChange(idx, 'name', e.target.value)} />
-                        )}
                       </div>
                       <Button
                         type="button"
@@ -295,7 +314,17 @@ const PurchaseOrders = () => {
                     <div className="grid grid-cols-4 gap-4 pt-2 border-t border-border/50">
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium">Quantity</Label>
-                        <Input type="number" className="h-9" value={item.quantity} onChange={(e) => handleItemChange(idx, 'quantity', Number(e.target.value))} />
+                        <Input
+                          type="number"
+                          className="h-9"
+                          min="0"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={(e) => {
+                            if (e.target.value === '') handleItemChange(idx, 'quantity', 0);
+                          }}
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium">Unit</Label>
@@ -319,8 +348,13 @@ const PurchaseOrders = () => {
                         <Input
                           type="number"
                           className="h-9 font-bold"
+                          min="0"
                           value={item.amount}
-                          onChange={(e) => handleItemChange(idx, 'amount', Number(e.target.value))}
+                          onChange={(e) => handleItemChange(idx, 'amount', e.target.value === '' ? '' : Number(e.target.value))}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={(e) => {
+                            if (e.target.value === '') handleItemChange(idx, 'amount', 0);
+                          }}
                           placeholder="Enter Total Amount"
                         />
                       </div>
