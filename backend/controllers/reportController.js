@@ -282,12 +282,21 @@ const getActivityLogs = async (req, res) => {
 // @access  Private
 const getAnalyticsDashboard = async (req, res) => {
     try {
-        const { period = 'year' } = req.query;
+        const { period = 'year', startDate: customStart, endDate: customEnd } = req.query;
         let startDate = new Date();
+        let endDate = new Date();
         let prevStartDate = new Date();
         let prevEndDate = new Date();
 
-        if (period === 'week') {
+        if (customStart || customEnd) {
+            startDate = customStart ? new Date(customStart) : new Date(0);
+            endDate = customEnd ? new Date(customEnd) : new Date();
+            endDate.setHours(23, 59, 59, 999);
+
+            const durationMs = endDate.getTime() - startDate.getTime();
+            prevStartDate = new Date(startDate.getTime() - durationMs);
+            prevEndDate = new Date(startDate.getTime());
+        } else if (period === 'week') {
             startDate.setDate(startDate.getDate() - 7);
             prevStartDate.setDate(prevStartDate.getDate() - 14);
             prevEndDate.setDate(prevEndDate.getDate() - 7);
@@ -308,7 +317,7 @@ const getAnalyticsDashboard = async (req, res) => {
         const matchStage = {
             status: 'Completed',
             includeGST: { $ne: false },
-            createdAt: { $gte: startDate }
+            createdAt: { $gte: startDate, $lte: endDate }
         };
 
         const prevMatchStage = {
@@ -318,7 +327,8 @@ const getAnalyticsDashboard = async (req, res) => {
         };
 
         // Trend Grouping Logic
-        const groupFormat = (period === 'week' || period === 'month')
+        const durationDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+        const groupFormat = (period === 'week' || period === 'month' || (period === 'custom' && durationDays <= 31))
             ? { day: { $dayOfMonth: "$createdAt" }, month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }
             : { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } };
 

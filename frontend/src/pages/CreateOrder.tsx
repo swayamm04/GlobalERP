@@ -76,6 +76,8 @@ const CreateOrder = () => {
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
     const [subtotal, setSubtotal] = useState(0);
+    const [cgst, setCgst] = useState(0);
+    const [sgst, setSgst] = useState(0);
     const [grandTotal, setGrandTotal] = useState(0);
     const [roundOff, setRoundOff] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,6 +134,7 @@ const CreateOrder = () => {
         // Calculate grand total: Add-on GST if enabled
         const taxableValue = Math.max(0, newSubtotal - discount);
         const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
+        const individualGst = gstAmount / 2;
         const rawTotal = taxableValue + gstAmount;
 
         // Round off logic: Round UP to nearest integer if there are decimals
@@ -140,6 +143,8 @@ const CreateOrder = () => {
 
         setGrandTotal(roundedTotal);
         setRoundOff(diff > 0 ? diff : 0);
+        setCgst(individualGst);
+        setSgst(individualGst);
     }, [items, discount, includeGST]);
 
     const addItem = () => {
@@ -248,6 +253,8 @@ const CreateOrder = () => {
                 items: formattedItems,
                 subtotal,
                 discount,
+                cgst,
+                sgst,
                 grandTotal,
                 roundOff,
                 paidAmount: grandTotal,
@@ -753,6 +760,19 @@ const CreateOrder = () => {
                                 <span className="font-semibold">Subtotal:</span>
                                 <span className="text-muted-foreground">₹ {subtotal.toFixed(2)}</span>
                             </div>
+
+                            {includeGST && (
+                                <>
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <span>CGST (9%):</span>
+                                        <span>₹ {cgst.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <span>SGST (9%):</span>
+                                        <span>₹ {sgst.toFixed(2)}</span>
+                                    </div>
+                                </>
+                            )}
 
                             {roundOff > 0 && (
                                 <div className="flex justify-between items-center text-sm text-muted-foreground italic">

@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -82,6 +84,12 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
 
+  // Custom date states
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
+
   const revenueChartRef = useRef<HTMLDivElement>(null);
   const categoryChartRef = useRef<HTMLDivElement>(null);
   const orderChartRef = useRef<HTMLDivElement>(null);
@@ -89,7 +97,11 @@ const Analytics = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/reports/analytics?period=${period}`);
+      let query = `?period=${period}`;
+      if (period === 'custom' && startDate && endDate) {
+        query += `&startDate=${startDate}&endDate=${endDate}`;
+      }
+      const response = await api.get(`/api/reports/analytics${query}`);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -100,8 +112,25 @@ const Analytics = () => {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    if (period !== 'custom') {
+      fetchAnalytics();
+    }
   }, [period]);
+
+  const handleApplyCustomDates = () => {
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    if (period === 'custom') {
+      fetchAnalytics();
+    }
+  };
+
+  // Re-fetch when actual custom dates change
+  useEffect(() => {
+    if (period === 'custom' && startDate && endDate) {
+      fetchAnalytics();
+    }
+  }, [startDate, endDate]);
 
   const generatePDF = async () => {
     try {
@@ -355,19 +384,51 @@ const Analytics = () => {
             Track performance metrics and business insights
           </p>
         </div>
-        <div className="flex gap-2">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[150px]">
-              <Calendar className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="quarter">This Quarter</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex gap-2">
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-[140px]">
+                <Calendar className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="quarter">This Quarter</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+                <SelectItem value="custom">Custom Range</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {period === 'custom' && (
+              <div className="flex flex-row gap-3 items-center bg-muted/40 p-1.5 px-3 rounded-lg border border-border/60 animate-in fade-in slide-in-from-right-2 duration-300">
+                <div className="flex flex-row gap-3 items-center">
+                  <Input
+                    type="date"
+                    className="h-9 w-40 text-sm"
+                    value={tempStartDate}
+                    onChange={(e) => setTempStartDate(e.target.value)}
+                  />
+                  <span className="text-muted-foreground text-sm font-medium">to</span>
+                  <Input
+                    type="date"
+                    className="h-9 w-40 text-sm"
+                    value={tempEndDate}
+                    onChange={(e) => setTempEndDate(e.target.value)}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  className="h-9 px-4 ml-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={handleApplyCustomDates}
+                  disabled={!tempStartDate || !tempEndDate}
+                >
+                  Go
+                </Button>
+              </div>
+            )}
+          </div>
+
           <Button
             variant="default"
             onClick={generatePDF}

@@ -24,6 +24,7 @@ import {
   Receipt,
   ChevronDown,
   ChevronUp,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -89,6 +90,7 @@ const menuItems: MenuItem[] = [
       { icon: UserPlus, label: "Create Admins", path: "/users", roles: ["super_admin"] },
     ],
   },
+  { icon: Calculator, label: "Create Estimation", path: "/estimations" },
   { icon: ClipboardList, label: "Stock Management", path: "/stock-management" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: FileText, label: "Reports", path: "/reports" },

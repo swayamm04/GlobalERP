@@ -76,6 +76,8 @@ export interface InvoiceData {
     balanceDue?: number;
     roundOff?: number;
     includeGST?: boolean;
+    cgst?: number;
+    sgst?: number;
 }
 
 export interface PaymentReceiptData {
@@ -139,7 +141,9 @@ export const generateInvoice = async (data: InvoiceData) => {
         termsOfDelivery,
         paidAmount,
         balanceDue,
-        roundOff = 0,
+        roundOff: passedRoundOff = 0,
+        cgst: passedCgst,
+        sgst: passedSgst,
         includeGST = true
     } = data;
 
@@ -389,23 +393,23 @@ export const generateInvoice = async (data: InvoiceData) => {
     }
 
     if (includeGST) {
-        const cgst = taxableValue * 0.09;
-        const sgst = taxableValue * 0.09;
+        const cgst = passedCgst !== undefined ? passedCgst : (taxableValue * 0.09);
+        const sgst = passedSgst !== undefined ? passedSgst : (taxableValue * 0.09);
 
         // In Add-On mode, we show taxes added specifically
         doc.setFont("helvetica", "normal");
-        doc.text("CGST (9%):", summaryX + 20, lastY + 5);
+        doc.text("CGST (9%):", summaryX, lastY + 5);
         doc.text(`Rs. ${cgst.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
 
-        doc.text("SGST (9%):", summaryX + 20, lastY + 10);
+        doc.text("SGST (9%):", summaryX, lastY + 10);
         doc.text(`Rs. ${sgst.toFixed(2)}`, rightEdge, lastY + 10, { align: 'right' });
         lastY += 10;
     }
 
-    if (roundOff > 0) {
+    if (passedRoundOff > 0) {
         doc.setFont("helvetica", "normal");
-        doc.text("Round Off:", summaryX + 20, lastY + 5);
-        doc.text(`Rs. ${roundOff.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
+        doc.text("Round Off:", summaryX, lastY + 5);
+        doc.text(`Rs. ${passedRoundOff.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
         lastY += 5;
     }
 

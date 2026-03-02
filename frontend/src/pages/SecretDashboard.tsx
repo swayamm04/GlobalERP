@@ -1,10 +1,11 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, ClipboardList, Lock, IndianRupee, Activity } from "lucide-react";
+import { ShoppingCart, ClipboardList, Lock, IndianRupee, Activity, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import Orders from "./Orders";
 import PendingOrders from "./PendingOrders";
+import Estimations from "./Estimations";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -68,14 +69,18 @@ const SecretDashboard = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                    <TabsTrigger value="pending" className="gap-2">
-                        <ClipboardList className="h-4 w-4" />
+                <TabsList className="grid w-full grid-cols-3 max-w-[600px] gap-2 bg-transparent h-auto p-0">
+                    <TabsTrigger value="pending" className="gap-1 sm:gap-2 border shadow-sm data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-[11px] sm:text-sm px-2 sm:px-4 py-2">
+                        <ClipboardList className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Pending Orders</span>
                     </TabsTrigger>
-                    <TabsTrigger value="completed" className="gap-2">
-                        <ShoppingCart className="h-4 w-4" />
+                    <TabsTrigger value="completed" className="gap-1 sm:gap-2 border shadow-sm data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-[11px] sm:text-sm px-2 sm:px-4 py-2">
+                        <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Completed Orders</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="estimations" className="gap-1 sm:gap-2 border shadow-sm data-[state=active]:bg-white data-[state=active]:shadow-md transition-all text-[11px] sm:text-sm px-2 sm:px-4 py-2">
+                        <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>Estimations</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -85,6 +90,10 @@ const SecretDashboard = () => {
 
                 <TabsContent value="completed" className="mt-6 border-none p-0">
                     <Orders isSecret={true} isStandalone={true} />
+                </TabsContent>
+
+                <TabsContent value="estimations" className="mt-6 border-none p-0">
+                    <Estimations isSecret={true} />
                 </TabsContent>
             </Tabs>
         </div>

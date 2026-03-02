@@ -51,6 +51,13 @@ const PurchaseOrders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Temporary states for inputs
+  const [tempSearchTerm, setTempSearchTerm] = useState("");
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
 
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [rawMaterials, setRawMaterials] = useState<any[]>([]);
@@ -162,11 +169,39 @@ const PurchaseOrders = () => {
     const items = po.items?.map((i: any) => i.name).join(" ").toLowerCase() || "";
     const notes = (po.notes || "").toLowerCase();
 
+    // Date filtering
+    const poDate = po.createdAt ? new Date(po.createdAt) : null;
+
+    if (poDate && !isNaN(poDate.getTime())) {
+      poDate.setHours(0, 0, 0, 0);
+
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (poDate < start) return false;
+      }
+
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (poDate > end) return false;
+      }
+    } else if (startDate || endDate) {
+      // If we have date filters but the PO doesn't have a valid date, filter it out
+      return false;
+    }
+
     return poNum.includes(sanitizedSearch) ||
       supplierName.includes(sanitizedSearch) ||
       items.includes(sanitizedSearch) ||
       notes.includes(sanitizedSearch);
   });
+
+  const handleApplyFilters = () => {
+    setSearchTerm(tempSearchTerm);
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+  };
 
   return (
     <div className="space-y-6">
@@ -210,7 +245,7 @@ const PurchaseOrders = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Delivery Date</Label>
+                  <Label>Received Date</Label>
                   <Input type="date" value={formData.deliveryDate} onChange={(e) => setFormData(f => ({ ...f, deliveryDate: e.target.value }))} required />
                 </div>
               </div>
@@ -395,16 +430,48 @@ const PurchaseOrders = () => {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search POs..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row items-end gap-4 bg-muted/20 p-4 rounded-lg border border-border/50">
+        <div className="relative flex-1 md:flex-[1.5] w-full">
+          <Label className="text-xs font-semibold mb-1.5 block">Search</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search POs..."
+              className="pl-10 h-10 w-full"
+              value={tempSearchTerm}
+              onChange={(e) => setTempSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="w-full md:w-auto flex flex-col md:flex-row md:flex-nowrap gap-6 items-end">
+          <div className="w-full md:w-72 flex flex-row gap-3">
+            <div className="flex-1">
+              <Label className="text-xs font-semibold mb-1.5 block">From Date</Label>
+              <Input
+                type="date"
+                className="h-10 w-full"
+                value={tempStartDate}
+                onChange={(e) => setTempStartDate(e.target.value)}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="text-xs font-semibold mb-1.5 block">To Date</Label>
+              <Input
+                type="date"
+                className="h-10 w-full"
+                value={tempEndDate}
+                onChange={(e) => setTempEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button
+            className="h-10 gap-2 px-6 w-full md:w-auto"
+            onClick={handleApplyFilters}
+          >
+            Go
+          </Button>
         </div>
       </div>
 
@@ -423,7 +490,7 @@ const PurchaseOrders = () => {
                 <TableHead>PO Number</TableHead>
                 <TableHead>Supplier</TableHead>
                 <TableHead>Order Date</TableHead>
-                <TableHead>Delivery Date</TableHead>
+                <TableHead>Received Date</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead className="text-right">Status</TableHead>
               </TableRow>
@@ -512,7 +579,7 @@ const PurchaseOrders = () => {
                     </p>
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-opacity-70">Expected Delivery</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest text-opacity-70">Received Date</p>
                     <p className="text-base font-semibold text-foreground">
                       {viewingPO.deliveryDate ? new Date(viewingPO.deliveryDate).toLocaleDateString('en-GB') : 'N/A'}
                     </p>

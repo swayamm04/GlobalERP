@@ -63,6 +63,18 @@ const estimationSchema = mongoose.Schema({
     includeGST: {
         type: Boolean,
         default: true
+    },
+    cgst: {
+        type: Number,
+        default: 0
+    },
+    sgst: {
+        type: Number,
+        default: 0
+    },
+    roundOff: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true
