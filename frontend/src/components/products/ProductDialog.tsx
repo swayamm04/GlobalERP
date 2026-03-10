@@ -292,9 +292,6 @@ export function ProductDialog({
                                     <div className="space-y-2">
                                         <Label htmlFor="calcValue" className="text-xs">
                                             Value per Unit (e.g. 10 kg/pc)
-                                            {isBase12Unit(formData.calculationField?.unit) && (
-                                                <span className="text-[10px] text-blue-400 ml-1 font-medium">b12</span>
-                                            )}
                                         </Label>
                                         <Input
                                             id="calcValue"

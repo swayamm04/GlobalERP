@@ -673,21 +673,23 @@ const CreateOrder = () => {
                                                 </PopoverContent>
                                             </Popover>
                                         </div>
-                                        <div className="w-full md:w-32 space-y-2">
-                                            <Label>Price</Label>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                value={item.price}
-                                                onChange={(e) => updateItem(item.id, 'price', e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
-                                                onFocus={(e) => e.target.select()}
-                                                onBlur={(e) => {
-                                                    if (e.target.value === "") updateItem(item.id, 'price', 0);
-                                                }}
-                                                onWheel={(e) => e.currentTarget.blur()}
-                                                className="bg-background"
-                                            />
-                                        </div>
+                                        {item.calculationField && item.calculationField.label && (
+                                            <div className="w-full md:w-28 space-y-2 text-left">
+                                                <Label className="text-xs font-semibold">
+                                                    {item.calculationField.label} {item.calculationField.unit ? `(${item.calculationField.unit})` : ""}
+                                                </Label>
+                                                <Input
+                                                    type="text"
+                                                    className="h-10 bg-zinc-50 border-zinc-200"
+                                                    value={item.calculationField.value}
+                                                    onChange={(e) => updateItem(item.id, 'calculationValue', e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === "") updateItem(item.id, 'calculationValue', "1");
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                         <div className="w-full md:w-24 space-y-2">
                                             <Label>Qty ({item.unit || 'pcs'})</Label>
                                             <Input
@@ -723,26 +725,21 @@ const CreateOrder = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        {item.calculationField && (
-                                            <div className="w-full md:w-28 space-y-2 text-left">
-                                                <Label className="text-xs font-semibold">
-                                                    {item.calculationField.label} ({item.calculationField.unit})
-                                                    {isBase12Unit(item.calculationField.unit) && (
-                                                        <span className="text-[10px] text-blue-400 ml-1 font-medium">b12</span>
-                                                    )}
-                                                </Label>
-                                                <Input
-                                                    type="text"
-                                                    className="h-10 bg-zinc-50 border-zinc-200"
-                                                    value={item.calculationField.value}
-                                                    onChange={(e) => updateItem(item.id, 'calculationValue', e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onBlur={(e) => {
-                                                        if (e.target.value === "") updateItem(item.id, 'calculationValue', "1");
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
+                                        <div className="w-full md:w-32 space-y-2">
+                                            <Label>Price</Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={item.price}
+                                                onChange={(e) => updateItem(item.id, 'price', e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                                                onFocus={(e) => e.target.select()}
+                                                onBlur={(e) => {
+                                                    if (e.target.value === "") updateItem(item.id, 'price', 0);
+                                                }}
+                                                onWheel={(e) => e.currentTarget.blur()}
+                                                className="bg-background"
+                                            />
+                                        </div>
                                         <div className="w-full md:w-32 space-y-2">
                                             <Label>Total</Label>
                                             <div className="h-10 flex items-center px-3 border rounded-md bg-muted text-muted-foreground">

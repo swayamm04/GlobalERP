@@ -205,10 +205,9 @@ const Products = () => {
                       {product.name}
                       {product.customFields && product.customFields.length > 0 && (
                         <div className="flex flex-wrap gap-x-2 mt-1">
-                          {product.calculationField && product.calculationField.value?.toString() !== "1" && product.calculationField.value !== "" && (
+                          {product.calculationField && product.calculationField.label && product.calculationField.value?.toString() !== "1" && product.calculationField.value !== "" && (
                             <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-1 rounded border border-blue-100 flex items-center gap-1">
                               {product.calculationField.label}: {product.calculationField.value} {product.calculationField.unit}
-                              {isBase12Unit(product.calculationField.unit) && <span className="text-[8px] text-blue-400 font-medium">b12</span>}
                             </span>
                           )}
                           {product.customFields.map((f: any, i: number) => (

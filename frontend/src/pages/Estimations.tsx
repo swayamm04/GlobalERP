@@ -539,6 +539,36 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                                                     </PopoverContent>
                                                 </Popover>
                                             </div>
+                                            {item.calculationField && item.calculationField.label && (
+                                                <div className="w-full md:w-28 space-y-2">
+                                                    <Label className="text-xs font-semibold">
+                                                        {item.calculationField.label} {item.calculationField.unit ? `(${item.calculationField.unit})` : ""}
+                                                    </Label>
+                                                    <Input
+                                                        type="text"
+                                                        className="h-10 bg-zinc-50 border-zinc-200"
+                                                        value={item.calculationField.value}
+                                                        onChange={(e) => updateItem(item.id, 'calculationValue', e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value === "") updateItem(item.id, 'calculationValue', "1");
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="w-full md:w-24 space-y-2">
+                                                <Label className="text-xs font-semibold">Qty</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onBlur={(e) => {
+                                                        if (e.target.value === "") updateItem(item.id, 'quantity', 1);
+                                                    }}
+                                                    onChange={(e) => updateItem(item.id, 'quantity', e.target.value === "" ? "" : parseFloat(e.target.value) || 1)}
+                                                />
+                                            </div>
                                             <div className="w-full md:w-32 space-y-2">
                                                 <Label className="text-xs font-semibold">Price</Label>
                                                 <Input
@@ -554,39 +584,6 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                                                     className="bg-background"
                                                 />
                                             </div>
-                                            <div className="w-full md:w-24 space-y-2">
-                                                <Label className="text-xs font-semibold">Qty</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.quantity}
-                                                    onFocus={(e) => e.target.select()}
-                                                    onBlur={(e) => {
-                                                        if (e.target.value === "") updateItem(item.id, 'quantity', 1);
-                                                    }}
-                                                    onChange={(e) => updateItem(item.id, 'quantity', e.target.value === "" ? "" : parseFloat(e.target.value) || 1)}
-                                                />
-                                            </div>
-                                            {item.calculationField && (
-                                                <div className="w-full md:w-28 space-y-2">
-                                                    <Label className="text-xs font-semibold">
-                                                        {item.calculationField.label} ({item.calculationField.unit})
-                                                        {isBase12Unit(item.calculationField.unit) && (
-                                                            <span className="text-[10px] text-blue-400 ml-1 font-medium">b12</span>
-                                                        )}
-                                                    </Label>
-                                                    <Input
-                                                        type="text"
-                                                        className="h-10 bg-zinc-50 border-zinc-200"
-                                                        value={item.calculationField.value}
-                                                        onChange={(e) => updateItem(item.id, 'calculationValue', e.target.value)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        onBlur={(e) => {
-                                                            if (e.target.value === "") updateItem(item.id, 'calculationValue', "1");
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
                                             <div className="w-full md:w-32 space-y-2">
                                                 <Label className="text-xs font-semibold">Total</Label>
                                                 <div className="h-10 flex items-center px-3 border rounded-md bg-muted font-medium">
