@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import api from "@/lib/api";
+import { isBase12Unit } from "@/lib/calculationUtils";
 
 interface ProductDialogProps {
     open: boolean;
@@ -56,6 +58,11 @@ export function ProductDialog({
                 unit: product.unit || "pcs",
                 cgst: (product.cgst || 9).toString(),
                 sgst: (product.sgst || 9).toString(),
+                calculationField: {
+                    label: product.calculationField?.label || "",
+                    value: (product.calculationField?.value || "").toString(),
+                    unit: product.calculationField?.unit || ""
+                }
             });
             // Map customFields to category fields if needed, 
             // but for simplicity I'll just load them into the state.
@@ -70,6 +77,11 @@ export function ProductDialog({
                 unit: "pcs",
                 cgst: "9",
                 sgst: "9",
+                calculationField: {
+                    label: "",
+                    value: "",
+                    unit: ""
+                }
             });
             setCategoryFields([]);
         }
@@ -105,6 +117,10 @@ export function ProductDialog({
                 price: Number(formData.price),
                 cgst: Number(formData.cgst),
                 sgst: Number(formData.sgst),
+                calculationField: {
+                    ...formData.calculationField,
+                    value: formData.calculationField.value // Keep as string to preserve .10 vs .1
+                },
                 customFields: categoryFields.map(f => ({
                     label: f.label,
                     value: f.label.toLowerCase() === 'unit' ? 'pieces' : f.value,
@@ -119,7 +135,7 @@ export function ProductDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{product ? "Edit Product" : "Add Product"}</DialogTitle>
                     <DialogDescription>
@@ -129,8 +145,8 @@ export function ProductDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
-                    <div className="grid gap-6 py-4">
-                        <div className="grid grid-cols-2 gap-6">
+                    <div className="py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                             <div className="space-y-4">
                                 <h3 className="text-sm font-medium border-b pb-2">Basic Details</h3>
                                 <div className="space-y-2">
@@ -207,7 +223,6 @@ export function ProductDialog({
                                 </div>
                             </div>
 
-
                             <div className="space-y-4">
                                 <h3 className="text-sm font-medium border-b pb-2">Category Specific Fields</h3>
                                 {categoryFields.length > 0 ? (
@@ -218,7 +233,7 @@ export function ProductDialog({
                                                 <div key={index} className="space-y-2">
                                                     <Label className="text-blue-900/70">{field.label} {field.unit ? `(${field.unit})` : ""}</Label>
                                                     <Input
-                                                        className="bg-white/50 border-blue-100"
+                                                        className="bg-white/50 border-blue-100 placeholder:text-blue-200"
                                                         value={field.value}
                                                         onChange={(e) => {
                                                             const newFields = [...categoryFields];
@@ -236,8 +251,65 @@ export function ProductDialog({
                                         {formData.category ? "No specific fields for this category" : "Please select a category first"}
                                     </p>
                                 )}
+                            </div>
 
-
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-medium border-b pb-2">Calculation Field (Optional)</h3>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                    Used for auto-calculating total weight-based prices in estimations/orders.
+                                </p>
+                                <div className="space-y-3 p-3 rounded-lg border bg-zinc-50/50">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="calcLabel" className="text-xs">Label</Label>
+                                            <Input
+                                                id="calcLabel"
+                                                size={32}
+                                                className="h-8 text-xs"
+                                                value={formData.calculationField?.label}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    calculationField: { ...formData.calculationField, label: e.target.value }
+                                                })}
+                                                placeholder="e.g. Weight"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="calcUnit" className="text-xs">Unit</Label>
+                                            <Input
+                                                id="calcUnit"
+                                                size={32}
+                                                className="h-8 text-xs"
+                                                value={formData.calculationField?.unit}
+                                                onChange={(e) => setFormData({
+                                                    ...formData,
+                                                    calculationField: { ...formData.calculationField, unit: e.target.value }
+                                                })}
+                                                placeholder="e.g. kg"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="calcValue" className="text-xs">
+                                            Value per Unit (e.g. 10 kg/pc)
+                                            {isBase12Unit(formData.calculationField?.unit) && (
+                                                <span className="text-[10px] text-blue-400 ml-1 font-medium">b12</span>
+                                            )}
+                                        </Label>
+                                        <Input
+                                            id="calcValue"
+                                            type="text"
+                                            className="h-8 text-xs"
+                                            placeholder="e.g. 10 or 4.10"
+                                            value={formData.calculationField?.value}
+                                            onChange={(e) => setFormData({
+                                                ...formData,
+                                                calculationField: { ...formData.calculationField, value: e.target.value }
+                                            })}
+                                            onFocus={(e) => e.target.select()}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -248,6 +320,6 @@ export function ProductDialog({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

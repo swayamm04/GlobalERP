@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Filter, Edit, Trash2 } from "lucide-react";
+import { isBase12Unit } from "@/lib/calculationUtils";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -204,6 +205,12 @@ const Products = () => {
                       {product.name}
                       {product.customFields && product.customFields.length > 0 && (
                         <div className="flex flex-wrap gap-x-2 mt-1">
+                          {product.calculationField && product.calculationField.value?.toString() !== "1" && product.calculationField.value !== "" && (
+                            <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-1 rounded border border-blue-100 flex items-center gap-1">
+                              {product.calculationField.label}: {product.calculationField.value} {product.calculationField.unit}
+                              {isBase12Unit(product.calculationField.unit) && <span className="text-[8px] text-blue-400 font-medium">b12</span>}
+                            </span>
+                          )}
                           {product.customFields.map((f: any, i: number) => (
                             <span key={i} className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
                               {f.label}: {f.value}{f.unit ? ` ${f.unit}` : ""}

@@ -62,7 +62,12 @@ const productSchema = mongoose.Schema({
             value: String,
             unit: String
         }
-    ]
+    ],
+    calculationField: {
+        label: { type: String, default: "" },
+        value: { type: String, default: "" },
+        unit: { type: String, default: "" }
+    }
 }, {
     timestamps: true
 });

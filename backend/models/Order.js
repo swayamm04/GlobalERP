@@ -36,14 +36,20 @@ const orderSchema = mongoose.Schema({
                     value: String,
                     unit: String
                 }
-            ]
+            ],
+            calculationField: {
+                label: String,
+                value: { type: String, default: "1" },
+                unit: String
+            }
         }
     ],
     subtotal: {
         type: Number,
         required: true
     },
-    discount: {
+
+    loadingCharge: {
         type: Number,
         default: 0
     },

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { generateInvoice } from "@/lib/invoiceGenerator";
 import { format } from "date-fns";
+import { getCalculationMultiplier, isBase12Unit } from "@/lib/calculationUtils";
 
 interface OrderItem {
     id: string;
@@ -41,6 +42,11 @@ interface OrderItem {
     price: number;
     category: string;
     unit: string;
+    calculationField?: {
+        label: string;
+        value: string | number;
+        unit: string;
+    };
 }
 
 const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
@@ -60,7 +66,7 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
     const [availableCustomers, setAvailableCustomers] = useState<any[]>([]);
     const [companyDetails, setCompanyDetails] = useState<any>(null);
     const [items, setItems] = useState<OrderItem[]>([]);
-    const [discount, setDiscount] = useState(0);
+    const [loadingCharge, setLoadingCharge] = useState(0);
     const [includeGST, setIncludeGST] = useState(true);
     const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -97,14 +103,14 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
     }, []);
 
     useEffect(() => {
-        const newSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        const newSubtotal = items.reduce((sum, item) => sum + (item.quantity * item.price * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)), 0);
         setSubtotal(newSubtotal);
 
         // Calculate grand total: Add-on GST if enabled
-        const taxableValue = Math.max(0, newSubtotal - discount);
+        const taxableValue = newSubtotal;
         const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
         const individualGst = gstAmount / 2;
-        const rawTotal = taxableValue + gstAmount;
+        const rawTotal = taxableValue + gstAmount + loadingCharge;
 
         // Round off logic: Round UP to nearest integer if there are decimals
         const roundedTotal = Math.ceil(rawTotal);
@@ -114,7 +120,7 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
         setRoundOff(diff > 0 ? diff : 0);
         setCgst(individualGst);
         setSgst(individualGst);
-    }, [items, discount, includeGST]);
+    }, [items, loadingCharge, includeGST]);
 
     const addItem = () => {
         setItems([{ id: Date.now().toString(), productName: "", quantity: 1, price: 0, category: "", unit: "pcs" }, ...items]);
@@ -124,22 +130,37 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
         setItems(items.filter(item => item.id !== id));
     };
 
-    const updateItem = (id: string, field: keyof OrderItem, value: any) => {
+    const updateItem = (id: string, field: string, value: any) => {
         if (field === 'productName') {
-            const isDuplicate = items.some(item => item.id !== id && item.productName === value);
-            if (isDuplicate) {
-                toast.error("This product is already added to the list");
-                return;
+            const selectedProduct = availableProducts.find(p => p._id === value);
+            if (selectedProduct) {
+                const isDuplicate = items.some(item =>
+                    item.id !== id &&
+                    item.productName === value &&
+                    item.price === selectedProduct.price &&
+                    item.calculationField?.value === selectedProduct.calculationField?.value
+                );
+                if (isDuplicate) {
+                    toast.error("This product with the same price and calculation is already added");
+                    return;
+                }
             }
         }
         setItems(items.map(item => {
             if (item.id === id) {
+                if (field === 'calculationValue') {
+                    return {
+                        ...item,
+                        calculationField: item.calculationField ? { ...item.calculationField, value } : undefined
+                    };
+                }
                 const updatedItem = { ...item, [field]: value };
                 if (field === 'productName') {
                     const product = availableProducts.find(p => p._id === value);
                     if (product) {
                         updatedItem.price = product.price;
                         updatedItem.unit = product.unit || "pcs";
+                        updatedItem.calculationField = product.calculationField;
                     }
                 }
                 return updatedItem;
@@ -195,6 +216,7 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                     hsnCode: product?.category?.hsnCode || "",
                     productName: product ? product.name : item.productName,
                     customFields: product ? product.customFields : [],
+                    calculationField: item.calculationField || product?.calculationField,
                     unit: item.unit || product?.unit || 'pcs'
                 };
             });
@@ -206,7 +228,7 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                 address,
                 items: formattedItems,
                 subtotal,
-                discount,
+                loadingCharge,
                 grandTotal,
                 roundOff,
                 cgst,
@@ -233,7 +255,7 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
             setContact("");
             setAddress("");
             setItems([]);
-            setDiscount(0);
+            setLoadingCharge(0);
             setCompanyName("");
             setGstin("");
             setStateName("");
@@ -545,10 +567,30 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                                                     onChange={(e) => updateItem(item.id, 'quantity', e.target.value === "" ? "" : parseFloat(e.target.value) || 1)}
                                                 />
                                             </div>
+                                            {item.calculationField && (
+                                                <div className="w-full md:w-28 space-y-2">
+                                                    <Label className="text-xs font-semibold">
+                                                        {item.calculationField.label} ({item.calculationField.unit})
+                                                        {isBase12Unit(item.calculationField.unit) && (
+                                                            <span className="text-[10px] text-blue-400 ml-1 font-medium">b12</span>
+                                                        )}
+                                                    </Label>
+                                                    <Input
+                                                        type="text"
+                                                        className="h-10 bg-zinc-50 border-zinc-200"
+                                                        value={item.calculationField.value}
+                                                        onChange={(e) => updateItem(item.id, 'calculationValue', e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value === "") updateItem(item.id, 'calculationValue', "1");
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                             <div className="w-full md:w-32 space-y-2">
                                                 <Label className="text-xs font-semibold">Total</Label>
                                                 <div className="h-10 flex items-center px-3 border rounded-md bg-muted font-medium">
-                                                    ₹ {(item.price * item.quantity).toFixed(2)}
+                                                    ₹ {(item.price * item.quantity * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)).toFixed(2)}
                                                 </div>
                                             </div>
                                             <Button
@@ -622,15 +664,15 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                                 )}
 
                                 <div className="flex items-center gap-4">
-                                    <Label className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Discount:</Label>
+                                    <Label className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Loading Charges:</Label>
                                     <Input
                                         type="number"
-                                        value={discount}
+                                        value={loadingCharge}
                                         onFocus={(e) => e.target.select()}
                                         onBlur={(e) => {
-                                            if (e.target.value === "") setDiscount(0);
+                                            if (e.target.value === "") setLoadingCharge(0);
                                         }}
-                                        onChange={(e) => setDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0) as any)}
+                                        onChange={(e) => setLoadingCharge(e.target.value === "" ? 0 : (parseFloat(e.target.value) || 0) as any)}
                                         className="h-8 bg-background"
                                     />
                                 </div>

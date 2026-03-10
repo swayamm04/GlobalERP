@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getCalculationMultiplier } from './calculationUtils';
 
 // Helper to load image
 const loadImage = (url: string): Promise<string> => {
@@ -76,6 +77,7 @@ export interface InvoiceData {
     balanceDue?: number;
     roundOff?: number;
     includeGST?: boolean;
+    loadingCharge?: number;
     cgst?: number;
     sgst?: number;
 }
@@ -142,6 +144,7 @@ export const generateInvoice = async (data: InvoiceData) => {
         paidAmount,
         balanceDue,
         roundOff: passedRoundOff = 0,
+        loadingCharge = 0,
         cgst: passedCgst,
         sgst: passedSgst,
         includeGST = true
@@ -314,9 +317,13 @@ export const generateInvoice = async (data: InvoiceData) => {
             ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(", ")
             : "";
 
+        const calcInfo = item.calculationField && item.calculationField.value !== 1
+            ? ` (${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit})`
+            : "";
+
         const description = specs
-            ? { content: `${item.productName || "Product"}\n(${specs})`, styles: { fontSize: 6, cellPadding: 1 } }
-            : (item.productName || "Product");
+            ? { content: `${item.productName || "Product"}${calcInfo}\n(${specs})`, styles: { fontSize: 6, cellPadding: 1 } }
+            : `${item.productName || "Product"}${calcInfo}`;
 
         return [
             index + 1,
@@ -325,7 +332,7 @@ export const generateInvoice = async (data: InvoiceData) => {
             `${item.quantity} ${(item.unit || 'pcs').toUpperCase()}`,
             item.price.toFixed(2),
             (item.unit || 'pcs').toUpperCase(),
-            (item.price * item.quantity).toFixed(2)
+            (item.price * item.quantity * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)).toFixed(2)
         ];
     });
 
@@ -367,30 +374,17 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
 
-    const subtotalValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const discountAmount = (data as any).discount || 0;
-    const taxableValue = subtotalValue - discountAmount;
+    const subtotalValue = items.reduce((sum, item) => sum + (item.price * item.quantity * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)), 0);
+    const taxableValue = subtotalValue;
 
     doc.text("Subtotal:", summaryX, lastY);
     doc.text(`Rs. ${subtotalValue.toFixed(2)}`, rightEdge, lastY, { align: 'right' });
 
-    if (discountAmount > 0) {
-        doc.text("Discount:", summaryX, lastY + 6);
-        doc.text(`-Rs. ${discountAmount.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
-        lastY += 6;
-
-        doc.setFont("helvetica", "bold");
-        doc.text("Total Taxable Value:", summaryX, lastY + 6);
-        doc.text(`Rs. ${taxableValue.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
-        lastY += 6;
-        doc.setFont("helvetica", "normal");
-    } else {
-        doc.setFont("helvetica", "bold");
-        doc.text("Total Taxable Value:", summaryX, lastY + 6);
-        doc.text(`Rs. ${taxableValue.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
-        lastY += 6;
-        doc.setFont("helvetica", "normal");
-    }
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Taxable Value:", summaryX, lastY + 6);
+    doc.text(`Rs. ${taxableValue.toFixed(2)}`, rightEdge, lastY + 6, { align: 'right' });
+    lastY += 6;
+    doc.setFont("helvetica", "normal");
 
     if (includeGST) {
         const cgst = passedCgst !== undefined ? passedCgst : (taxableValue * 0.09);
@@ -410,6 +404,13 @@ export const generateInvoice = async (data: InvoiceData) => {
         doc.setFont("helvetica", "normal");
         doc.text("Round Off:", summaryX, lastY + 5);
         doc.text(`Rs. ${passedRoundOff.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
+        lastY += 5;
+    }
+
+    if (loadingCharge > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.text("Loading Charges:", summaryX, lastY + 5);
+        doc.text(`Rs. ${loadingCharge.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
         lastY += 5;
     }
 
