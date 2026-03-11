@@ -1,14 +1,16 @@
 "use client";
-import { Button } from "@/components/ui/button";
 
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import {
     Popover,
@@ -43,7 +45,8 @@ interface OrderItem {
     };
 }
 
-const CreateOrder = () => {
+const DummyOrders = () => {
+    const [createdAt, setCreatedAt] = useState("");
     const [customerType, setCustomerType] = useState<"Individual" | "Business">("Individual");
     const [customerName, setCustomerName] = useState("");
     const [contact, setContact] = useState("");
@@ -88,6 +91,11 @@ const CreateOrder = () => {
     const [grandTotal, setGrandTotal] = useState(0);
     const [roundOff, setRoundOff] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [dummyOrders, setDummyOrders] = useState<any[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [editingOrder, setEditingOrder] = useState<any | null>(null);
+
 
     const fetchData = async () => {
         try {
@@ -105,9 +113,26 @@ const CreateOrder = () => {
         }
     };
 
+    
+    const fetchDummyOrders = async () => {
+        try {
+            setLoadingOrders(true);
+            const { data } = await api.get("/api/orders");
+            const dOrders = data.filter((o: any) => o.isDummy === true && !o.isPastOrder);
+            setDummyOrders(dOrders);
+        } catch (error) {
+            console.error("Error fetching dummy orders:", error);
+            toast.error("Failed to load dummy orders");
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
     useEffect(() => {
         fetchData();
+        fetchDummyOrders();
     }, []);
+
 
     useEffect(() => {
         if (customerType === "Business") {
@@ -231,9 +256,93 @@ const CreateOrder = () => {
         });
     };
 
+    
+    const handleDeleteOrder = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this dummy order?")) return;
+        try {
+            setDeletingId(id);
+            await api.delete(`/api/orders/${id}`);
+            toast.success("Dummy order deleted successfully");
+            fetchDummyOrders();
+        } catch (error) {
+            console.error("Error deleting order:", error);
+            toast.error("Failed to delete order");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleEditOrderDetail = async (orderId: string) => {
+        try {
+            const { data } = await api.get(`/api/orders/${orderId}`);
+            setEditingOrder(data);
+            
+            // Pre-fill form
+            setCustomerType(data.customerType || "Individual");
+            setCustomerName(data.customerName || "");
+            setCompanyName(data.companyName || "");
+            setContact(data.contact || "");
+            setAddress(data.address || "");
+            setGstin(data.gstin || "");
+            setStateName(data.stateName || "");
+            setStateCode(data.stateCode || "");
+            setEmail(data.email || "");
+            
+            setInvoiceNo(data.invoiceNo || "");
+            setInvoiceDate(data.invoiceDate ? new Date(data.invoiceDate).toISOString().split('T')[0] : "");
+            setDeliveryNote(data.deliveryNote || "");
+            setModeOfPayment(data.modeOfPayment || "");
+            setReferenceNo(data.referenceNo || "");
+            setOtherReferences(data.otherReferences || "");
+            setBuyersOrderNo(data.buyersOrderNo || "");
+            setBuyersOrderDate(data.buyersOrderDate ? new Date(data.buyersOrderDate).toISOString().split('T')[0] : "");
+            setDispatchDocNo(data.dispatchDocNo || "");
+            setDeliveryNoteDate(data.deliveryNoteDate ? new Date(data.deliveryNoteDate).toISOString().split('T')[0] : "");
+            setDispatchedThrough(data.dispatchedThrough || "");
+            setDestination(data.destination || "");
+            setBillOfLading(data.billOfLading || "");
+            setMotorVehicleNo(data.motorVehicleNo || "");
+            setTermsOfDelivery(data.termsOfDelivery || "");
+            
+            setCreatedAt(data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : "");
+            setIncludeGST(data.includeGST !== false);
+            setPaymentMethod(data.paymentMethod || "cash");
+            setLoadingCharge(data.loadingCharge || 0);
+
+            // Map backend items to frontend OrderItem format
+            const mappedItems: OrderItem[] = data.items.map((item: any, index: number) => {
+                const product = availableProducts.find(p => p.name === item.productName);
+                return {
+                    id: `edit-${index}-${Date.now()}`,
+                    productName: product ? product._id : item.productName,
+                    quantity: item.quantity,
+                    price: item.price,
+                    unit: item.unit || "pcs",
+                    category: item.category || "",
+                    stock: product ? product.stock : 0,
+                    calculationField: item.calculationField
+                };
+            });
+            setItems(mappedItems);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            toast.info("Order loaded for editing");
+        } catch (error) {
+            console.error("Error fetching order details:", error);
+            toast.error("Failed to load order details");
+        }
+    };
+
+
     const handleSubmit = async () => {
         const isBusiness = customerType === "Business";
         const primaryName = isBusiness ? companyName : customerName;
+
+        if (!createdAt) {
+            toast.error("Please select an Order Date");
+            return;
+        }
 
         if (!primaryName || !address) {
             toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
@@ -306,16 +415,24 @@ const CreateOrder = () => {
                 billOfLading,
                 motorVehicleNo,
                 termsOfDelivery,
-                status: 'Completed'
+                status: 'Completed',
+                createdAt: createdAt ? new Date(createdAt).toISOString() : undefined,
+                isDummy: true
             };
 
             // Save to database
-            await api.post("/api/orders", orderData);
+            if (editingOrder) {
+                await api.put(`/api/orders/${editingOrder._id}`, orderData);
+                toast.success("Dummy order updated successfully!");
+                setEditingOrder(null);
+            } else {
+                await api.post("/api/orders", orderData);
+                toast.success("Dummy order saved successfully!");
+            }
 
-            // Trigger PDF generation IMMEDIATELY
-            await generateInvoicePDF(orderData);
 
-            toast.success("Order placed and invoice generated!");
+
+            fetchDummyOrders();
 
             // Reset form
             setCustomerName("");
@@ -340,6 +457,7 @@ const CreateOrder = () => {
             setBillOfLading("");
             setMotorVehicleNo("");
             setTermsOfDelivery("");
+            setCreatedAt("");
 
         } catch (error) {
             console.error("Error creating order:", error);
@@ -352,8 +470,8 @@ const CreateOrder = () => {
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             <div>
-                <h1 className="text-2xl font-bold">Create Order</h1>
-                <p className="text-muted-foreground">Enter order details below.</p>
+                <h1 className="text-2xl font-bold">Dummy Orders</h1>
+                <p className="text-muted-foreground">Create dummy orders for testing or reporting without affecting main stock. Select a manual date. Dummy orders can be deleted later.</p>
             </div>
 
             <Card className="shadow-md">
@@ -378,7 +496,20 @@ const CreateOrder = () => {
                         </RadioGroup>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="flex flex-col space-y-4 pt-4 border-t">
+                        <Label htmlFor="createdAt" className="font-semibold text-lg">Order Date <span className="text-destructive">*</span></Label>
+                        <Input
+                            id="createdAt"
+                            type="date"
+                            value={createdAt}
+                            onChange={(e) => setCreatedAt(e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                            className="w-full md:w-[300px]"
+                        />
+                        <p className="text-xs text-muted-foreground">Select the original date this order was placed.</p>
+                    </div>
+
+                    <div className="space-y-6 pt-4 border-t">
                         <h3 className="text-lg font-semibold border-b pb-2">
                             {customerType === "Business" ? "Business & Customer Details" : "Customer Details"}
                         </h3>
@@ -879,8 +1010,78 @@ const CreateOrder = () => {
 
                 </CardContent>
             </Card>
+
+            {/* Dummy Orders History Section */}
+            <div className="mt-12 space-y-4">
+                <h2 className="text-xl font-bold">Dummy Orders History</h2>
+                <Card className="shadow-md">
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="px-6 py-4">Order ID</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Items</TableHead>
+                                    <TableHead>Total</TableHead>
+                                    <TableHead className="text-right px-6">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loadingOrders ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24">Loading dummy orders...</TableCell>
+                                    </TableRow>
+                                ) : dummyOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24">No dummy orders found</TableCell>
+                                    </TableRow>
+                                ) : (
+                                    dummyOrders.map((order) => (
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-medium px-6">
+                                                #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
+                                            </TableCell>
+                                            <TableCell>{order.customer}</TableCell>
+                                            <TableCell>
+                                                {format(new Date(order.date), 'MMM dd, yyyy')}
+                                            </TableCell>
+                                            <TableCell>{order.itemsCount || 0} Items</TableCell>
+                                            <TableCell>₹{(order.amount || 0).toLocaleString()}</TableCell>
+                                            <TableCell className="text-right px-6">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleEditOrderDetail(order.id)}
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/10"
+                                                    onClick={() => handleDeleteOrder(order.id)}
+                                                    disabled={deletingId === order.id}
+                                                >
+                                                    {deletingId === order.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+
         </div>
     );
 };
 
-export default CreateOrder;
+export default DummyOrders;

@@ -1,4 +1,6 @@
+"use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Package, AlertTriangle, CheckCircle, TrendingDown } from "lucide-react";
 import { useState, useEffect } from "react";

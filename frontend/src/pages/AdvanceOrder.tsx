@@ -1,5 +1,6 @@
-
+"use client";
 import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -251,9 +252,8 @@ const AdvanceOrder = () => {
             setIsSubmitting(true);
             const formattedItems = items.map(item => {
                 const product = availableProducts.find(p => p._id === item.productName);
-                return {
+                const returnItem: any = {
                     ...item,
-                    productId: item.productName, // productName stores the _id in the form state
                     category: product ? (product.category?.name || "No Category") : item.category,
                     hsnCode: product?.category?.hsnCode || "",
                     productName: product ? product.name : item.productName,
@@ -261,6 +261,10 @@ const AdvanceOrder = () => {
                     calculationField: item.calculationField || product?.calculationField,
                     unit: item.unit || product?.unit || 'pcs'
                 };
+                if (product) {
+                    returnItem.productId = item.productName;
+                }
+                return returnItem;
             });
 
 

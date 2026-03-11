@@ -95,6 +95,8 @@ const menuItems: MenuItem[] = [
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: FileText, label: "Reports", path: "/reports" },
   { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: History, label: "Add Past Order", path: "/past-order", roles: ["super_admin"] },
+  { icon: FileText, label: "Dummy Orders", path: "/dummy-orders", roles: ["super_admin"] },
 ];
 
 const SidebarNav = ({

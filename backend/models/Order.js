@@ -115,6 +115,14 @@ const orderSchema = mongoose.Schema({
     includeGST: {
         type: Boolean,
         default: true
+    },
+    isDummy: {
+        type: Boolean,
+        default: false
+    },
+    isPastOrder: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

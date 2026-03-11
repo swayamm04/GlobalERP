@@ -61,7 +61,9 @@ const getOrders = async (req, res) => {
             balanceDue: order.balanceDue || 0,
             paidAmount: order.paidAmount || 0,
             paymentHistory: order.paymentHistory || [],
-            includeGST: order.includeGST
+            includeGST: order.includeGST,
+            isDummy: order.isDummy || false,
+            isPastOrder: order.isPastOrder || false
         }));
 
         res.status(200).json(formattedOrders);
@@ -109,7 +111,10 @@ const createOrder = async (req, res) => {
             motorVehicleNo,
             termsOfDelivery,
             status,
-            includeGST
+            includeGST,
+            createdAt, // Add createdAt
+            isPastOrder,
+            isDummy
         } = req.body;
 
         const orderData = {
@@ -145,13 +150,19 @@ const createOrder = async (req, res) => {
             motorVehicleNo,
             termsOfDelivery,
             includeGST: includeGST === false ? false : true,
+            isDummy: isDummy === true,
+            isPastOrder: isPastOrder === true,
             status: status || 'Pending',
             paymentHistory: [{
                 amount: paidAmount || 0,
                 method: paymentMethod || modeOfPayment || 'Cash',
-                date: new Date()
+                date: createdAt ? new Date(createdAt) : new Date() // Use createdAt for initial payment if provided
             }]
         };
+
+        if (createdAt) {
+            orderData.createdAt = new Date(createdAt);
+        }
 
         if (req.user) {
             orderData.user = req.user._id;
@@ -171,10 +182,12 @@ const createOrder = async (req, res) => {
         }
 
         // Deduct stock
-        try {
-            await updateProductStock(orderData.items, 'deduct');
-        } catch (stockError) {
-            console.error('Error updating stock on order creation:', stockError);
+        if (!isPastOrder && !isDummy) {
+            try {
+                await updateProductStock(orderData.items, 'deduct');
+            } catch (stockError) {
+                console.error('Error updating stock on order creation:', stockError);
+            }
         }
 
         // Update/Create Customer record
@@ -364,11 +377,153 @@ const markOrderAsPaid = async (req, res) => {
     }
 };
 
+// @desc    Delete order
+// @route   DELETE /api/orders/:id
+// @access  Private
+const deleteOrder = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            await Order.deleteOne({ _id: order._id });
+
+            // Log Activity
+            if (req.user && order.includeGST !== false) {
+                await logActivity(
+                    req.user._id,
+                    'DELETED_ORDER',
+                    `Deleted order #${order.invoiceNo || order._id}`,
+                    req
+                );
+            }
+
+            res.status(200).json({ message: 'Order removed' });
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        console.error('Error in deleteOrder:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+const updateOrder = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            // Check if stock needs to be adjusted back before applying new items
+            // But for Dummy and Past orders, we skip stock deduction/addition as per user request
+            
+            const {
+                customerName,
+                contact,
+                address,
+                items,
+                subtotal,
+                discount,
+                grandTotal,
+                paidAmount,
+                balanceDue,
+                paymentMethod,
+                customerType,
+                companyName,
+                gstin,
+                stateName,
+                stateCode,
+                email,
+                invoiceNo,
+                invoiceDate,
+                deliveryNote,
+                modeOfPayment,
+                referenceNo,
+                otherReferences,
+                buyersOrderNo,
+                buyersOrderDate,
+                dispatchDocNo,
+                deliveryNoteDate,
+                dispatchedThrough,
+                destination,
+                billOfLading,
+                motorVehicleNo,
+                termsOfDelivery,
+                status,
+                includeGST,
+                createdAt,
+                isPastOrder,
+                isDummy
+            } = req.body;
+
+            order.customerName = customerName || order.customerName;
+            order.contact = contact || order.contact;
+            order.address = address || order.address;
+            order.items = items || order.items;
+            order.subtotal = subtotal !== undefined ? subtotal : order.subtotal;
+            order.discount = discount !== undefined ? discount : order.discount;
+            order.grandTotal = grandTotal !== undefined ? grandTotal : order.grandTotal;
+            order.paidAmount = paidAmount !== undefined ? paidAmount : order.paidAmount;
+            order.balanceDue = balanceDue !== undefined ? balanceDue : order.balanceDue;
+            order.paymentMethod = paymentMethod || order.paymentMethod;
+            order.customerType = customerType || order.customerType;
+            order.companyName = companyName || order.companyName;
+            order.gstin = gstin || order.gstin;
+            order.stateName = stateName || order.stateName;
+            order.stateCode = stateCode || order.stateCode;
+            order.email = email || order.email;
+            order.invoiceNo = invoiceNo || order.invoiceNo;
+            order.invoiceDate = invoiceDate || order.invoiceDate;
+            order.deliveryNote = deliveryNote || order.deliveryNote;
+            order.modeOfPayment = modeOfPayment || order.modeOfPayment;
+            order.referenceNo = referenceNo || order.referenceNo;
+            order.otherReferences = otherReferences || order.otherReferences;
+            order.buyersOrderNo = buyersOrderNo || order.buyersOrderNo;
+            order.buyersOrderDate = buyersOrderDate || order.buyersOrderDate;
+            order.dispatchDocNo = dispatchDocNo || order.dispatchDocNo;
+            order.deliveryNoteDate = deliveryNoteDate || order.deliveryNoteDate;
+            order.dispatchedThrough = dispatchedThrough || order.dispatchedThrough;
+            order.destination = destination || order.destination;
+            order.billOfLading = billOfLading || order.billOfLading;
+            order.motorVehicleNo = motorVehicleNo || order.motorVehicleNo;
+            order.termsOfDelivery = termsOfDelivery || order.termsOfDelivery;
+            order.status = status || order.status;
+            order.includeGST = includeGST !== undefined ? includeGST : order.includeGST;
+            
+            if (createdAt) {
+                order.createdAt = new Date(createdAt);
+            }
+            
+            if (isPastOrder !== undefined) order.isPastOrder = isPastOrder;
+            if (isDummy !== undefined) order.isDummy = isDummy;
+
+            const updatedOrder = await order.save();
+
+            // Log Activity
+            if (req.user && order.includeGST !== false) {
+                await logActivity(
+                    req.user._id,
+                    'UPDATED_ORDER',
+                    `Updated order #${order.invoiceNo || order._id}`,
+                    req
+                );
+            }
+
+            res.status(200).json(updatedOrder);
+        } else {
+            res.status(404).json({ message: 'Order not found' });
+        }
+    } catch (error) {
+        console.error('Error in updateOrder:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getOrders,
     createOrder,
     getOrderById,
     updateOrderStatus,
     markOrderAsPaid,
-    addPayment
+    addPayment,
+    deleteOrder,
+    updateOrder
 };

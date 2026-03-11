@@ -1,13 +1,22 @@
 "use client";
 import { Button } from "@/components/ui/button";
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit } from "lucide-react";
+import { format } from "date-fns";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -43,7 +52,8 @@ interface OrderItem {
     };
 }
 
-const CreateOrder = () => {
+const AddPastOrder = () => {
+    const [createdAt, setCreatedAt] = useState("");
     const [customerType, setCustomerType] = useState<"Individual" | "Business">("Individual");
     const [customerName, setCustomerName] = useState("");
     const [contact, setContact] = useState("");
@@ -88,6 +98,11 @@ const CreateOrder = () => {
     const [grandTotal, setGrandTotal] = useState(0);
     const [roundOff, setRoundOff] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pastOrders, setPastOrders] = useState<any[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [editingOrder, setEditingOrder] = useState<any | null>(null);
+
 
     const fetchData = async () => {
         try {
@@ -105,8 +120,23 @@ const CreateOrder = () => {
         }
     };
 
+    const fetchPastOrders = async () => {
+        try {
+            setLoadingOrders(true);
+            const { data } = await api.get("/api/orders");
+            const pOrders = data.filter((o: any) => o.isPastOrder === true);
+            setPastOrders(pOrders);
+        } catch (error) {
+            console.error("Error fetching past orders:", error);
+            toast.error("Failed to load past orders history");
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
     useEffect(() => {
         fetchData();
+        fetchPastOrders();
     }, []);
 
     useEffect(() => {
@@ -221,7 +251,85 @@ const CreateOrder = () => {
         toast.info(`Details pre-filled for ${customerType === "Business" ? (customer.companyName || customer.name) : customer.name}`);
     };
 
+    const handleEditOrderDetail = async (orderId: string) => {
+        try {
+            const { data: order } = await api.get(`/api/orders/${orderId}`);
+            setEditingOrder(order);
+
+            // Pre-fill form
+            setCustomerType(order.customerType || "Individual");
+            setCustomerName(order.customerName || "");
+            setCompanyName(order.companyName || "");
+            setContact(order.contact || "");
+            setAddress(order.address || "");
+            setGstin(order.gstin || "");
+            setStateName(order.stateName || "");
+            setStateCode(order.stateCode || "");
+            setEmail(order.email || "");
+
+            setInvoiceNo(order.invoiceNo || "");
+            setInvoiceDate(order.invoiceDate || "");
+            setDeliveryNote(order.deliveryNote || "");
+            setModeOfPayment(order.modeOfPayment || "");
+            setReferenceNo(order.referenceNo || "");
+            setOtherReferences(order.otherReferences || "");
+            setBuyersOrderNo(order.buyersOrderNo || "");
+            setBuyersOrderDate(order.buyersOrderDate || "");
+            setDispatchDocNo(order.dispatchDocNo || "");
+            setDeliveryNoteDate(order.deliveryNoteDate || "");
+            setDispatchedThrough(order.dispatchedThrough || "");
+            setDestination(order.destination || "");
+            setBillOfLading(order.billOfLading || "");
+            setMotorVehicleNo(order.motorVehicleNo || "");
+            setTermsOfDelivery(order.termsOfDelivery || "");
+            setIncludeGST(order.includeGST !== false);
+            setPaymentMethod(order.paymentMethod || "cash");
+            setLoadingCharge(order.loadingCharge || 0);
+
+            if (order.createdAt) {
+                setCreatedAt(new Date(order.createdAt).toISOString().split('T')[0]);
+            }
+
+            // Map and load items
+            const mappedItems = order.items.map((item: any) => ({
+                id: Math.random().toString(36).substr(2, 9),
+                productName: item.productId || item.productName,
+                quantity: item.quantity,
+                price: item.price,
+                unit: item.unit || "pcs",
+                category: item.category || "",
+                stock: 0, 
+                calculationField: item.calculationField
+            }));
+            setItems(mappedItems);
+
+            toast.info("Past order loaded for editing");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (error) {
+            console.error("Error fetching order details:", error);
+            toast.error("Failed to load order for editing");
+        }
+    };
+
+    const handleDeleteOrder = async (orderId: string) => {
+        if (!window.confirm("Are you sure you want to delete this past order?")) return;
+
+        try {
+            setDeletingId(orderId);
+            await api.delete(`/api/orders/${orderId}`);
+            toast.success("Past order deleted successfully");
+            fetchPastOrders();
+        } catch (error) {
+            console.error("Error deleting order:", error);
+            toast.error("Failed to delete order");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     const generateInvoicePDF = async (orderData: any) => {
+
         await generateInvoice({
             ...orderData,
             paymentMethod,
@@ -234,6 +342,11 @@ const CreateOrder = () => {
     const handleSubmit = async () => {
         const isBusiness = customerType === "Business";
         const primaryName = isBusiness ? companyName : customerName;
+
+        if (!createdAt) {
+            toast.error("Please select an Order Date");
+            return;
+        }
 
         if (!primaryName || !address) {
             toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
@@ -306,16 +419,22 @@ const CreateOrder = () => {
                 billOfLading,
                 motorVehicleNo,
                 termsOfDelivery,
-                status: 'Completed'
+                status: 'Completed',
+                createdAt: createdAt ? new Date(createdAt).toISOString() : undefined,
+                isPastOrder: true
             };
 
             // Save to database
-            await api.post("/api/orders", orderData);
+            if (editingOrder) {
+                await api.put(`/api/orders/${editingOrder._id}`, orderData);
+                toast.success("Past order updated successfully!");
+                setEditingOrder(null);
+            } else {
+                await api.post("/api/orders", orderData);
+                toast.success("Past order saved successfully!");
+            }
 
-            // Trigger PDF generation IMMEDIATELY
-            await generateInvoicePDF(orderData);
-
-            toast.success("Order placed and invoice generated!");
+            fetchPastOrders();
 
             // Reset form
             setCustomerName("");
@@ -340,6 +459,7 @@ const CreateOrder = () => {
             setBillOfLading("");
             setMotorVehicleNo("");
             setTermsOfDelivery("");
+            setCreatedAt("");
 
         } catch (error) {
             console.error("Error creating order:", error);
@@ -352,8 +472,8 @@ const CreateOrder = () => {
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             <div>
-                <h1 className="text-2xl font-bold">Create Order</h1>
-                <p className="text-muted-foreground">Enter order details below.</p>
+                <h1 className="text-2xl font-bold">Add Past Order</h1>
+                <p className="text-muted-foreground">Enter past order details below. The order will be dated according to the Order Date selected.</p>
             </div>
 
             <Card className="shadow-md">
@@ -378,7 +498,20 @@ const CreateOrder = () => {
                         </RadioGroup>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="flex flex-col space-y-4 pt-4 border-t">
+                        <Label htmlFor="createdAt" className="font-semibold text-lg">Order Date <span className="text-destructive">*</span></Label>
+                        <Input
+                            id="createdAt"
+                            type="date"
+                            value={createdAt}
+                            onChange={(e) => setCreatedAt(e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                            className="w-full md:w-[300px]"
+                        />
+                        <p className="text-xs text-muted-foreground">Select the original date this order was placed.</p>
+                    </div>
+
+                    <div className="space-y-6 pt-4 border-t">
                         <h3 className="text-lg font-semibold border-b pb-2">
                             {customerType === "Business" ? "Business & Customer Details" : "Customer Details"}
                         </h3>
@@ -879,8 +1012,105 @@ const CreateOrder = () => {
 
                 </CardContent>
             </Card>
+
+            {/* Past Orders History Table */}
+            <Card className="shadow-md overflow-hidden">
+                <CardHeader className="bg-muted/50 border-b">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                        Past Orders History
+                        <Badge variant="outline" className="ml-2">
+                            {pastOrders.length} Records
+                        </Badge>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/30">
+                                    <TableHead className="w-[120px] px-6">Order ID</TableHead>
+                                    <TableHead className="px-6">Customer</TableHead>
+                                    <TableHead className="px-6">Date</TableHead>
+                                    <TableHead className="px-6">Items</TableHead>
+                                    <TableHead className="px-6">Amount</TableHead>
+                                    <TableHead className="text-right px-6">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loadingOrders ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Loading past orders...
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : pastOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                            No past orders found
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    pastOrders.map((order) => {
+                                        const orderAmount = order.grandTotal || order.amount || 0;
+                                        const orderDate = order.createdAt || order.date;
+                                        return (
+                                            <TableRow key={order._id || order.id}>
+                                                <TableCell className="font-medium px-6">
+                                                    #{order._id ? order._id.substring(Math.max(0, order._id.length - 6)).toUpperCase() : "N/A"}
+                                                </TableCell>
+                                                <TableCell className="px-6">{order.customerName || order.customer}</TableCell>
+                                                <TableCell className="px-6 text-muted-foreground">
+                                                    {orderDate ? format(new Date(orderDate), 'MMM dd, yyyy') : "N/A"}
+                                                </TableCell>
+                                                <TableCell className="px-6">
+                                                    <span className="text-xs bg-muted px-2 py-1 rounded-full">
+                                                        {order.items?.length || 0} Items
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="px-6 font-semibold">
+                                                    ₹{orderAmount.toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right px-6">
+                                                    <div className="flex justify-end space-x-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                            onClick={() => handleEditOrderDetail(order._id || order.id)}
+                                                            title="Edit Order"
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeleteOrder(order._id || order.id)}
+                                                            disabled={deletingId === (order._id || order.id)}
+                                                            title="Delete Order"
+                                                        >
+                                                            {deletingId === (order._id || order.id) ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Trash2 className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };
 
-export default CreateOrder;
+export default AddPastOrder;
