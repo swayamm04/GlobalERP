@@ -133,21 +133,35 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
     };
 
     const updateItem = (id: string, field: string, value: any) => {
-        if (field === 'productName') {
+        if (field === 'productName' && value) {
             const selectedProduct = availableProducts.find(p => p._id === value);
             if (selectedProduct) {
-                const isDuplicate = items.some(item =>
+                // Find if this product (with same price and calculation) already exists in another row
+                const existingItem = items.find(item =>
                     item.id !== id &&
                     item.productName === value &&
                     item.price === selectedProduct.price &&
-                    item.calculationField?.value === selectedProduct.calculationField?.value
+                    (item.calculationField?.value === selectedProduct.calculationField?.value)
                 );
-                if (isDuplicate) {
-                    toast.error("This product with the same price and calculation is already added");
+
+                if (existingItem) {
+                    const currentItem = items.find(item => item.id === id);
+                    const currentQty = currentItem?.quantity || 1;
+
+                    // Remove current row and update the existing one
+                    setItems(prevItems => prevItems
+                        .filter(item => item.id !== id)
+                        .map(item => item.id === existingItem.id 
+                            ? { ...item, quantity: item.quantity + currentQty } 
+                            : item
+                        )
+                    );
+                    toast.success(`Merged with existing ${selectedProduct.name}`);
                     return;
                 }
             }
         }
+
         setItems(items.map(item => {
             if (item.id === id) {
                 if (field === 'calculationValue') {

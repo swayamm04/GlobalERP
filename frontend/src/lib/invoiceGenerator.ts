@@ -319,33 +319,78 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.line(5, 85, pageWidth - 5, 85);
 
     // Items Table with Multi-page Support
-    const tableBody = items.map((item, index) => {
-        const specs = item.customFields && item.customFields.length > 0
-            ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(", ")
-            : "";
+    // Group identical products by name and price
+    const mergedItemsMap = new Map<string, any>();
 
-        const hasCalculation = item.calculationField && 
-                               item.calculationField.label && 
-                               item.calculationField.value && 
-                               item.calculationField.value.toString() !== "1" &&
-                               item.calculationField.value.toString() !== "0";
+    items.forEach(item => {
+        const key = `${item.productName}_${item.price}_${item.unit || 'pcs'}`;
+        const multiplier = getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit);
+        const resultantQuantity = item.quantity * multiplier;
 
-        const calcInfo = hasCalculation
-            ? ` (${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit || ""})`
-            : "";
+        if (mergedItemsMap.has(key)) {
+            const existing = mergedItemsMap.get(key);
+            existing.resultantQuantity += resultantQuantity;
+            
+            // Collect unique calculation info ONLY if it's length/feet related
+            const label = item.calculationField?.label?.toLowerCase() || "";
+            const isLengthRelated = label.includes("length") || label === "feet" || label === "ft";
+            
+            if (isLengthRelated && item.calculationField && item.calculationField.value && item.calculationField.value.toString() !== "1") {
+                const info = `${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit || ""}`;
+                if (!existing.allCalcInfo.includes(info)) {
+                    existing.allCalcInfo.push(info);
+                }
+            }
+            
+            // Collect unique custom fields (specs)
+            if (item.customFields) {
+                item.customFields.forEach((f: any) => {
+                    const fInfo = `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`;
+                    if (!existing.allSpecs.includes(fInfo)) {
+                        existing.allSpecs.push(fInfo);
+                    }
+                });
+            }
+        } else {
+            const allSpecs = item.customFields 
+                ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`)
+                : [];
+            
+            const label = item.calculationField?.label?.toLowerCase() || "";
+            const isLengthRelated = label.includes("length") || label === "feet" || label === "ft";
 
-        const description = specs
-            ? { content: `${item.productName || "Product"}${calcInfo}\n(${specs})`, styles: { fontSize: 6, cellPadding: 1 } }
-            : `${item.productName || "Product"}${calcInfo}`;
+            const allCalcInfo = (isLengthRelated && item.calculationField && item.calculationField.value && item.calculationField.value.toString() !== "1")
+                ? [`${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit || ""}`]
+                : [];
+
+            mergedItemsMap.set(key, {
+                ...item,
+                resultantQuantity,
+                allSpecs,
+                allCalcInfo
+            });
+        }
+    });
+
+    const tableBody = Array.from(mergedItemsMap.values()).map((item, index) => {
+        const specsStr = item.allSpecs.length > 0 ? ` (${item.allSpecs.join(", ")})` : "";
+        const calcStr = item.allCalcInfo.length > 0 ? ` (${item.allCalcInfo.join(", ")})` : "";
+        
+        const description = specsStr
+            ? { content: `${item.productName || "Product"}${calcStr}\n${specsStr}`, styles: { fontSize: 6, cellPadding: 1 } }
+            : `${item.productName || "Product"}${calcStr}`;
+
+        // Determine the unit to display: calculation unit takes priority if it exists
+        const displayUnit = (item.calculationField?.unit || item.unit || 'pcs').toUpperCase();
 
         return [
             index + 1,
             description,
             item.hsnCode || item.category || "N/A",
-            `${item.quantity} ${(item.unit || 'pcs').toUpperCase()}`,
+            `${item.resultantQuantity.toFixed(2)} ${displayUnit}`,
             item.price.toFixed(2),
-            (item.unit || 'pcs').toUpperCase(),
-            (item.price * item.quantity * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)).toFixed(2)
+            displayUnit,
+            (item.price * item.resultantQuantity).toFixed(2)
         ];
     });
 
