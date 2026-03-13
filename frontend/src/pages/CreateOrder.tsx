@@ -110,20 +110,19 @@ const CreateOrder = () => {
     }, []);
 
     useEffect(() => {
-        if (customerType === "Business") {
-            const today = new Date().toISOString().split('T')[0];
-            setInvoiceDate(today);
-
-            // Simple auto-generation for invoice number
-            // Using date/time components for uniqueness in this simple implementation
-            if (!invoiceNo) {
-                const now = new Date();
-                const year = now.getFullYear().toString().slice(-2);
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const random = Math.floor(100 + Math.random() * 900);
-                setInvoiceNo(`INV/${year}${month}${day}/${random}`);
+        const fetchNextInvoice = async () => {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const { data } = await api.get(`/api/orders/next-invoice-number?date=${today}`);
+                setInvoiceNo(data.nextInvoiceNo);
+                setInvoiceDate(today);
+            } catch (error) {
+                console.error("Error fetching next invoice number:", error);
             }
+        };
+
+        if (!invoiceNo) {
+            fetchNextInvoice();
         }
     }, [customerType]);
 
@@ -227,7 +226,8 @@ const CreateOrder = () => {
             paymentMethod,
             companyDetails,
             paidAmount: orderData.paidAmount,
-            balanceDue: orderData.balanceDue
+            balanceDue: orderData.balanceDue,
+            pageSize: 'a4'
         });
     };
 
@@ -360,7 +360,9 @@ const CreateOrder = () => {
                 <CardContent className="p-6 space-y-8">
                     {/* Customer Type Toggle */}
                     <div className="flex flex-col space-y-4">
-                        <Label className="font-semibold text-lg">Customer Type</Label>
+                        <div className="flex items-center justify-between">
+                            <Label className="font-semibold text-lg">Customer Type</Label>
+                        </div>
                         <RadioGroup
                             defaultValue="Individual"
                             value={customerType}

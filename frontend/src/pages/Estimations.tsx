@@ -175,7 +175,8 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
         await generateInvoice({
             ...est,
             isEstimation: true,
-            companyDetails
+            companyDetails,
+            pageSize: 'a4'
         });
     };
 
@@ -295,7 +296,10 @@ const Estimations = ({ isSecret = false }: { isSecret?: boolean }) => {
                     <CardContent className="p-6 space-y-8">
                         {/* Creation form content remains here... */}
                         <div className="flex flex-col space-y-4">
-                            <Label className="font-semibold text-lg">Customer Type</Label>
+                            <div className="flex items-center justify-between">
+                                <Label className="font-semibold text-lg">Customer Type</Label>
+                                
+                            </div>
                             <RadioGroup
                                 defaultValue="Individual"
                                 value={customerType}

@@ -61,6 +61,7 @@ const getOrders = async (req, res) => {
             balanceDue: order.balanceDue || 0,
             paidAmount: order.paidAmount || 0,
             paymentHistory: order.paymentHistory || [],
+            invoiceNo: order.invoiceNo,
             includeGST: order.includeGST,
             isDummy: order.isDummy || false,
             isPastOrder: order.isPastOrder || false
@@ -517,6 +518,96 @@ const updateOrder = async (req, res) => {
     }
 };
 
+// @desc    Get next sequential invoice number for a given date
+// @route   GET /api/orders/next-invoice-number
+// @access  Private
+const getNextInvoiceNumber = async (req, res) => {
+    try {
+        const { date } = req.query;
+        if (!date) {
+            return res.status(400).json({ message: 'Date is required' });
+        }
+
+        const queryDate = new Date(date);
+        const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
+
+        // Format date part: YYMMDD
+        const year = startOfDay.getFullYear().toString().slice(-2);
+        const month = (startOfDay.getMonth() + 1).toString().padStart(2, '0');
+        const day = startOfDay.getDate().toString().padStart(2, '0');
+        const datePrefix = `INV/${year}${month}${day}/`;
+
+        // Find the latest invoice number with this prefix
+        const lastOrder = await Order.findOne({
+            invoiceNo: { $regex: `^${datePrefix}` }
+        }).sort({ invoiceNo: -1 });
+
+        let nextNumber = 1;
+        if (lastOrder && lastOrder.invoiceNo) {
+            const parts = lastOrder.invoiceNo.split('/');
+            const lastSeq = parseInt(parts[parts.length - 1]);
+            if (!isNaN(lastSeq)) {
+                nextNumber = lastSeq + 1;
+            }
+        }
+
+        const nextInvoiceNo = `${datePrefix}${nextNumber.toString().padStart(3, '0')}`;
+        res.status(200).json({ nextInvoiceNo });
+    } catch (error) {
+        console.error('Error in getNextInvoiceNumber:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Clear all dummy orders history
+// @route   DELETE /api/orders/dummy
+// @access  Private
+const clearDummyOrders = async (req, res) => {
+    try {
+        const result = await Order.deleteMany({ isDummy: true, isPastOrder: { $ne: true } });
+        
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CLEARED_DUMMY_HISTORY',
+                `Cleared dummy orders history (${result.deletedCount} orders)`,
+                req
+            );
+        }
+
+        res.status(200).json({ message: 'Dummy history cleared', deletedCount: result.deletedCount });
+    } catch (error) {
+        console.error('Error in clearDummyOrders:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Clear all past orders history
+// @route   DELETE /api/orders/past
+// @access  Private
+const clearPastOrders = async (req, res) => {
+    try {
+        const result = await Order.deleteMany({ isPastOrder: true });
+        
+        // Log Activity
+        if (req.user) {
+            await logActivity(
+                req.user._id,
+                'CLEARED_PAST_HISTORY',
+                `Cleared past orders history (${result.deletedCount} orders)`,
+                req
+            );
+        }
+
+        res.status(200).json({ message: 'Past history cleared', deletedCount: result.deletedCount });
+    } catch (error) {
+        console.error('Error in clearPastOrders:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 module.exports = {
     getOrders,
     createOrder,
@@ -525,5 +616,8 @@ module.exports = {
     markOrderAsPaid,
     addPayment,
     deleteOrder,
-    updateOrder
+    updateOrder,
+    getNextInvoiceNumber,
+    clearDummyOrders,
+    clearPastOrders
 };

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
@@ -95,6 +95,7 @@ const DummyOrders = () => {
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingOrder, setEditingOrder] = useState<any | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
 
     const fetchData = async () => {
@@ -114,6 +115,42 @@ const DummyOrders = () => {
     };
 
     
+    const handleClearHistory = async () => {
+        if (!confirm("WARNING: This will permanently delete ALL dummy order history. Are you sure you want to proceed?")) return;
+        
+        try {
+            setLoadingOrders(true);
+            await api.delete("/api/orders/dummy");
+            toast.success("Dummy history cleared successfully!");
+            fetchDummyOrders();
+        } catch (error) {
+            console.error("Error clearing dummy history:", error);
+            toast.error("Failed to clear dummy history");
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    const handleDownloadInvoice = async (orderId: string) => {
+        setDownloadingId(orderId);
+        try {
+            const { data: order } = await api.get(`/api/orders/${orderId}`);
+            
+            await generateInvoice({
+                ...order,
+                companyDetails,
+                pageSize: 'a4'
+            });
+
+            toast.success("Invoice downloaded!");
+        } catch (error) {
+            console.error("Error downloading invoice:", error);
+            toast.error("Failed to download invoice");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     const fetchDummyOrders = async () => {
         try {
             setLoadingOrders(true);
@@ -135,22 +172,23 @@ const DummyOrders = () => {
 
 
     useEffect(() => {
-        if (customerType === "Business") {
-            const today = new Date().toISOString().split('T')[0];
-            setInvoiceDate(today);
-
-            // Simple auto-generation for invoice number
-            // Using date/time components for uniqueness in this simple implementation
-            if (!invoiceNo) {
-                const now = new Date();
-                const year = now.getFullYear().toString().slice(-2);
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const random = Math.floor(100 + Math.random() * 900);
-                setInvoiceNo(`INV/${year}${month}${day}/${random}`);
+        const fetchNextInvoice = async () => {
+            try {
+                const dateToUse = createdAt || new Date().toISOString().split('T')[0];
+                const { data } = await api.get(`/api/orders/next-invoice-number?date=${dateToUse}`);
+                setInvoiceNo(data.nextInvoiceNo);
+                if (!invoiceDate) {
+                    setInvoiceDate(dateToUse);
+                }
+            } catch (error) {
+                console.error("Error fetching next invoice number:", error);
             }
+        };
+
+        if (createdAt) {
+            fetchNextInvoice();
         }
-    }, [customerType]);
+    }, [createdAt, customerType]);
 
     // Sync modeOfPayment with paymentMethod selection
     useEffect(() => {
@@ -252,7 +290,8 @@ const DummyOrders = () => {
             paymentMethod,
             companyDetails,
             paidAmount: orderData.paidAmount,
-            balanceDue: orderData.balanceDue
+            balanceDue: orderData.balanceDue,
+            pageSize: 'a4'
         });
     };
 
@@ -478,7 +517,9 @@ const DummyOrders = () => {
                 <CardContent className="p-6 space-y-8">
                     {/* Customer Type Toggle */}
                     <div className="flex flex-col space-y-4">
-                        <Label className="font-semibold text-lg">Customer Type</Label>
+                        <div className="flex items-center justify-between">
+                            <Label className="font-semibold text-lg">Customer Type</Label>
+                        </div>
                         <RadioGroup
                             defaultValue="Individual"
                             value={customerType}
@@ -1013,7 +1054,21 @@ const DummyOrders = () => {
 
             {/* Dummy Orders History Section */}
             <div className="mt-12 space-y-4">
-                <h2 className="text-xl font-bold">Dummy Orders History</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-xl font-bold">Dummy Orders History</h2>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="text-[10px] h-8 font-bold flex items-center gap-1"
+                            onClick={handleClearHistory}
+                            disabled={loadingOrders || dummyOrders.length === 0}
+                        >
+                            <Trash2 className="h-3 w-3" />
+                            CLEAR ALL HISTORY
+                        </Button>
+                    </div>
+                </div>
                 <Card className="shadow-md">
                     <CardContent className="p-0">
                         <Table>
@@ -1040,7 +1095,7 @@ const DummyOrders = () => {
                                     dummyOrders.map((order) => (
                                         <TableRow key={order.id}>
                                             <TableCell className="font-medium px-6">
-                                                #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
+                                                {order.invoiceNo || (order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A")}
                                             </TableCell>
                                             <TableCell>{order.customer}</TableCell>
                                             <TableCell>
@@ -1049,27 +1104,43 @@ const DummyOrders = () => {
                                             <TableCell>{order.itemsCount || 0} Items</TableCell>
                                             <TableCell>₹{(order.amount || 0).toLocaleString()}</TableCell>
                                             <TableCell className="text-right px-6">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleEditOrderDetail(order.id)}
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDeleteOrder(order.id)}
-                                                    disabled={deletingId === order.id}
-                                                >
-                                                    {deletingId === order.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="h-4 w-4" />
-                                                    )}
-                                                </Button>
+                                                <div className="flex justify-end space-x-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                                        onClick={() => handleDownloadInvoice(order.id)}
+                                                        disabled={downloadingId === order.id}
+                                                        title="Download Invoice"
+                                                    >
+                                                        {downloadingId === order.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Download className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                                        onClick={() => handleEditOrderDetail(order.id)}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive hover:bg-destructive/10"
+                                                        onClick={() => handleDeleteOrder(order.id)}
+                                                        disabled={deletingId === order.id}
+                                                    >
+                                                        {deletingId === order.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))

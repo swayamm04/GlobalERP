@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown, Loader2, Edit, Download } from "lucide-react";
 import { format } from "date-fns";
 import {
     Table,
@@ -99,9 +99,10 @@ const AddPastOrder = () => {
     const [roundOff, setRoundOff] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pastOrders, setPastOrders] = useState<any[]>([]);
-    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [loadingOrders, setLoadingOrders] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingOrder, setEditingOrder] = useState<any | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
 
     const fetchData = async () => {
@@ -139,23 +140,60 @@ const AddPastOrder = () => {
         fetchPastOrders();
     }, []);
 
-    useEffect(() => {
-        if (customerType === "Business") {
-            const today = new Date().toISOString().split('T')[0];
-            setInvoiceDate(today);
-
-            // Simple auto-generation for invoice number
-            // Using date/time components for uniqueness in this simple implementation
-            if (!invoiceNo) {
-                const now = new Date();
-                const year = now.getFullYear().toString().slice(-2);
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const random = Math.floor(100 + Math.random() * 900);
-                setInvoiceNo(`INV/${year}${month}${day}/${random}`);
-            }
+    const handleClearPastHistory = async () => {
+        if (!confirm("WARNING: This will permanently delete ALL past order history records. Are you sure you want to proceed?")) return;
+        
+        try {
+            setLoadingOrders(true);
+            await api.delete("/api/orders/past");
+            toast.success("Past history cleared successfully!");
+            fetchPastOrders();
+        } catch (error) {
+            console.error("Error clearing past history:", error);
+            toast.error("Failed to clear past history");
+        } finally {
+            setLoadingOrders(false);
         }
-    }, [customerType]);
+    };
+
+    const handleDownloadInvoice = async (orderId: string) => {
+        setDownloadingId(orderId);
+        try {
+            const { data: order } = await api.get(`/api/orders/${orderId}`);
+            
+            await generateInvoice({
+                ...order,
+                companyDetails,
+                pageSize: 'a4'
+            });
+
+            toast.success("Invoice downloaded!");
+        } catch (error) {
+            console.error("Error downloading invoice:", error);
+            toast.error("Failed to download invoice");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
+    useEffect(() => {
+        const fetchNextInvoice = async () => {
+            try {
+                const dateToUse = createdAt || new Date().toISOString().split('T')[0];
+                const { data } = await api.get(`/api/orders/next-invoice-number?date=${dateToUse}`);
+                setInvoiceNo(data.nextInvoiceNo);
+                if (!invoiceDate) {
+                    setInvoiceDate(dateToUse);
+                }
+            } catch (error) {
+                console.error("Error fetching next invoice number:", error);
+            }
+        };
+
+        if (createdAt) {
+            fetchNextInvoice();
+        }
+    }, [createdAt, customerType]);
 
     // Sync modeOfPayment with paymentMethod selection
     useEffect(() => {
@@ -335,7 +373,8 @@ const AddPastOrder = () => {
             paymentMethod,
             companyDetails,
             paidAmount: orderData.paidAmount,
-            balanceDue: orderData.balanceDue
+            balanceDue: orderData.balanceDue,
+            pageSize: 'a4'
         });
     };
 
@@ -480,7 +519,9 @@ const AddPastOrder = () => {
                 <CardContent className="p-6 space-y-8">
                     {/* Customer Type Toggle */}
                     <div className="flex flex-col space-y-4">
-                        <Label className="font-semibold text-lg">Customer Type</Label>
+                        <div className="flex items-center justify-between">
+                            <Label className="font-semibold text-lg">Customer Type</Label>
+                        </div>
                         <RadioGroup
                             defaultValue="Individual"
                             value={customerType}
@@ -1016,11 +1057,25 @@ const AddPastOrder = () => {
             {/* Past Orders History Table */}
             <Card className="shadow-md overflow-hidden">
                 <CardHeader className="bg-muted/50 border-b">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                        Past Orders History
-                        <Badge variant="outline" className="ml-2">
-                            {pastOrders.length} Records
-                        </Badge>
+                    <CardTitle className="text-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            Past Orders History
+                            <Badge variant="outline" className="ml-2">
+                                {pastOrders.length} Records
+                            </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="text-[10px] h-8 font-bold flex items-center gap-1"
+                                onClick={handleClearPastHistory}
+                                disabled={loadingOrders || pastOrders.length === 0}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                                CLEAR ALL HISTORY
+                            </Button>
+                        </div>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -1059,7 +1114,7 @@ const AddPastOrder = () => {
                                         return (
                                             <TableRow key={order._id || order.id}>
                                                 <TableCell className="font-medium px-6">
-                                                    #{order._id ? order._id.substring(Math.max(0, order._id.length - 6)).toUpperCase() : "N/A"}
+                                                    {order.invoiceNo || (order._id ? order._id.substring(Math.max(0, order._id.length - 6)).toUpperCase() : "N/A")}
                                                 </TableCell>
                                                 <TableCell className="px-6">{order.customerName || order.customer}</TableCell>
                                                 <TableCell className="px-6 text-muted-foreground">
@@ -1075,6 +1130,20 @@ const AddPastOrder = () => {
                                                 </TableCell>
                                                 <TableCell className="text-right px-6">
                                                     <div className="flex justify-end space-x-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-green-600 hover:bg-green-50"
+                                                            onClick={() => handleDownloadInvoice(order._id || order.id)}
+                                                            disabled={downloadingId === (order._id || order.id)}
+                                                            title="Download Invoice"
+                                                        >
+                                                            {downloadingId === (order._id || order.id) ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Download className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"

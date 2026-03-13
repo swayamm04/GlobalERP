@@ -122,7 +122,8 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
         paidAmount: order.paidAmount,
         balanceDue: order.balanceDue,
         loadingCharge: order.loadingCharge,
-        roundOff: order.roundOff
+        roundOff: order.roundOff,
+        invoiceNo: order.invoiceNo,
       });
 
       toast.success("Invoice downloaded!");

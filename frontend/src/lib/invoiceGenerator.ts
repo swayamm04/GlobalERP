@@ -80,6 +80,7 @@ export interface InvoiceData {
     loadingCharge?: number;
     cgst?: number;
     sgst?: number;
+    pageSize?: 'a4' | 'a5';
 }
 
 export interface PaymentReceiptData {
@@ -147,10 +148,16 @@ export const generateInvoice = async (data: InvoiceData) => {
         loadingCharge = 0,
         cgst: passedCgst,
         sgst: passedSgst,
-        includeGST = true
+        includeGST = true,
+        pageSize = 'a4'
     } = data;
 
-    const doc = new jsPDF();
+    const orientation = pageSize === 'a5' ? 'l' : 'p'; // A5 landscape often used for bills, but let's stick to Portrait for A5 unless requested
+    const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: pageSize
+    });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -317,8 +324,14 @@ export const generateInvoice = async (data: InvoiceData) => {
             ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`).join(", ")
             : "";
 
-        const calcInfo = item.calculationField && item.calculationField.value !== 1
-            ? ` (${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit})`
+        const hasCalculation = item.calculationField && 
+                               item.calculationField.label && 
+                               item.calculationField.value && 
+                               item.calculationField.value.toString() !== "1" &&
+                               item.calculationField.value.toString() !== "0";
+
+        const calcInfo = hasCalculation
+            ? ` (${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit || ""})`
             : "";
 
         const description = specs
@@ -369,7 +382,7 @@ export const generateInvoice = async (data: InvoiceData) => {
         lastY = 20;
     }
 
-    const summaryX = pageWidth - 80;
+    const summaryX = pageSize === 'a5' ? pageWidth - 100 : pageWidth - 80;
     const rightEdge = pageWidth - 10;
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
@@ -437,6 +450,14 @@ export const generateInvoice = async (data: InvoiceData) => {
         doc.text("FULLY PAID", rightEdge, lastY + 16, { align: 'right' });
         doc.setTextColor(0, 0, 0);
     }
+
+    const wordsX = pageSize === 'a5' ? 10 : summaryX;
+    const wordsWidth = pageSize === 'a5' ? pageWidth - 20 : pageWidth - summaryX - 10;
+    const currentY = lastY + (balanceDue && balanceDue > 0 ? 30 : 25);
+    
+    const amountInWords = `Amount in words: ${toWords(grandTotal).toUpperCase()} ONLY`;
+    const lines = doc.splitTextToSize(amountInWords, wordsWidth);
+    doc.text(lines, wordsX, Math.max(currentY, lastY + 30));
 
     doc.save(`${data.isEstimation ? 'Estimation' : 'Invoice'}_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
 };
@@ -680,5 +701,28 @@ export const generatePaymentStatement = async (data: StatementData) => {
     doc.text("End of Statement", pageWidth / 2, pageHeight - 10, { align: "center" });
 
     doc.save(`Statement_${customerName.replace(/\s+/g, '_')}_${orderId.slice(-6)}.pdf`);
+};
+
+const toWords = (num: number) => {
+    const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
+    const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+    const inWords = (n: number): string => {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+        if (n < 1000) return a[Math.floor(n / 100)] + 'hundred ' + (n % 100 !== 0 ? 'and ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + 'thousand ' + (n % 1000 !== 0 ? inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + 'lakh ' + (n % 100000 !== 0 ? inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + 'crore ' + (n % 10000000 !== 0 ? inWords(n % 10000000) : '');
+    };
+
+    const whole = Math.floor(num);
+    const fraction = Math.round((num - whole) * 100);
+    
+    let str = inWords(whole) + 'Rupees ';
+    if (fraction > 0) {
+        str += 'and ' + inWords(fraction) + 'Paise ';
+    }
+    return str;
 };
 
