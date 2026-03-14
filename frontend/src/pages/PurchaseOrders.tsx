@@ -378,6 +378,7 @@ const PurchaseOrders = () => {
                           <option value="kg">kg</option>
                           <option value="quintal">qtl</option>
                           <option value="ton">tone</option>
+                          <option value="ft">ft</option>
                         </select>
                       </div>
                       <div className="col-span-2 space-y-1.5">

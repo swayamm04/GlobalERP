@@ -159,6 +159,7 @@ const AddRawMaterialModal = ({ open, onOpenChange, onSuccess, editingMaterial }:
                                     <option value="kg">Kilograms (kg)</option>
                                     <option value="quintal">Quintal (qtl)</option>
                                     <option value="ton">Tone (tone)</option>
+                                    <option value="feet">Feet (ft)</option>
                                 </select>
                             </div>
 

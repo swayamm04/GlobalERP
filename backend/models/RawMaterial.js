@@ -13,7 +13,7 @@ const rawMaterialSchema = mongoose.Schema({
     unit: {
         type: String,
         required: true,
-        enum: ['pieces', 'kg', 'quintal', 'ton'],
+        enum: ['pieces', 'kg', 'quintal', 'ton', 'feet'],
         default: 'pieces'
     },
     stockQuantity: {

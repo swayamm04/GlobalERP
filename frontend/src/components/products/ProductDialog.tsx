@@ -188,6 +188,7 @@ export function ProductDialog({
                                         <SelectContent>
                                             <SelectItem value="pcs">Pieces (pcs)</SelectItem>
                                             <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                                            <SelectItem value="ft">Feet (ft)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
