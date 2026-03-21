@@ -9,10 +9,12 @@ const companySettingsSchema = new mongoose.Schema({
     invoicePrefix: { type: String, default: 'INV-' },
     financialYear: { type: String, default: '2025-26' },
     bankDetails: {
+        accountHolderName: { type: String, default: '' },
         bankName: { type: String, default: '' },
         accountNumber: { type: String, default: '' },
         ifscCode: { type: String, default: '' },
-        branch: { type: String, default: '' }
+        branch: { type: String, default: '' },
+        swiftCode: { type: String, default: '' }
     },
     email: { type: String, default: '' },
     phone: { type: String, default: '' },

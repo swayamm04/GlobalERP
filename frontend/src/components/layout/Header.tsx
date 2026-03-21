@@ -91,21 +91,23 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   const handleLogout = () => {
-    Cookies.remove("auth_token", { path: '/' });
-    Cookies.remove("user_role", { path: '/' });
-    Cookies.remove("user_name", { path: '/' });
+    // 1. Clear all auth-related cookies with explicit path to ensure removal
+    const cookieOptions = { path: '/' };
+    Cookies.remove("auth_token", cookieOptions);
+    Cookies.remove("user_role", cookieOptions);
+    Cookies.remove("user_name", cookieOptions);
+    
+    // 2. Clear any local/session storage that might hold sensitive state
+    localStorage.clear();
+    sessionStorage.clear();
+
     toast.success("Logged out successfully");
 
-    // Safely attempt redirection
-    try {
-      if (router) {
-        router.push("/login");
-      } else {
-        window.location.href = "/login";
-      }
-    } catch (e) {
-      window.location.href = "/login";
-    }
+    // 3. Professional redirection: Force a full page reload to the login page
+    // Using window.location.href instead of router.push ensures that all 
+    // client-side state is cleared and the browser makes a fresh request 
+    // to the server, allowing the middleware to intercept correctly.
+    window.location.href = "/login";
   };
 
   return (

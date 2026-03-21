@@ -44,7 +44,20 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Search, Loader2, Filter, CheckCircle2, RefreshCcw, MoreVertical, CreditCard, History, Plus, XCircle, Download } from "lucide-react";
+import { Search, Loader2, Filter, CheckCircle2, RefreshCcw, MoreVertical, CreditCard, History, Plus, XCircle, Download, Check, ChevronsUpDown } from "lucide-react";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
 import { useEffect, useState, useMemo } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -110,6 +123,13 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+    
+    // Quick Payment Section State
+    const [quickPaymentOrderId, setQuickPaymentOrderId] = useState("");
+    const [quickPaymentAmount, setQuickPaymentAmount] = useState("");
+    const [quickPaymentMethod, setQuickPaymentMethod] = useState("Cash");
+    const [isSubmittingQuickPayment, setIsSubmittingQuickPayment] = useState(false);
+    const [isOrderPopoverOpen, setIsOrderPopoverOpen] = useState(false);
 
     const filteredOrders = useMemo(() => {
         return orders.filter((order) => {
@@ -221,6 +241,43 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
         }
     };
 
+    const handleQuickPayment = async () => {
+        const order = orders.find(o => o.id === quickPaymentOrderId);
+        if (!order || !quickPaymentAmount || parseFloat(quickPaymentAmount) <= 0) {
+            toast.error("Please select an order and enter a valid amount");
+            return;
+        }
+
+        let amount = parseFloat(quickPaymentAmount);
+        const epsilon = 0.001;
+        if (Math.abs(amount - order.balanceDue) < epsilon) {
+            amount = order.balanceDue;
+        }
+
+        if (amount > order.balanceDue + epsilon) {
+            setQuickPaymentAmount(order.balanceDue.toString());
+            toast.warning("Payment amount cannot exceed balance due. Adjusted to maximum.");
+            return;
+        }
+
+        setIsSubmittingQuickPayment(true);
+        try {
+            await api.patch(`/api/orders/${order.id}/payment`, {
+                amount,
+                method: quickPaymentMethod
+            });
+            toast.success("Payment recorded successfully");
+            setQuickPaymentAmount("");
+            setQuickPaymentOrderId("");
+            fetchOrders();
+        } catch (error) {
+            console.error("Error recording quick payment:", error);
+            toast.error("Failed to record payment");
+        } finally {
+            setIsSubmittingQuickPayment(false);
+        }
+    };
+
     const openPaymentModal = (order: Order) => {
         setSelectedOrder(order);
         setNewPaymentAmount("");
@@ -294,6 +351,113 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                     </div>
                 </div>
             )}
+
+            {/* Quick Payment Section */}
+            <Card className="border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3">
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
+                        <Plus className="h-5 w-5" />
+                        Quick Payment Record
+                    </h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="space-y-2 col-span-1 md:col-span-1">
+                            <Label className="text-sm font-semibold">Select Order</Label>
+                            <Popover open={isOrderPopoverOpen} onOpenChange={setIsOrderPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={isOrderPopoverOpen}
+                                        className="w-full justify-between bg-background"
+                                    >
+                                        {quickPaymentOrderId
+                                            ? orders.find((o) => o.id === quickPaymentOrderId)?.customer || "Select Order"
+                                            : "Select Order..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Search customer or ID..." />
+                                        <CommandList>
+                                            <CommandEmpty>No pending orders found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {orders
+                                                    .filter(o => o.status !== "Completed" && o.status !== "Cancelled" && (isSecret ? !o.includeGST : (o.includeGST || o.includeGST === undefined)))
+                                                    .map((order) => (
+                                                        <CommandItem
+                                                            key={order.id}
+                                                            value={`${order.customer} ${order.id}`}
+                                                            onSelect={() => {
+                                                                setQuickPaymentOrderId(order.id);
+                                                                setQuickPaymentAmount(order.balanceDue.toString());
+                                                                setIsOrderPopoverOpen(false);
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    quickPaymentOrderId === order.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold">{order.customer}</span>
+                                                                <span className="text-xs text-muted-foreground">ID: #{order.id.slice(-6).toUpperCase()} | Due: ₹{order.balanceDue}</span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
+                        <div className="space-y-2 col-span-1">
+                            <Label className="text-sm font-semibold">Amount</Label>
+                            <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                value={quickPaymentAmount}
+                                onChange={(e) => setQuickPaymentAmount(e.target.value)}
+                                className="bg-background"
+                            />
+                        </div>
+
+                        <div className="space-y-2 col-span-1">
+                            <Label className="text-sm font-semibold">Method</Label>
+                            <RadioGroup
+                                value={quickPaymentMethod}
+                                onValueChange={setQuickPaymentMethod}
+                                className="flex gap-4 h-10 items-center"
+                            >
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="Cash" id="q-cash" />
+                                    <Label htmlFor="q-cash" className="text-xs cursor-pointer">Cash</Label>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="Online" id="q-online" />
+                                    <Label htmlFor="q-online" className="text-xs cursor-pointer">Online</Label>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <RadioGroupItem value="Bank" id="q-bank" />
+                                    <Label htmlFor="q-bank" className="text-xs cursor-pointer">Bank</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <Button 
+                            className="w-full" 
+                            disabled={!quickPaymentOrderId || !quickPaymentAmount || isSubmittingQuickPayment}
+                            onClick={handleQuickPayment}
+                        >
+                            {isSubmittingQuickPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Payment"}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>
@@ -469,39 +633,49 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <Plus className="h-4 w-4" /> Add New Payment
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="pay-method">Method</Label>
-                                            <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
-                                                <SelectTrigger id="pay-method">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Cash">Cash</SelectItem>
-                                                    <SelectItem value="Online">Online</SelectItem>
-                                                    <SelectItem value="Card">Card</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                    <div className="space-y-4 border-t pt-4">
+                                        <h4 className="font-semibold text-sm">Add Payment</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold">Payment Method</Label>
+                                                <RadioGroup
+                                                    value={newPaymentMethod}
+                                                    onValueChange={setNewPaymentMethod}
+                                                    className="flex gap-4 mt-1"
+                                                >
+                                                    <div className="flex items-center space-x-1">
+                                                        <RadioGroupItem value="Cash" id="m-cash" />
+                                                        <Label htmlFor="m-cash" className="text-xs cursor-pointer">Cash</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-1">
+                                                        <RadioGroupItem value="Online" id="m-online" />
+                                                        <Label htmlFor="m-online" className="text-xs cursor-pointer">Online</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-1">
+                                                        <RadioGroupItem value="Bank" id="m-bank" />
+                                                        <Label htmlFor="m-bank" className="text-xs cursor-pointer">Bank</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-semibold">Amount</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={newPaymentAmount}
+                                                    onChange={(e) => setNewPaymentAmount(e.target.value)}
+                                                    placeholder="Enter amount"
+                                                    className="h-9"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="pay-amount">Amount</Label>
-                                            <Input
-                                                id="pay-amount"
-                                                type="number"
-                                                placeholder="Enter amount"
-                                                value={newPaymentAmount}
-                                                onChange={(e) => setNewPaymentAmount(e.target.value)}
-                                            />
-                                        </div>
+                                        <Button 
+                                            className="w-full h-9" 
+                                            onClick={handleAddPayment}
+                                            disabled={isSubmittingPayment || !newPaymentAmount || parseFloat(newPaymentAmount) <= 0}
+                                        >
+                                            {isSubmittingPayment ? "Recording..." : "Record Payment"}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        className="w-full"
-                                        disabled={isSubmittingPayment}
-                                        onClick={handleAddPayment}
-                                    >
-                                        {isSubmittingPayment ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                                        Record Payment
-                                    </Button>
                                 </div>
                             )}
 
@@ -615,8 +789,6 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
             </AlertDialog>
         </div>
     );
-
-    if (isStandalone) return Content;
 
     return Content;
 };

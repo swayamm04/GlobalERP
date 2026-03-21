@@ -29,10 +29,12 @@ const Settings = () => {
     invoicePrefix: "",
     financialYear: "",
     bankDetails: {
+      accountHolderName: "",
       bankName: "",
       accountNumber: "",
       ifscCode: "",
-      branch: ""
+      branch: "",
+      swiftCode: ""
     },
     email: "",
     phone: "",
@@ -388,6 +390,15 @@ const Settings = () => {
                   <CardContent className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
+                        <Label htmlFor="bank-accountHolderName">Account Holder Name</Label>
+                        <Input
+                          id="bank-accountHolderName"
+                          value={settings.bankDetails.accountHolderName}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="bank-bankName">Bank Name</Label>
                         <Input
                           id="bank-bankName"
@@ -419,6 +430,15 @@ const Settings = () => {
                         <Input
                           id="bank-branch"
                           value={settings.bankDetails.branch}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bank-swiftCode">SWIFT Code</Label>
+                        <Input
+                          id="bank-swiftCode"
+                          value={settings.bankDetails.swiftCode}
                           onChange={handleChange}
                           disabled={!isEditing}
                         />

@@ -68,6 +68,14 @@ export interface InvoiceData {
         phone: string;
         email: string;
         hsnCode?: string;
+        bankDetails?: {
+            accountHolderName?: string;
+            bankName?: string;
+            accountNumber?: string;
+            ifscCode?: string;
+            branch?: string;
+            swiftCode?: string;
+        };
     };
     orderId?: string;
     date?: string | Date;
@@ -496,13 +504,81 @@ export const generateInvoice = async (data: InvoiceData) => {
         doc.setTextColor(0, 0, 0);
     }
 
-    const wordsX = pageSize === 'a5' ? 10 : summaryX;
-    const wordsWidth = pageSize === 'a5' ? pageWidth - 20 : pageWidth - summaryX - 10;
-    const currentY = lastY + (balanceDue && balanceDue > 0 ? 30 : 25);
+    // New Footer Section
+    let footerY = lastY + (balanceDue && balanceDue > 0 ? 25 : 20);
+    const footerHeight = 45;
+
+    // Check if footer fits on page
+    if (footerY + footerHeight > pageHeight - 10) {
+        doc.addPage();
+        drawPageDecoration();
+        footerY = 20;
+    }
+
+    // Amount in words (Spans across)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const amountInWords = `Amount in words : INR ${toWords(grandTotal).trim()} Only`;
+    const wordsLines = doc.splitTextToSize(amountInWords, pageWidth - 15);
+    doc.text(wordsLines, 7, footerY);
+    footerY += (wordsLines.length * 4);
+
+    // Footer Box
+    const boxStartY = footerY + 2;
+    const boxWidth = pageWidth - 10;
+    const boxHeight = 48; // Increased box height for more signature space
+    const splitX = 5 + (boxWidth * 0.55); // Vertical split line
+
+    doc.setLineWidth(0.1);
+    doc.rect(5, boxStartY, boxWidth, boxHeight);
+    doc.line(splitX, boxStartY, splitX, boxStartY + boxHeight); // Middle vertical line
+
+    // Declaration (Left Side)
+    doc.setFontSize(7);
+    const declTitle = "Declaration";
+    doc.setFont("helvetica", "bold");
+    doc.text(declTitle, 6, boxStartY + 4);
+    doc.line(6, boxStartY + 4.5, 18, boxStartY + 4.5); // Underline declaration
+
+    doc.setFont("helvetica", "normal");
+    const declarationText = "We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.";
+    const declLines = doc.splitTextToSize(declarationText, splitX - 10);
+    doc.text(declLines, 6, boxStartY + 8);
+
+    // Bank Details (Right Side - Top part)
+    const rightX = splitX + 2;
+    doc.setFont("helvetica", "bold");
+    doc.text("Company's Bank Details", rightX, boxStartY + 4);
     
-    const amountInWords = `Amount in words: ${toWords(grandTotal).toUpperCase()} ONLY`;
-    const lines = doc.splitTextToSize(amountInWords, wordsWidth);
-    doc.text(lines, wordsX, Math.max(currentY, lastY + 30));
+    doc.setFontSize(7);
+    const bankDetails = companyDetails?.bankDetails;
+    const bankData = [
+        { label: "A/c Holder's Name", value: bankDetails?.accountHolderName || companyDetails?.companyName || "" },
+        { label: "Bank Name", value: bankDetails?.bankName || "" },
+        { label: "A/c No.", value: bankDetails?.accountNumber || "" },
+        { label: "Branch & IFS Code", value: `${bankDetails?.branch || ""} & ${bankDetails?.ifscCode || ""}` },
+        { label: "SWIFT Code", value: bankDetails?.swiftCode || "" }
+    ];
+
+    bankData.forEach((row, i) => {
+        doc.setFont("helvetica", "normal");
+        doc.text(row.label, rightX, boxStartY + 8 + (i * 3.5));
+        doc.text(":", rightX + 24, boxStartY + 8 + (i * 3.5));
+        doc.setFont("helvetica", "bold");
+        doc.text(row.value.toString(), rightX + 26, boxStartY + 8 + (i * 3.5));
+    });
+
+    // Horizontal separator within right box (pushed down)
+    doc.line(splitX, boxStartY + 28, pageWidth - 5, boxStartY + 28);
+
+    // Signature Area (Bottom Right)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text(`for ${companyDetails?.companyName || "VASANTHA METAL INDUSTRY"}`, pageWidth - 7, boxStartY + 33, { align: "right" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text("Authorised Signatory", pageWidth - 10, boxStartY + 45, { align: "right" });
 
     doc.save(`${data.isEstimation ? 'Estimation' : 'Invoice'}_${customerName.replace(/\s+/g, '_')}_${orderId || Date.now()}.pdf`);
 };
@@ -749,22 +825,22 @@ export const generatePaymentStatement = async (data: StatementData) => {
 };
 
 const toWords = (num: number) => {
-    const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
-    const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+    const b = ['', '', 'Twenty ', 'Thirty ', 'Forty ', 'Fifty ', 'Sixty ', 'Seventy ', 'Eighty ', 'Ninety '];
 
     const inWords = (n: number): string => {
         if (n < 20) return a[n];
-        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
-        if (n < 1000) return a[Math.floor(n / 100)] + 'hundred ' + (n % 100 !== 0 ? 'and ' + inWords(n % 100) : '');
-        if (n < 100000) return inWords(Math.floor(n / 1000)) + 'thousand ' + (n % 1000 !== 0 ? inWords(n % 1000) : '');
-        if (n < 10000000) return inWords(Math.floor(n / 100000)) + 'lakh ' + (n % 100000 !== 0 ? inWords(n % 100000) : '');
-        return inWords(Math.floor(n / 10000000)) + 'crore ' + (n % 10000000 !== 0 ? inWords(n % 10000000) : '');
+        if (n < 100) return b[Math.floor(n / 10)] + inWords(n % 10);
+        if (n < 1000) return a[Math.floor(n / 100)] + 'Hundred ' + (n % 100 !== 0 ? 'and ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + 'Thousand ' + (n % 1000 !== 0 ? inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + 'Lakh ' + (n % 100000 !== 0 ? inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + 'Crore ' + (n % 10000000 !== 0 ? inWords(n % 10000000) : '');
     };
 
     const whole = Math.floor(num);
     const fraction = Math.round((num - whole) * 100);
     
-    let str = inWords(whole) + 'Rupees ';
+    let str = inWords(whole);
     if (fraction > 0) {
         str += 'and ' + inWords(fraction) + 'Paise ';
     }

@@ -1033,7 +1033,7 @@ const DummyOrders = () => {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="card" id="card" />
-                                        <Label htmlFor="card">Card</Label>
+                                        <Label htmlFor="card">Bank</Label>
                                     </div>
                                 </RadioGroup>
                             </div>
