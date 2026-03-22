@@ -170,7 +170,7 @@ const ProductCatalog = () => {
                 product.name,
                 product.category?.name || "No Category",
                 product.customFields?.map((f: any) => `${f.label}: ${f.value}`).join(", ") || "-",
-                `Rs. ${product.price} / ${product.unit || 'pcs'}`,
+                `Rs. ${product.price} / ${product.calculationField?.unit || product.unit || 'pcs'}`,
             ]);
 
 
@@ -302,7 +302,7 @@ const ProductCatalog = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell>{product.category?.name || "No Category"}</TableCell>
-                                        <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
+                                        <TableCell>₹{product.price} / {product.calculationField?.unit || product.unit || 'pcs'}</TableCell>
 
                                     </TableRow>
                                 ))

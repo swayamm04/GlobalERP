@@ -177,7 +177,7 @@ export function ProductDialog({
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="unit">Unit of Measurement</Label>
+                                    <Label htmlFor="unit">unit of stock measurement</Label>
                                     <Select
                                         value={formData.unit}
                                         onValueChange={(value) => setFormData({ ...formData, unit: value })}
@@ -208,7 +208,10 @@ export function ProductDialog({
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="price">Price (per unit)</Label>
+                                        <Label htmlFor="price" className="flex justify-between items-center whitespace-nowrap">
+                                            <span>Price</span>
+                                            <span className="text-[10px] text-muted-foreground ml-1">(per {formData.calculationField?.unit || formData.unit || 'unit'})</span >
+                                        </Label>
                                         <Input
                                             id="price"
                                             type="number"

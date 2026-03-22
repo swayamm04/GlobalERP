@@ -148,7 +148,7 @@ const AddRawMaterialModal = ({ open, onOpenChange, onSuccess, editingMaterial }:
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-sm">Unit</Label>
+                                <Label className="text-sm">unit of stock measurement</Label>
                                 <select
                                     className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background"
                                     value={materialForm.unit}

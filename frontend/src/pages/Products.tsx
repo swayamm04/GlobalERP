@@ -223,7 +223,7 @@ const Products = () => {
                   </TableCell>
                   <TableCell>{product.category?.name || "No Category"}</TableCell>
                   <TableCell>{product.stock} {product.unit || 'pcs'}</TableCell>
-                  <TableCell>₹{product.price} / {product.unit || 'pcs'}</TableCell>
+                  <TableCell>₹{product.price} / {product.calculationField?.unit || product.unit || 'pcs'}</TableCell>
 
                   <TableCell>
                     <Badge variant={getStatusVariant(product.status)}>

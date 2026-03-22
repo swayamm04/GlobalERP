@@ -364,7 +364,7 @@ const PurchaseOrders = () => {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Unit</Label>
+                        <Label className="text-xs font-medium">unit of stock measurement</Label>
                         <select
                           className={cn(
                             "h-9 w-full text-sm bg-background border rounded-md px-3 focus:ring-1 focus:ring-primary outline-none transition-opacity",
