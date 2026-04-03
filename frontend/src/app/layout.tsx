@@ -5,8 +5,8 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: {
-        default: "Metal Industry App",
-        template: "%s | Metal Industry App",
+        default: "Vasantha Metal Industry",
+        template: "%s | Vasantha Metal Industry",
     },
     description: "Enterprise Inventory Management System",
     icons: {

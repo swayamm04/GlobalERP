@@ -330,7 +330,9 @@ export const generateInvoice = async (data: InvoiceData) => {
     // Group identical products by name and price
     const mergedItemsMap = new Map<string, any>();
 
-    items.forEach(item => {
+    // Reverse a shallow copy of items to ensure chronological order in the PDF
+    const itemsToProcess = [...items].reverse();
+    itemsToProcess.forEach(item => {
         const key = `${item.productName}_${item.price}_${item.unit || 'pcs'}`;
         const multiplier = getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit);
         const resultantQuantity = item.quantity * multiplier;
