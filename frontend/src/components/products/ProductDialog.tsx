@@ -51,13 +51,13 @@ export function ProductDialog({
     useEffect(() => {
         if (product) {
             setFormData({
-                name: product.name,
-                category: typeof product.category === 'object' ? product.category._id : product.category || "",
-                stock: product.stock.toString(),
-                price: product.price.toString(),
+                name: product.name || "",
+                category: product.category?._id || product.category || "",
+                stock: (product.stock ?? 0).toString(),
+                price: (product.price ?? 0).toString(),
                 unit: product.unit || "pcs",
-                cgst: (product.cgst || 9).toString(),
-                sgst: (product.sgst || 9).toString(),
+                cgst: (product.cgst ?? 9).toString(),
+                sgst: (product.sgst ?? 9).toString(),
                 calculationField: {
                     label: product.calculationField?.label || "",
                     value: (product.calculationField?.value || "").toString(),

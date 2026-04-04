@@ -134,9 +134,9 @@ const Products = () => {
   };
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" ||
-      (typeof product.category === 'object' ? product.category._id : product.category) === selectedCategory;
+    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const categoryId = product.category?._id || product.category || "";
+    const matchesCategory = selectedCategory === "all" || categoryId === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 

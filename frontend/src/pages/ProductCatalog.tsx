@@ -96,14 +96,14 @@ const ProductCatalog = () => {
         const categoryName = product.category?.name?.toLowerCase() || "";
         const specs = product.customFields?.map((f: any) => `${f.label} ${f.value}`).join(" ").toLowerCase() || "";
 
-        const matchesSearch =
-            product.name.toLowerCase().includes(sanitizedSearch) ||
-            categoryName.includes(sanitizedSearch) ||
-            specs.includes(sanitizedSearch);
+    const matchesSearch =
+        (product.name?.toLowerCase() || "").includes(sanitizedSearch) ||
+        categoryName.includes(sanitizedSearch) ||
+        specs.includes(sanitizedSearch);
 
-        const matchesCategory = selectedCategory === "all" ||
-            (typeof product.category === 'object' ? product.category._id : product.category) === selectedCategory;
-        return matchesSearch && matchesCategory;
+    const categoryId = product.category?._id || product.category || "";
+    const matchesCategory = selectedCategory === "all" || categoryId === selectedCategory;
+    return matchesSearch && matchesCategory;
     });
 
     const exportToExcel = () => {
