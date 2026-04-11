@@ -201,9 +201,17 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
                 </TableRow>
               ) : (
                 filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
+                    <TableRow key={order.id}>
                     <TableCell className="font-medium hidden sm:table-cell">
-                      #{order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}
+                      {(() => {
+                        if (order.invoiceNo) {
+                          const parts = order.invoiceNo.split('/');
+                          const lastPart = parts[parts.length - 1];
+                          const num = parseInt(lastPart, 10);
+                          return `#${isNaN(num) ? lastPart : num}`;
+                        }
+                        return `#${order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`;
+                      })()}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
                     <TableCell className="hidden md:table-cell whitespace-nowrap">

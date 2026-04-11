@@ -523,36 +523,33 @@ const updateOrder = async (req, res) => {
 // @access  Private
 const getNextInvoiceNumber = async (req, res) => {
     try {
-        const { date } = req.query;
-        if (!date) {
-            return res.status(400).json({ message: 'Date is required' });
-        }
-
-        const queryDate = new Date(date);
-        const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
-
-        // Format date part: YYMMDD
-        const year = startOfDay.getFullYear().toString().slice(-2);
-        const month = (startOfDay.getMonth() + 1).toString().padStart(2, '0');
-        const day = startOfDay.getDate().toString().padStart(2, '0');
-        const datePrefix = `INV/${year}${month}${day}/`;
-
-        // Find the latest invoice number with this prefix
-        const lastOrder = await Order.findOne({
-            invoiceNo: { $regex: `^${datePrefix}` }
-        }).sort({ invoiceNo: -1 });
+        const cutoffDate = new Date('2026-04-11T00:00:00Z');
+        const result = await Order.aggregate([
+            { 
+                $match: { 
+                    invoiceNo: { $regex: /^INV\/\d+$/ },
+                    createdAt: { $gte: cutoffDate }
+                } 
+            },
+            {
+                $project: {
+                    invNum: { $toLong: { $arrayElemAt: [{ $split: ["$invoiceNo", "/"] }, 1] } }
+                }
+            },
+            { $group: { _id: null, maxInv: { $max: "$invNum" } } }
+        ]);
 
         let nextNumber = 1;
-        if (lastOrder && lastOrder.invoiceNo) {
-            const parts = lastOrder.invoiceNo.split('/');
-            const lastSeq = parseInt(parts[parts.length - 1]);
-            if (!isNaN(lastSeq)) {
-                nextNumber = lastSeq + 1;
-            }
+        if (result.length > 0 && result[0].maxInv !== undefined) {
+            nextNumber = Number(result[0].maxInv) + 1;
+        } else {
+            // Fallback: If no INV/X found, check if there are any old format orders 
+            // and maybe continue from total count to be safe, or just start from 1.
+            // The user said "start fresh from inv/1 today", so we start from 1 if no INV/X exists.
+            nextNumber = 1;
         }
 
-        const nextInvoiceNo = `${datePrefix}${nextNumber.toString().padStart(3, '0')}`;
+        const nextInvoiceNo = `INV/${nextNumber}`;
         res.status(200).json({ nextInvoiceNo });
     } catch (error) {
         console.error('Error in getNextInvoiceNumber:', error);

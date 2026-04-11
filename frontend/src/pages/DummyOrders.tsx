@@ -1095,7 +1095,15 @@ const DummyOrders = () => {
                                     dummyOrders.map((order) => (
                                         <TableRow key={order.id}>
                                             <TableCell className="font-medium px-6">
-                                                {order.invoiceNo || (order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A")}
+                                                {(() => {
+                                                    if (order.invoiceNo) {
+                                                        const parts = order.invoiceNo.split('/');
+                                                        const lastPart = parts[parts.length - 1];
+                                                        const num = parseInt(lastPart, 10);
+                                                        return `#${isNaN(num) ? lastPart : num}`;
+                                                    }
+                                                    return `#${order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`;
+                                                })()}
                                             </TableCell>
                                             <TableCell>{order.customer}</TableCell>
                                             <TableCell>

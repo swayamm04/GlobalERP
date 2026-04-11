@@ -36,6 +36,7 @@ const getDashboardStats = async (req, res) => {
 
         const formattedOrders = recentOrders.map(order => ({
             id: order._id,
+            invoiceNo: order.invoiceNo,
             customer: order.customerName,
             items: order.items.length,
             amount: order.grandTotal || 0,

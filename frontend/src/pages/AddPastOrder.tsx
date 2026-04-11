@@ -1128,7 +1128,15 @@ const AddPastOrder = () => {
                                         return (
                                             <TableRow key={order._id || order.id}>
                                                 <TableCell className="font-medium px-6">
-                                                    {order.invoiceNo || (order._id ? order._id.substring(Math.max(0, order._id.length - 6)).toUpperCase() : "N/A")}
+                                                    {(() => {
+                                                        if (order.invoiceNo) {
+                                                            const parts = order.invoiceNo.split('/');
+                                                            const lastPart = parts[parts.length - 1];
+                                                            const num = parseInt(lastPart, 10);
+                                                            return `#${isNaN(num) ? lastPart : num}`;
+                                                        }
+                                                        return `#${order._id ? order._id.substring(Math.max(0, order._id.length - 6)).toUpperCase() : "N/A"}`;
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="px-6">{order.customerName || order.customer}</TableCell>
                                                 <TableCell className="px-6 text-muted-foreground">
