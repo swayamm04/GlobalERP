@@ -114,10 +114,10 @@ const DummyOrders = () => {
         }
     };
 
-    
+
     const handleClearHistory = async () => {
         if (!confirm("WARNING: This will permanently delete ALL dummy order history. Are you sure you want to proceed?")) return;
-        
+
         try {
             setLoadingOrders(true);
             await api.delete("/api/orders/dummy");
@@ -135,7 +135,7 @@ const DummyOrders = () => {
         setDownloadingId(orderId);
         try {
             const { data: order } = await api.get(`/api/orders/${orderId}`);
-            
+
             await generateInvoice({
                 ...order,
                 companyDetails,
@@ -295,7 +295,7 @@ const DummyOrders = () => {
         });
     };
 
-    
+
     const handleDeleteOrder = async (id: string) => {
         if (!confirm("Are you sure you want to delete this dummy order?")) return;
         try {
@@ -315,7 +315,7 @@ const DummyOrders = () => {
         try {
             const { data } = await api.get(`/api/orders/${orderId}`);
             setEditingOrder(data);
-            
+
             // Pre-fill form
             setCustomerType(data.customerType || "Individual");
             setCustomerName(data.customerName || "");
@@ -326,7 +326,7 @@ const DummyOrders = () => {
             setStateName(data.stateName || "");
             setStateCode(data.stateCode || "");
             setEmail(data.email || "");
-            
+
             setInvoiceNo(data.invoiceNo || "");
             setInvoiceDate(data.invoiceDate ? new Date(data.invoiceDate).toISOString().split('T')[0] : "");
             setDeliveryNote(data.deliveryNote || "");
@@ -342,7 +342,7 @@ const DummyOrders = () => {
             setBillOfLading(data.billOfLading || "");
             setMotorVehicleNo(data.motorVehicleNo || "");
             setTermsOfDelivery(data.termsOfDelivery || "");
-            
+
             setCreatedAt(data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : "");
             setIncludeGST(data.includeGST !== false);
             setPaymentMethod(data.paymentMethod || "cash");
@@ -363,7 +363,7 @@ const DummyOrders = () => {
                 };
             });
             setItems(mappedItems);
-            
+
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
             toast.info("Order loaded for editing");
@@ -1057,9 +1057,9 @@ const DummyOrders = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h2 className="text-xl font-bold">Dummy Orders History</h2>
                     <div className="flex items-center gap-2">
-                        <Button 
-                            variant="destructive" 
-                            size="sm" 
+                        <Button
+                            variant="destructive"
+                            size="sm"
                             className="text-[10px] h-8 font-bold flex items-center gap-1"
                             onClick={handleClearHistory}
                             disabled={loadingOrders || dummyOrders.length === 0}

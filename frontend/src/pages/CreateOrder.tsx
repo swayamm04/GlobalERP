@@ -180,8 +180,8 @@ const CreateOrder = () => {
                     // Remove current row and update the existing one
                     setItems(prevItems => prevItems
                         .filter(item => item.id !== id)
-                        .map(item => item.id === existingItem.id 
-                            ? { ...item, quantity: item.quantity + currentQty } 
+                        .map(item => item.id === existingItem.id
+                            ? { ...item, quantity: item.quantity + currentQty }
                             : item
                         )
                     );

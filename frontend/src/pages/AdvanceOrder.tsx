@@ -183,8 +183,8 @@ const AdvanceOrder = () => {
                     // Remove current row and update the existing one
                     setItems(prevItems => prevItems
                         .filter(item => item.id !== id)
-                        .map(item => item.id === existingItem.id 
-                            ? { ...item, quantity: item.quantity + currentQty } 
+                        .map(item => item.id === existingItem.id
+                            ? { ...item, quantity: item.quantity + currentQty }
                             : item
                         )
                     );
@@ -378,10 +378,10 @@ const AdvanceOrder = () => {
                 <Card className="shadow-md border-indigo-100 dark:border-indigo-900/30">
                     <CardContent className="p-6 space-y-8">
                         <div className="flex flex-col space-y-4">
-                        <div className="flex items-center justify-between">
-                            <Label className="font-semibold text-lg">Customer Type</Label>
-                        </div>
-                        <RadioGroup
+                            <div className="flex items-center justify-between">
+                                <Label className="font-semibold text-lg">Customer Type</Label>
+                            </div>
+                            <RadioGroup
                                 defaultValue="Individual"
                                 value={customerType}
                                 onValueChange={(val: any) => setCustomerType(val)}
@@ -699,8 +699,8 @@ const AdvanceOrder = () => {
                                             {item.calculationField && item.calculationField.label && (
                                                 <div className="w-full md:w-28 space-y-2">
                                                     <Label className="text-xs font-semibold">
-                                                         {item.calculationField.label} {item.calculationField.unit ? `(${item.calculationField.unit})` : ""}
-                                                     </Label>
+                                                        {item.calculationField.label} {item.calculationField.unit ? `(${item.calculationField.unit})` : ""}
+                                                    </Label>
                                                     <Input
                                                         type="text"
                                                         className="h-10 bg-zinc-50 border-zinc-200"

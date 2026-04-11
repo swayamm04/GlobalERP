@@ -415,7 +415,7 @@ const updateOrder = async (req, res) => {
         if (order) {
             // Check if stock needs to be adjusted back before applying new items
             // But for Dummy and Past orders, we skip stock deduction/addition as per user request
-            
+
             const {
                 customerName,
                 contact,
@@ -488,11 +488,11 @@ const updateOrder = async (req, res) => {
             order.termsOfDelivery = termsOfDelivery || order.termsOfDelivery;
             order.status = status || order.status;
             order.includeGST = includeGST !== undefined ? includeGST : order.includeGST;
-            
+
             if (createdAt) {
                 order.createdAt = new Date(createdAt);
             }
-            
+
             if (isPastOrder !== undefined) order.isPastOrder = isPastOrder;
             if (isDummy !== undefined) order.isDummy = isDummy;
 
@@ -566,7 +566,7 @@ const getNextInvoiceNumber = async (req, res) => {
 const clearDummyOrders = async (req, res) => {
     try {
         const result = await Order.deleteMany({ isDummy: true, isPastOrder: { $ne: true } });
-        
+
         // Log Activity
         if (req.user) {
             await logActivity(
@@ -590,7 +590,7 @@ const clearDummyOrders = async (req, res) => {
 const clearPastOrders = async (req, res) => {
     try {
         const result = await Order.deleteMany({ isPastOrder: true });
-        
+
         // Log Activity
         if (req.user) {
             await logActivity(

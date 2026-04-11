@@ -340,18 +340,18 @@ export const generateInvoice = async (data: InvoiceData) => {
         if (mergedItemsMap.has(key)) {
             const existing = mergedItemsMap.get(key);
             existing.resultantQuantity += resultantQuantity;
-            
+
             // Collect unique calculation info ONLY if it's length/feet related
             const label = item.calculationField?.label?.toLowerCase() || "";
             const isLengthRelated = label.includes("length") || label === "feet" || label === "ft";
-            
+
             if (isLengthRelated && item.calculationField && item.calculationField.value && item.calculationField.value.toString() !== "1") {
                 const info = `${item.calculationField.label}: ${item.calculationField.value} ${item.calculationField.unit || ""}`;
                 if (!existing.allCalcInfo.includes(info)) {
                     existing.allCalcInfo.push(info);
                 }
             }
-            
+
             // Collect unique custom fields (specs)
             if (item.customFields) {
                 item.customFields.forEach((f: any) => {
@@ -362,10 +362,10 @@ export const generateInvoice = async (data: InvoiceData) => {
                 });
             }
         } else {
-            const allSpecs = item.customFields 
+            const allSpecs = item.customFields
                 ? item.customFields.map((f: any) => `${f.label}: ${f.value}${f.unit ? ` ${f.unit}` : ""}`)
                 : [];
-            
+
             const label = item.calculationField?.label?.toLowerCase() || "";
             const isLengthRelated = label.includes("length") || label === "feet" || label === "ft";
 
@@ -385,7 +385,7 @@ export const generateInvoice = async (data: InvoiceData) => {
     const tableBody = Array.from(mergedItemsMap.values()).map((item, index) => {
         const specsStr = item.allSpecs.length > 0 ? ` (${item.allSpecs.join(", ")})` : "";
         const calcStr = item.allCalcInfo.length > 0 ? ` (${item.allCalcInfo.join(", ")})` : "";
-        
+
         const description = specsStr
             ? { content: `${item.productName || "Product"}${calcStr}\n${specsStr}`, styles: { fontSize: 6, cellPadding: 1 } }
             : `${item.productName || "Product"}${calcStr}`;
@@ -551,7 +551,7 @@ export const generateInvoice = async (data: InvoiceData) => {
     const rightX = splitX + 2;
     doc.setFont("helvetica", "bold");
     doc.text("Company's Bank Details", rightX, boxStartY + 4);
-    
+
     doc.setFontSize(7);
     const bankDetails = companyDetails?.bankDetails;
     const bankData = [
@@ -577,7 +577,7 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.text(`for ${companyDetails?.companyName || "VASANTHA METAL INDUSTRY"}`, pageWidth - 7, boxStartY + 33, { align: "right" });
-    
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.text("Authorised Signatory", pageWidth - 10, boxStartY + 45, { align: "right" });
@@ -841,7 +841,7 @@ const toWords = (num: number) => {
 
     const whole = Math.floor(num);
     const fraction = Math.round((num - whole) * 100);
-    
+
     let str = inWords(whole);
     if (fraction > 0) {
         str += 'and ' + inWords(fraction) + 'Paise ';

@@ -142,7 +142,7 @@ const AddPastOrder = () => {
 
     const handleClearPastHistory = async () => {
         if (!confirm("WARNING: This will permanently delete ALL past order history records. Are you sure you want to proceed?")) return;
-        
+
         try {
             setLoadingOrders(true);
             await api.delete("/api/orders/past");
@@ -160,7 +160,7 @@ const AddPastOrder = () => {
         setDownloadingId(orderId);
         try {
             const { data: order } = await api.get(`/api/orders/${orderId}`);
-            
+
             await generateInvoice({
                 ...order,
                 companyDetails,
@@ -249,8 +249,8 @@ const AddPastOrder = () => {
                     // Remove current row and update the existing one
                     setItems(prevItems => prevItems
                         .filter(item => item.id !== id)
-                        .map(item => item.id === existingItem.id 
-                            ? { ...item, quantity: item.quantity + currentQty } 
+                        .map(item => item.id === existingItem.id
+                            ? { ...item, quantity: item.quantity + currentQty }
                             : item
                         )
                     );
@@ -350,7 +350,7 @@ const AddPastOrder = () => {
                 price: item.price,
                 unit: item.unit || "pcs",
                 category: item.category || "",
-                stock: 0, 
+                stock: 0,
                 calculationField: item.calculationField
             }));
             setItems(mappedItems);
@@ -1079,9 +1079,9 @@ const AddPastOrder = () => {
                             </Badge>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button 
-                                variant="destructive" 
-                                size="sm" 
+                            <Button
+                                variant="destructive"
+                                size="sm"
                                 className="text-[10px] h-8 font-bold flex items-center gap-1"
                                 onClick={handleClearPastHistory}
                                 disabled={loadingOrders || pastOrders.length === 0}
