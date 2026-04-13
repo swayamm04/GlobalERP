@@ -247,7 +247,7 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.setFont("helvetica", "bold");
     const displayInvoiceNo = data.isEstimation
         ? (data.estimationNo || `EST-${Date.now().toString().slice(-6)}`)
-        : (invoiceNo || (orderId ? (orderId.length > 6 ? `#INV-${orderId.slice(-6).toUpperCase()}` : `#INV-${orderId}`) : `#INV-${Date.now().toString().slice(-6)}`));
+        : (invoiceNo || "");
     doc.text(displayInvoiceNo, rightColOffset + 2, 21.5);
 
     doc.setFont("helvetica", "normal");
