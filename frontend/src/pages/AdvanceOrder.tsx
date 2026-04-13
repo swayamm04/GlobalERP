@@ -263,6 +263,10 @@ const AdvanceOrder = () => {
             toast.error("Please add at least one item");
             return;
         }
+        if (items.some(item => !item.productName)) {
+            toast.error("Please select a product for all items in the list");
+            return;
+        }
 
         try {
             setIsSubmitting(true);
