@@ -323,10 +323,15 @@ const CreateOrder = () => {
             };
 
             // Save to database
-            await api.post("/api/orders", orderData);
+            const response = await api.post("/api/orders", orderData);
+            const createdOrder = response.data;
 
-            // Trigger PDF generation IMMEDIATELY
-            await generateInvoicePDF(orderData);
+            // Trigger PDF generation IMMEDIATELY with the backend's generated invoice number
+            await generateInvoicePDF({ 
+                ...orderData, 
+                invoiceNo: createdOrder.invoiceNo, 
+                orderId: createdOrder._id 
+            });
 
             toast.success("Order placed and invoice generated!");
 

@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Customer = require('../models/Customer');
 const Product = require('../models/Product');
 const logActivity = require('../utils/activityLogger');
+const Counter = require('../models/Counter');
 
 // Helper to update product stock
 const updateProductStock = async (items, type = 'deduct') => {
@@ -118,6 +119,28 @@ const createOrder = async (req, res) => {
             isDummy
         } = req.body;
 
+        let finalInvoiceNo = invoiceNo;
+        
+        // Only generate sequential numbers for live, non-dummy orders
+        if (!isPastOrder && !isDummy) {
+            try {
+                // Atomic increment
+                const counter = await Counter.findOneAndUpdate(
+                    { id: 'invoice' },
+                    { $inc: { seq: 1 } },
+                    { upsert: true, new: true }
+                );
+                
+                // If this is the first time or somehow lower than existing data, we might need a sync
+                // However, for strict sequence requested by user, the counter is now the source of truth.
+                finalInvoiceNo = `INV/${counter.seq}`;
+            } catch (error) {
+                console.error("Counter Error:", error);
+                // Fallback to timestamp only if counter fails (safety net to prevent 500)
+                finalInvoiceNo = `INV/ERR-${Date.now()}`;
+            }
+        }
+
         const orderData = {
             customerName,
             contact,
@@ -135,7 +158,7 @@ const createOrder = async (req, res) => {
             stateName,
             stateCode,
             email,
-            invoiceNo,
+            invoiceNo: finalInvoiceNo,
             invoiceDate,
             deliveryNote,
             modeOfPayment,
@@ -518,44 +541,7 @@ const updateOrder = async (req, res) => {
     }
 };
 
-// @desc    Get next sequential invoice number for a given date
-// @route   GET /api/orders/next-invoice-number
-// @access  Private
-const getNextInvoiceNumber = async (req, res) => {
-    try {
-        const cutoffDate = new Date('2026-04-11T00:00:00Z');
-        const result = await Order.aggregate([
-            { 
-                $match: { 
-                    invoiceNo: { $regex: /^INV\/\d+/ },
-                    createdAt: { $gte: cutoffDate }
-                } 
-            },
-            {
-                $project: {
-                    invNum: { $toLong: { $arrayElemAt: [{ $split: ["$invoiceNo", "/"] }, 1] } }
-                }
-            },
-            { $group: { _id: null, maxInv: { $max: "$invNum" } } }
-        ]);
 
-        let nextNumber = 1;
-        if (result.length > 0 && result[0].maxInv != null) {
-            nextNumber = Number(result[0].maxInv) + 1;
-        } else {
-            // Fallback: If no INV/X found, check if there are any old format orders 
-            // and maybe continue from total count to be safe, or just start from 1.
-            // The user said "start fresh from inv/1 today", so we start from 1 if no INV/X exists.
-            nextNumber = 1;
-        }
-
-        const nextInvoiceNo = `INV/${nextNumber}`;
-        res.status(200).json({ nextInvoiceNo });
-    } catch (error) {
-        console.error('Error in getNextInvoiceNumber:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
-    }
-};
 
 // @desc    Clear all dummy orders history
 // @route   DELETE /api/orders/dummy
@@ -602,6 +588,46 @@ const clearPastOrders = async (req, res) => {
     } catch (error) {
         console.error('Error in clearPastOrders:', error);
         res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Get next invoice number
+// @route   GET /api/orders/next-invoice-number
+// @access  Private
+const getNextInvoiceNumber = async (req, res) => {
+    try {
+        const counter = await Counter.findOne({ id: 'invoice' });
+        let nextNumber = 1;
+        
+        if (counter) {
+            nextNumber = counter.seq + 1;
+        } else {
+            // First time initialization from existing database data
+            const cutoffDate = new Date('2026-04-11T00:00:00Z');
+            const result = await Order.aggregate([
+                { 
+                    $match: { 
+                        invoiceNo: { $regex: /^INV\/\d+$/ },
+                        createdAt: { $gte: cutoffDate }
+                    } 
+                },
+                {
+                    $project: {
+                        invNum: { $toLong: { $arrayElemAt: [{ $split: ["$invoiceNo", "/"] }, 1] } }
+                    }
+                },
+                { $group: { _id: null, maxInv: { $max: "$invNum" } } }
+            ]);
+
+            if (result.length > 0 && result[0].maxInv != null) {
+                nextNumber = Number(result[0].maxInv) + 1;
+            }
+        }
+        
+        res.json({ nextInvoiceNo: `INV/${nextNumber}` });
+    } catch (error) {
+        console.error('Error in getNextInvoiceNumber:', error);
+        res.status(500).json({ message: 'Error calculating next invoice number' });
     }
 };
 

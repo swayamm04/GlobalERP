@@ -325,8 +325,14 @@ const AdvanceOrder = () => {
                 status: 'Pending' // Always pending for Advance Orders
             };
 
-            await api.post("/api/orders", orderData);
-            await generateInvoicePDF(orderData);
+            const response = await api.post("/api/orders", orderData);
+            const createdOrder = response.data;
+            
+            await generateInvoicePDF({
+                ...orderData,
+                invoiceNo: createdOrder.invoiceNo,
+                orderId: createdOrder._id
+            });
             toast.success("Advance order placed and invoice generated!");
 
             // Reset form
