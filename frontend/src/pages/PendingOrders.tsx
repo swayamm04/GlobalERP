@@ -518,15 +518,7 @@ const PendingOrders = ({ isSecret = false, isStandalone = false }: { isSecret?: 
                                             className="hover:bg-muted/50 transition-colors"
                                         >
                                             <TableCell className="font-medium hidden sm:table-cell whitespace-nowrap">
-                                                {(() => {
-                                                    if (order.invoiceNo) {
-                                                        const parts = order.invoiceNo.split('/');
-                                                        const lastPart = parts[parts.length - 1];
-                                                        const num = parseInt(lastPart, 10);
-                                                        return `#${isNaN(num) ? lastPart : num}`;
-                                                    }
-                                                    return `#${order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`;
-                                                })()}
+                                                {`#${order.id ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`}
                                             </TableCell>
                                             <TableCell className="whitespace-nowrap">{order.customer}</TableCell>
                                             <TableCell className="hidden md:table-cell whitespace-nowrap">

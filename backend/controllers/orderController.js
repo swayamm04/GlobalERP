@@ -527,7 +527,7 @@ const getNextInvoiceNumber = async (req, res) => {
         const result = await Order.aggregate([
             { 
                 $match: { 
-                    invoiceNo: { $regex: /^INV\/\d+$/ },
+                    invoiceNo: { $regex: /^INV\/\d+/ },
                     createdAt: { $gte: cutoffDate }
                 } 
             },
@@ -540,7 +540,7 @@ const getNextInvoiceNumber = async (req, res) => {
         ]);
 
         let nextNumber = 1;
-        if (result.length > 0 && result[0].maxInv !== undefined) {
+        if (result.length > 0 && result[0].maxInv != null) {
             nextNumber = Number(result[0].maxInv) + 1;
         } else {
             // Fallback: If no INV/X found, check if there are any old format orders 

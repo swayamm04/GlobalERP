@@ -67,15 +67,7 @@ export const RecentOrders = ({ orders }: RecentOrdersProps) => {
                 orders.map((order) => (
                   <TableRow key={order.id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className="font-medium hidden sm:table-cell text-muted-foreground">
-                      {(() => {
-                        if (order.invoiceNo) {
-                          const parts = order.invoiceNo.split('/');
-                          const lastPart = parts[parts.length - 1];
-                          const num = parseInt(lastPart, 10);
-                          return `#${isNaN(num) ? lastPart : num}`;
-                        }
-                        return `#${typeof order.id === 'string' ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`;
-                      })()}
+                      {`#${typeof order.id === 'string' ? order.id.substring(Math.max(0, order.id.length - 6)).toUpperCase() : "N/A"}`}
                     </TableCell>
                     <TableCell className="font-medium whitespace-nowrap">{order.customer}</TableCell>
                     <TableCell className="whitespace-nowrap">{order.items} Items</TableCell>

@@ -210,7 +210,8 @@ export const generateInvoice = async (data: InvoiceData) => {
     // Header - Tax Invoice (First Page)
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    const headerTitle = data.isEstimation ? "ESTIMATION" : (includeGST ? "Tax Invoice" : "Invoice/Bill");
+    const isAdvanceOrPartial = data.balanceDue > 0 && !data.isEstimation;
+    const headerTitle = data.isEstimation ? "ESTIMATION" : (isAdvanceOrPartial ? "Advance Receipt" : (includeGST ? "Tax Invoice" : "Invoice/Bill"));
     doc.text(headerTitle, pageWidth / 2, 12, { align: "center" });
     doc.line(5, 15, pageWidth - 5, 15);
 
