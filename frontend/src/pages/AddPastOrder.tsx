@@ -67,7 +67,7 @@ const AddPastOrder = () => {
     const [email, setEmail] = useState("");
 
     // Delivery Credentials state
-    const [invoiceNo, setInvoiceNo] = useState("");
+    const [invoiceNo, setInvoiceNo] = useState("INV/");
     const [invoiceDate, setInvoiceDate] = useState("");
     const [deliveryNote, setDeliveryNote] = useState("");
     const [modeOfPayment, setModeOfPayment] = useState("");
@@ -176,24 +176,6 @@ const AddPastOrder = () => {
         }
     };
 
-    useEffect(() => {
-        const fetchNextInvoice = async () => {
-            try {
-                const dateToUse = createdAt || new Date().toISOString().split('T')[0];
-                const { data } = await api.get(`/api/orders/next-invoice-number?date=${dateToUse}`);
-                setInvoiceNo(data.nextInvoiceNo);
-                if (!invoiceDate) {
-                    setInvoiceDate(dateToUse);
-                }
-            } catch (error) {
-                console.error("Error fetching next invoice number:", error);
-            }
-        };
-
-        if (createdAt) {
-            fetchNextInvoice();
-        }
-    }, [createdAt, customerType]);
 
     // Sync modeOfPayment with paymentMethod selection
     useEffect(() => {
@@ -401,8 +383,13 @@ const AddPastOrder = () => {
             return;
         }
 
-        if (!primaryName || !address) {
-            toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
+        if (!invoiceNo || !invoiceNo.startsWith("INV/")) {
+            toast.error("Please enter a valid Invoice Number starting with INV/");
+            return;
+        }
+
+        if (!primaryName || !address || !contact) {
+            toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address, Contact)`);
             return;
         }
         if (contact && contact.length !== 10) {
@@ -557,17 +544,39 @@ const AddPastOrder = () => {
                         </RadioGroup>
                     </div>
 
-                    <div className="flex flex-col space-y-4 pt-4 border-t">
-                        <Label htmlFor="createdAt" className="font-semibold text-lg">Order Date <span className="text-destructive">*</span></Label>
-                        <Input
-                            id="createdAt"
-                            type="date"
-                            value={createdAt}
-                            onChange={(e) => setCreatedAt(e.target.value)}
-                            max={new Date().toISOString().split('T')[0]}
-                            className="w-full md:w-[300px]"
-                        />
-                        <p className="text-xs text-muted-foreground">Select the original date this order was placed.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                        <div className="flex flex-col space-y-4">
+                            <Label htmlFor="createdAt" className="font-semibold text-lg">Order Date <span className="text-destructive">*</span></Label>
+                            <Input
+                                id="createdAt"
+                                type="date"
+                                value={createdAt}
+                                onChange={(e) => setCreatedAt(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
+                                className="w-full"
+                            />
+                            <p className="text-xs text-muted-foreground">Select the original date this order was placed.</p>
+                        </div>
+                        <div className="flex flex-col space-y-4">
+                            <Label htmlFor="invoiceNo" className="font-semibold text-lg">Invoice No. <span className="text-destructive">*</span></Label>
+                            <div className="relative flex items-center group">
+                                <span className="absolute left-3 flex items-center h-full text-muted-foreground font-bold pointer-events-none select-none border-r pr-2 py-2 group-focus-within:text-foreground transition-colors">
+                                    INV/
+                                </span>
+                                <Input
+                                    id="invoiceNo"
+                                    type="text"
+                                    value={invoiceNo.replace(/^INV\//, "")}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/^INV\/?/, "");
+                                        setInvoiceNo("INV/" + val);
+                                    }}
+                                    placeholder="001"
+                                    className="w-full pl-14 h-11 bg-background border-zinc-200 focus:border-primary transition-all font-mono"
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Compulsory invoice number (prefix INV/ is already included).</p>
+                        </div>
                     </div>
 
                     <div className="space-y-6 pt-4 border-t">

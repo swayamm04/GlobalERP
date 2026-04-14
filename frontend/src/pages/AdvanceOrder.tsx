@@ -251,8 +251,8 @@ const AdvanceOrder = () => {
         const isBusiness = customerType === "Business";
         const primaryName = isBusiness ? companyName : customerName;
 
-        if (!primaryName || !address) {
-            toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address)`);
+        if (!primaryName || !address || !contact) {
+            toast.error(`Please fill in required fields (${isBusiness ? "Company Name" : "Name"}, Address, Contact)`);
             return;
         }
         if (contact && contact.length !== 10) {

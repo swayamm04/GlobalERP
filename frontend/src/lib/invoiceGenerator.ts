@@ -238,60 +238,96 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.setFont("helvetica", "normal");
     const rightColOffset = pageWidth / 2;
 
-    // Horizontal separators for header grid
-    const gridLines = data.isEstimation ? [22, 85] : [22, 32, 42, 52, 65, 85];
-    gridLines.forEach(y => doc.line(rightColOffset, y, pageWidth - 5, y));
+    // --- Right Column - Dynamic Row Rendering ---
+    const rightColInternalSplit = 35; // The vertical split point within the right column area
+    let currentRightY = 15;
 
-    // Right Column Content - Grid fields
-    doc.text(data.isEstimation ? "Estimation No." : "Invoice No.", rightColOffset + 2, 19);
-    doc.setFont("helvetica", "bold");
-    const displayInvoiceNo = data.isEstimation
-        ? (data.estimationNo || `EST-${Date.now().toString().slice(-6)}`)
-        : (invoiceNo || "");
-    doc.text(displayInvoiceNo, rightColOffset + 2, 21.5);
+    const renderHeaderRow = (leftPair?: { label: string, value: string }, rightPair?: { label: string, value: string }, fullWidth?: { label: string, value: string }) => {
+        doc.setFontSize(8);
+        const rowStartY = currentRightY;
+        let rowHeight = 10; // Minimum row height
 
-    doc.setFont("helvetica", "normal");
-    doc.text("Dated", rightColOffset + 35, 19);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatDate(invDate || date || new Date()), rightColOffset + 35, 21.5);
+        if (fullWidth) {
+            // Render full width row (e.g. Terms of Delivery)
+            doc.setFont("helvetica", "normal");
+            doc.text(fullWidth.label, rightColOffset + 2, rowStartY + 4);
+            doc.setFont("helvetica", "bold");
+            const wrapped = doc.splitTextToSize(fullWidth.value || "", (pageWidth - 5 - rightColOffset) - 4);
+            doc.text(wrapped, rightColOffset + 2, rowStartY + 8);
+            rowHeight = Math.max(rowHeight, 8 + (wrapped.length * 3.5));
+        } else {
+            // Render split row
+            let leftHeight = 0;
+            let rightHeight = 0;
+
+            if (leftPair) {
+                doc.setFont("helvetica", "normal");
+                doc.text(leftPair.label, rightColOffset + 2, rowStartY + 4);
+                doc.setFont("helvetica", "bold");
+                const wrapped = doc.splitTextToSize(leftPair.value || "", rightColInternalSplit - 4);
+                doc.text(wrapped, rightColOffset + 2, rowStartY + 8);
+                leftHeight = 8 + (wrapped.length * 3.5);
+            }
+
+            if (rightPair) {
+                doc.setFont("helvetica", "normal");
+                doc.text(rightPair.label, rightColOffset + rightColInternalSplit + 2, rowStartY + 4);
+                doc.setFont("helvetica", "bold");
+                const wrapped = doc.splitTextToSize(rightPair.value || "", (pageWidth - 5 - (rightColOffset + rightColInternalSplit)) - 4);
+                doc.text(wrapped, rightColOffset + rightColInternalSplit + 2, rowStartY + 8);
+                rightHeight = 8 + (wrapped.length * 3.5);
+            }
+            rowHeight = Math.max(rowHeight, leftHeight, rightHeight);
+        }
+
+        // Draw Row Separators
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.1);
+        doc.line(rightColOffset, rowStartY + rowHeight, pageWidth - 5, rowStartY + rowHeight); // Horizontal line
+        if (!fullWidth) {
+            doc.line(rightColOffset + rightColInternalSplit, rowStartY, rightColOffset + rightColInternalSplit, rowStartY + rowHeight); // Internal vertical split
+        }
+
+        currentRightY += rowHeight;
+    };
+
+    // First row: Invoice No. and Dated
+    renderHeaderRow(
+        { label: data.isEstimation ? "Estimation No." : "Invoice No.", value: data.isEstimation ? (data.estimationNo || `EST-${Date.now().toString().slice(-6)}`) : (invoiceNo || "") },
+        { label: "Dated", value: formatDate(invDate || date || new Date()) }
+    );
 
     if (!data.isEstimation) {
-        doc.setFont("helvetica", "normal");
-        doc.text("Delivery Note", rightColOffset + 2, 26);
-        doc.setFont("helvetica", "bold");
-        doc.text(deliveryNote || "", rightColOffset + 2, 30);
+        // Second row: Delivery Note and Mode/Terms of Payment
+        renderHeaderRow(
+            { label: "Delivery Note", value: deliveryNote || "" },
+            { label: "Mode/Terms of Payment", value: (modeOfPayment || paymentMethod || "Cash").toUpperCase() }
+        );
 
-        doc.setFont("helvetica", "normal");
-        doc.text("Mode/Terms of Payment", rightColOffset + 35, 26);
-        doc.setFont("helvetica", "bold");
-        doc.text((modeOfPayment || paymentMethod || "Cash").toUpperCase(), rightColOffset + 35, 30);
+        // Third row: Dispatched through and Destination (LONG FIELD)
+        renderHeaderRow(
+            { label: "Dispatched through", value: dispatchedThrough || "" },
+            { label: "Destination", value: destination || (address ? address.split(',').pop()?.trim() : "") || "N/A" }
+        );
 
-        doc.setFont("helvetica", "normal");
-        doc.text("Dispatched through", rightColOffset + 2, 36);
-        doc.setFont("helvetica", "bold");
-        doc.text(dispatchedThrough || "", rightColOffset + 2, 40);
+        // Fourth row: Delivery Note Date and Motor Vehicle No.
+        renderHeaderRow(
+            { label: "Delivery Note Date", value: formatDate(deliveryNoteDate) },
+            { label: "Motor Vehicle No.", value: motorVehicleNo || "" }
+        );
 
-        doc.setFont("helvetica", "normal");
-        doc.text("Destination", rightColOffset + 35, 36);
-        doc.setFont("helvetica", "bold");
-        doc.text(destination || (address ? address.split(',').pop()?.trim() : "") || "N/A", rightColOffset + 35, 40);
-
-        doc.setFont("helvetica", "normal");
-        doc.text("Delivery Note Date", rightColOffset + 2, 46);
-        doc.setFont("helvetica", "bold");
-        doc.text(formatDate(deliveryNoteDate), rightColOffset + 2, 50);
-
-        doc.setFont("helvetica", "normal");
-        doc.text("Motor Vehicle No.", rightColOffset + 35, 46);
-        doc.setFont("helvetica", "bold");
-        doc.text(motorVehicleNo || "", rightColOffset + 35, 50);
-
-        doc.setFont("helvetica", "normal");
-        doc.text("Terms of Delivery", rightColOffset + 2, 56);
-        const termsLines = doc.splitTextToSize(termsOfDelivery || "", 70);
-        doc.setFont("helvetica", "bold");
-        doc.text(termsLines, rightColOffset + 2, 60);
+        // Fifth row: Terms of Delivery (Full width)
+        renderHeaderRow(undefined, undefined, { label: "Terms of Delivery", value: termsOfDelivery || "" });
     }
+
+    // Capture the final Y of the header section for the main split lines
+    const headerEndX = pageWidth - 5;
+    const headerEndY = currentRightY;
+
+    // Reset some styles just in case
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setDrawColor(0);
 
     // Buyer Details
     doc.setFont("helvetica", "bold");
@@ -324,8 +360,10 @@ export const generateInvoice = async (data: InvoiceData) => {
 
     doc.text(`Contact: ${contact}`, leftCol, buyerY);
 
-    doc.line(pageWidth / 2, 15, pageWidth / 2, 85);
-    doc.line(5, 85, pageWidth - 5, 85);
+    const finalHeaderBottom = Math.max(85, headerEndY, buyerY + 5);
+
+    doc.line(pageWidth / 2, 15, pageWidth / 2, finalHeaderBottom);
+    doc.line(5, finalHeaderBottom, pageWidth - 5, finalHeaderBottom);
 
     // Items Table with Multi-page Support
     // Group identical products by name and price
@@ -408,7 +446,7 @@ export const generateInvoice = async (data: InvoiceData) => {
     const tableHead = [['SI No', 'Description of Goods', 'HSN/SAC', 'Quantity', 'Rate', 'per', 'Amount']];
 
     autoTable(doc, {
-        startY: 85,
+        startY: finalHeaderBottom,
         head: tableHead,
         body: tableBody,
         theme: 'plain',

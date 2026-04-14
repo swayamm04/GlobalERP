@@ -119,28 +119,7 @@ const createOrder = async (req, res) => {
             isDummy
         } = req.body;
 
-        let finalInvoiceNo = invoiceNo;
-        
-        // Only generate sequential numbers for live, non-dummy orders
-        if (!isPastOrder && !isDummy) {
-            try {
-                // Atomic increment
-                const counter = await Counter.findOneAndUpdate(
-                    { id: 'invoice' },
-                    { $inc: { seq: 1 } },
-                    { upsert: true, new: true }
-                );
-                
-                // If this is the first time or somehow lower than existing data, we might need a sync
-                // However, for strict sequence requested by user, the counter is now the source of truth.
-                finalInvoiceNo = `INV/${counter.seq}`;
-            } catch (error) {
-                console.error("Counter Error:", error);
-                // Fallback to timestamp only if counter fails (safety net to prevent 500)
-                finalInvoiceNo = `INV/ERR-${Date.now()}`;
-            }
-        }
-
+        // Prepare the order object first (without final invoice number)
         const orderData = {
             customerName,
             contact,
@@ -158,7 +137,7 @@ const createOrder = async (req, res) => {
             stateName,
             stateCode,
             email,
-            invoiceNo: finalInvoiceNo,
+            invoiceNo: invoiceNo || "PENDING", // Use placeholder if not provided
             invoiceDate,
             deliveryNote,
             modeOfPayment,
@@ -180,7 +159,7 @@ const createOrder = async (req, res) => {
             paymentHistory: [{
                 amount: paidAmount || 0,
                 method: paymentMethod || modeOfPayment || 'Cash',
-                date: createdAt ? new Date(createdAt) : new Date() // Use createdAt for initial payment if provided
+                date: createdAt ? new Date(createdAt) : new Date()
             }]
         };
 
@@ -193,6 +172,29 @@ const createOrder = async (req, res) => {
         }
 
         const order = new Order(orderData);
+
+        // Run Mongoose validation BEFORE incrementing the counter
+        await order.validate();
+
+        // If validation passes, now we generate the sequential number for live orders
+        if (!isPastOrder && !isDummy) {
+            try {
+                // Atomic increment
+                const counter = await Counter.findOneAndUpdate(
+                    { id: 'invoice' },
+                    { $inc: { seq: 1 } },
+                    { upsert: true, new: true }
+                );
+                
+                order.invoiceNo = `INV/${counter.seq}`;
+            } catch (error) {
+                console.error("Counter Error:", error);
+                order.invoiceNo = `INV/ERR-${Date.now()}`;
+            }
+        } else if (invoiceNo) {
+            // For past/dummy orders, use the provided invoice number if available
+            order.invoiceNo = invoiceNo;
+        }
         const createdOrder = await order.save();
 
         // Log Activity
@@ -200,7 +202,7 @@ const createOrder = async (req, res) => {
             await logActivity(
                 req.user._id,
                 'CREATED_ORDER',
-                `Created order with Invoice #${invoiceNo || 'N/A'} for ${customerName}`,
+                `Created order with Invoice #${order.invoiceNo || 'N/A'} for ${customerName}`,
                 req
             );
         }
@@ -208,7 +210,7 @@ const createOrder = async (req, res) => {
         // Deduct stock
         if (!isPastOrder && !isDummy) {
             try {
-                await updateProductStock(orderData.items, 'deduct');
+                await updateProductStock(order.items, 'deduct');
             } catch (stockError) {
                 console.error('Error updating stock on order creation:', stockError);
             }
@@ -216,34 +218,34 @@ const createOrder = async (req, res) => {
 
         // Update/Create Customer record
         try {
-            const customerType = orderData.customerType || 'Individual';
-            let customer = await Customer.findOne({ contact: orderData.contact });
+            const customerType = order.customerType || 'Individual';
+            let customer = await Customer.findOne({ contact: order.contact });
 
             if (!customer) {
                 customer = new Customer({
-                    name: orderData.customerName,
-                    contact: orderData.contact,
-                    email: orderData.email,
-                    address: orderData.address,
+                    name: order.customerName,
+                    contact: order.contact,
+                    email: order.email,
+                    address: order.address,
                     customerType: customerType,
-                    companyName: orderData.companyName,
-                    gstin: orderData.gstin,
-                    stateName: orderData.stateName,
-                    stateCode: orderData.stateCode
+                    companyName: order.companyName,
+                    gstin: order.gstin,
+                    stateName: order.stateName,
+                    stateCode: order.stateCode
                 });
             }
 
             customer.totalOrders += 1;
-            customer.totalSpent += (orderData.grandTotal || 0);
+            customer.totalSpent += (order.grandTotal || 0);
             customer.lastOrderDate = new Date();
-            customer.name = orderData.customerName;
-            customer.address = orderData.address;
-            customer.email = orderData.email || customer.email;
+            customer.name = order.customerName;
+            customer.address = order.address;
+            customer.email = order.email || customer.email;
             if (customerType === 'Business') {
-                customer.companyName = orderData.companyName || customer.companyName;
-                customer.gstin = orderData.gstin || customer.gstin;
-                customer.stateName = orderData.stateName || customer.stateName;
-                customer.stateCode = orderData.stateCode || customer.stateCode;
+                customer.companyName = order.companyName || customer.companyName;
+                customer.gstin = order.gstin || customer.gstin;
+                customer.stateName = order.stateName || customer.stateName;
+                customer.stateCode = order.stateCode || customer.stateCode;
             }
 
             await customer.save();
