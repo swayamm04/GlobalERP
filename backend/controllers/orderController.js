@@ -116,7 +116,9 @@ const createOrder = async (req, res) => {
             includeGST,
             createdAt, // Add createdAt
             isPastOrder,
-            isDummy
+            isDummy,
+            loadingCharge,
+            roundOff
         } = req.body;
 
         // Prepare the order object first (without final invoice number)
@@ -152,6 +154,8 @@ const createOrder = async (req, res) => {
             billOfLading,
             motorVehicleNo,
             termsOfDelivery,
+            loadingCharge: loadingCharge || 0,
+            roundOff: roundOff || 0,
             includeGST: includeGST === false ? false : true,
             isDummy: isDummy === true,
             isPastOrder: isPastOrder === true,
@@ -477,7 +481,9 @@ const updateOrder = async (req, res) => {
                 includeGST,
                 createdAt,
                 isPastOrder,
-                isDummy
+                isDummy,
+                loadingCharge,
+                roundOff
             } = req.body;
 
             order.customerName = customerName || order.customerName;
@@ -489,6 +495,8 @@ const updateOrder = async (req, res) => {
             order.grandTotal = grandTotal !== undefined ? grandTotal : order.grandTotal;
             order.paidAmount = paidAmount !== undefined ? paidAmount : order.paidAmount;
             order.balanceDue = balanceDue !== undefined ? balanceDue : order.balanceDue;
+            order.loadingCharge = loadingCharge !== undefined ? loadingCharge : order.loadingCharge;
+            order.roundOff = roundOff !== undefined ? roundOff : order.roundOff;
             order.paymentMethod = paymentMethod || order.paymentMethod;
             order.customerType = customerType || order.customerType;
             order.companyName = companyName || order.companyName;
@@ -633,6 +641,86 @@ const getNextInvoiceNumber = async (req, res) => {
     }
 };
 
+const recalculateOldCalculations = async (req, res) => {
+    try {
+        if (req.user && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Forbidden: Super Admin only' });
+        }
+
+        const orders = await Order.find({});
+        let updatedCount = 0;
+
+        for (const order of orders) {
+            let loadingCharge = order.loadingCharge || 0;
+            const subtotal = order.subtotal || 0;
+            const includeGST = order.includeGST !== false;
+            const oldGrandTotal = order.grandTotal || 0;
+
+            // Deduce loading charge if not saved but was part of grand total
+            if (loadingCharge === 0) {
+                const oldGstAmount = includeGST ? (subtotal * 0.18) : 0;
+                const expectedOldTotalWithoutLoading = subtotal + oldGstAmount;
+                const diff = oldGrandTotal - expectedOldTotalWithoutLoading;
+
+                // Ignore rounding differences of less than 1
+                if (diff >= 1) {
+                    loadingCharge = Math.round(diff);
+                }
+            }
+
+            if (loadingCharge > 0) {
+                const taxableValue = subtotal + loadingCharge;
+
+                const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
+                const individualGst = gstAmount / 2;
+                const cgst = individualGst;
+                const sgst = individualGst;
+
+                const rawTotal = taxableValue + gstAmount;
+                const grandTotal = Math.ceil(rawTotal);
+                const roundOff = Number((grandTotal - rawTotal).toFixed(2));
+
+                let paidAmount = order.paidAmount || 0;
+                let balanceDue = order.balanceDue || 0;
+
+                if (balanceDue === 0 || paidAmount >= oldGrandTotal) {
+                    paidAmount = grandTotal;
+                    balanceDue = 0;
+                } else {
+                    balanceDue = Math.max(0, grandTotal - paidAmount);
+                }
+
+                const hasChanged = 
+                    order.loadingCharge !== loadingCharge ||
+                    order.grandTotal !== grandTotal ||
+                    order.roundOff !== roundOff ||
+                    order.paidAmount !== paidAmount ||
+                    order.balanceDue !== balanceDue;
+
+                if (hasChanged) {
+                    order.loadingCharge = loadingCharge;
+                    order.grandTotal = grandTotal;
+                    order.roundOff = roundOff;
+                    order.paidAmount = paidAmount;
+                    order.balanceDue = balanceDue;
+
+                    if (order.paymentHistory && order.paymentHistory.length === 1) {
+                        order.paymentHistory[0].amount = paidAmount;
+                    }
+
+                    await order.save({ validateBeforeSave: false });
+                    updatedCount++;
+                }
+            }
+        }
+
+        res.status(200).json({ message: 'Recalculation complete', updatedCount });
+    } catch (error) {
+        console.error('Error in recalculateOldCalculations:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 module.exports = {
     getOrders,
     createOrder,
@@ -644,5 +732,6 @@ module.exports = {
     updateOrder,
     getNextInvoiceNumber,
     clearDummyOrders,
-    clearPastOrders
+    clearPastOrders,
+    recalculateOldCalculations
 };

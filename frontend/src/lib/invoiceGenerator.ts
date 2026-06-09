@@ -482,10 +482,17 @@ export const generateInvoice = async (data: InvoiceData) => {
     doc.setFont("helvetica", "normal");
 
     const subtotalValue = items.reduce((sum, item) => sum + (item.price * item.quantity * getCalculationMultiplier(item.calculationField?.value, item.calculationField?.unit)), 0);
-    const taxableValue = subtotalValue;
+    const taxableValue = subtotalValue + loadingCharge;
 
     doc.text("Subtotal:", summaryX, lastY);
     doc.text(`Rs. ${subtotalValue.toFixed(2)}`, rightEdge, lastY, { align: 'right' });
+
+    if (loadingCharge > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.text("Loading Charges:", summaryX, lastY + 5);
+        doc.text(`Rs. ${loadingCharge.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
+        lastY += 5;
+    }
 
     doc.setFont("helvetica", "bold");
     doc.text("Total Taxable Value:", summaryX, lastY + 6);
@@ -514,13 +521,6 @@ export const generateInvoice = async (data: InvoiceData) => {
         lastY += 5;
     }
 
-    if (loadingCharge > 0) {
-        doc.setFont("helvetica", "normal");
-        doc.text("Loading Charges:", summaryX, lastY + 5);
-        doc.text(`Rs. ${loadingCharge.toFixed(2)}`, rightEdge, lastY + 5, { align: 'right' });
-        lastY += 5;
-    }
-
     doc.line(summaryX - 2, lastY + 3, pageWidth - 5, lastY + 3);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -537,12 +537,6 @@ export const generateInvoice = async (data: InvoiceData) => {
         doc.text("Balance Due:", summaryX, lastY + 22);
         doc.text(`Rs. ${balanceDue.toFixed(2)}`, rightEdge, lastY + 22, { align: 'right' });
         doc.setTextColor(0, 0, 0); // Reset to black
-    } else if (paidAmount !== undefined && paidAmount >= grandTotal) {
-        doc.setFontSize(10);
-        doc.text("Status:", summaryX, lastY + 16);
-        doc.setTextColor(22, 163, 74);
-        doc.text("FULLY PAID", rightEdge, lastY + 16, { align: 'right' });
-        doc.setTextColor(0, 0, 0);
     }
 
     // New Footer Section

@@ -109,21 +109,10 @@ const Orders = ({ isSecret = false, isStandalone = false }: { isSecret?: boolean
       const { data: settings } = await api.get("/api/company-settings");
 
       await generateInvoice({
-        customerName: order.customerName,
-        contact: order.contact,
-        address: order.address,
-        items: order.items,
-        grandTotal: order.grandTotal,
-        paymentMethod: order.paymentMethod,
+        ...order,
         orderId: order._id,
         date: order.createdAt,
         companyDetails: settings,
-        includeGST: order.includeGST,
-        paidAmount: order.paidAmount,
-        balanceDue: order.balanceDue,
-        loadingCharge: order.loadingCharge,
-        roundOff: order.roundOff,
-        invoiceNo: order.invoiceNo,
       });
 
       toast.success("Invoice downloaded!");

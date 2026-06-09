@@ -140,10 +140,10 @@ const AdvanceOrder = () => {
         setSubtotal(newSubtotal);
 
         // Calculate grand total: Add-on GST if enabled
-        const taxableValue = newSubtotal;
+        const taxableValue = newSubtotal + loadingCharge;
         const gstAmount = includeGST ? (taxableValue * 0.18) : 0;
         const individualGst = gstAmount / 2;
-        const rawTotal = taxableValue + gstAmount + loadingCharge;
+        const rawTotal = taxableValue + gstAmount;
 
         // Round off logic: Round UP to nearest integer if there are decimals
         const roundedTotal = Math.ceil(rawTotal);

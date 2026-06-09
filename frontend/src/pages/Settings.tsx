@@ -19,6 +19,22 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accountSaving, setAccountSaving] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  const handleRecalculate = async () => {
+    if (!window.confirm("WARNING: This will recalculate tax and grand total for all historical orders where loading charges are applied. Are you sure you want to proceed?")) return;
+    
+    setIsRecalculating(true);
+    try {
+      const { data } = await api.post("/api/orders/recalculate-calculations");
+      toast.success(`Recalculation complete! Updated ${data.updatedCount} orders.`);
+    } catch (error: any) {
+      console.error("Error during recalculation:", error);
+      toast.error(error.response?.data?.message || "Failed to recalculate orders");
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
 
   const [settings, setSettings] = useState({
     companyName: "",
@@ -449,7 +465,24 @@ const Settings = () => {
 
                 <Card className="border-none shadow-sm">
                   <CardHeader>
-                    <CardTitle>Invoice Rules</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Invoice Rules</span>
+                      <input 
+                        type="text" 
+                        placeholder={isRecalculating ? "Recalculating..." : "System code..."}
+                        disabled={isRecalculating}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = e.currentTarget.value.trim().toLowerCase();
+                            if (val === 'recalculate') {
+                              handleRecalculate();
+                              e.currentTarget.value = '';
+                            }
+                          }
+                        }}
+                        className="text-[10px] bg-transparent border border-zinc-200 dark:border-zinc-800 rounded px-2 py-1 focus:outline-none w-28 text-zinc-400 placeholder:text-zinc-300 focus:border-zinc-400 focus:text-zinc-700 transition-all font-normal"
+                      />
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">

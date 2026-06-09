@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getOrders, createOrder, getOrderById, updateOrderStatus, markOrderAsPaid, addPayment, deleteOrder, updateOrder, getNextInvoiceNumber, clearDummyOrders, clearPastOrders } = require('../controllers/orderController');
+const { getOrders, createOrder, getOrderById, updateOrderStatus, markOrderAsPaid, addPayment, deleteOrder, updateOrder, getNextInvoiceNumber, clearDummyOrders, clearPastOrders, recalculateOldCalculations } = require('../controllers/orderController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.get('/next-invoice-number', protect, getNextInvoiceNumber);
+router.post('/recalculate-calculations', protect, recalculateOldCalculations);
 
 router.route('/')
     .get(protect, getOrders)
