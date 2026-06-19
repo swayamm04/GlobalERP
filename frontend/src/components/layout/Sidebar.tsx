@@ -109,13 +109,10 @@ const SidebarNav = ({
   pathname: string;
   onItemClick?: () => void;
 }) => {
-  const [mounted, setMounted] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const userRole = Cookies.get("user_role");
 
   useEffect(() => {
-    setMounted(true);
-
     // Auto-expand menu if sub-item is active
     const activeMenu = menuItems.find(item =>
       item.children?.some(child => child.path === pathname)
@@ -132,7 +129,7 @@ const SidebarNav = ({
   };
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (mounted && userRole === "super_admin") {
+    if (userRole === "super_admin") {
       return ["Dashboard", "Settings", "Activity Logs"].includes(item.label);
     }
     
@@ -142,15 +139,11 @@ const SidebarNav = ({
     }
     
     if (item.roles) {
-      if (!mounted) return false;
       return item.roles.includes(userRole || "");
     }
     
+    return true;
   });
-
-  if (!mounted) {
-    return <nav className="mt-4 px-2 flex-1" />;
-  }
 
   return (
     <nav className="mt-4 px-2 flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-default">
@@ -185,7 +178,6 @@ const SidebarNav = ({
                   <ul className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-2">
                     {item.children?.filter(child => {
                       if (!child.roles) return true;
-                      if (!mounted) return false;
                       return child.roles.includes(userRole || "");
                     }).map((child) => {
                       const isChildLinkActive = pathname === child.path;
@@ -248,6 +240,7 @@ export const Sidebar = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [brandName, setBrandName] = useState("Nirvana ERP");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const userRole = Cookies.get("user_role");
@@ -257,6 +250,7 @@ export const Sidebar = ({
     } else {
       setBrandName("Nirvana ERP");
     }
+    setMounted(true);
   }, []);
 
   const handleLogoClick = (e: React.MouseEvent) => {
@@ -328,7 +322,7 @@ export const Sidebar = ({
           collapsed ? "w-16" : "w-64"
         )}
       >
-        <SidebarContent />
+        {mounted && <SidebarContent />}
 
         {/* Toggle Button */}
         <button
@@ -355,7 +349,7 @@ export const Sidebar = ({
               <span className="sr-only">Close sidebar</span>
             </SheetClose>
           </div>
-          <SidebarContent />
+          {mounted && <SidebarContent />}
         </SheetContent>
       </Sheet>
     </>
