@@ -6,10 +6,10 @@ const logActivity = require('../utils/activityLogger');
 // @access  Public (or Private if auth middleware is added later)
 const getSettings = async (req, res) => {
     try {
-        let settings = await CompanySettings.findOne();
+        let settings = await CompanySettings.findOne({ user: req.user.id });
         if (!settings) {
             // Create default settings if none exist
-            settings = await CompanySettings.create({});
+            settings = await CompanySettings.create({ user: req.user.id });
         }
         res.status(200).json(settings);
     } catch (error) {
@@ -22,16 +22,16 @@ const getSettings = async (req, res) => {
 // @access  Public
 const updateSettings = async (req, res) => {
     try {
-        let settings = await CompanySettings.findOne();
+        let settings = await CompanySettings.findOne({ user: req.user.id });
 
         if (settings) {
-            settings = await CompanySettings.findByIdAndUpdate(
-                settings._id,
+            settings = await CompanySettings.findOneAndUpdate(
+                { user: req.user.id },
                 req.body,
                 { new: true, runValidators: true }
             );
         } else {
-            settings = await CompanySettings.create(req.body);
+            settings = await CompanySettings.create({ ...req.body, user: req.user.id });
         }
 
         // Log Activity

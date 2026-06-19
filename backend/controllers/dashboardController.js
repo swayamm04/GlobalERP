@@ -8,10 +8,43 @@ const Customer = require('../models/Customer');
 // @access  Private
 const getDashboardStats = async (req, res) => {
     try {
+        if (req.user && req.user.role === 'super_admin') {
+            const totalCompanies = await User.countDocuments({ role: 'admin' });
+            
+            const revenueResult = await User.aggregate([
+                { $match: { role: 'admin' } },
+                { $group: { _id: null, total: { $sum: '$amountPaid' } } }
+            ]);
+            const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+            const recentlyJoined = await User.find({ role: 'admin' })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select('-password');
+
+            // Find companies expiring in the next 30 days, or already expired
+            const thirtyDaysFromNow = new Date();
+            thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+            
+            const warnings = await User.find({
+                role: 'admin',
+                subscriptionEndDate: { $lte: thirtyDaysFromNow }
+            })
+            .sort({ subscriptionEndDate: 1 })
+            .select('-password');
+
+            return res.status(200).json({
+                totalCompanies,
+                totalRevenue,
+                recentlyJoined,
+                warnings
+            });
+        }
+
         const isSecret = req.query.secret === 'true';
         const filter = isSecret
-            ? { includeGST: false }
-            : { includeGST: { $ne: false } };
+            ? { includeGST: false, user: req.user._id }
+            : { includeGST: { $ne: false }, user: req.user._id };
 
         const totalOrders = await Order.countDocuments(filter);
         const totalActiveOrders = await Order.countDocuments({
@@ -26,9 +59,9 @@ const getDashboardStats = async (req, res) => {
         });
         const totalRevenue = orders.reduce((acc, order) => acc + (order.grandTotal || 0), 0);
 
-        // Products and Customers remain global for now, but we could filter if needed
-        const totalProducts = await Product.countDocuments();
-        const activeCustomers = await Customer.countDocuments();
+        // Products and Customers isolated per tenant
+        const totalProducts = await Product.countDocuments({ user: req.user.id });
+        const activeCustomers = await Customer.countDocuments({ user: req.user.id });
 
         const recentOrders = await Order.find(filter)
             .sort({ createdAt: -1 })
@@ -53,7 +86,7 @@ const getDashboardStats = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 

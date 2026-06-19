@@ -5,7 +5,7 @@ const logActivity = require('../utils/activityLogger');
 // @route   GET /api/products
 // @access  Public (or Private depending on needs, currently Public)
 const getProducts = async (req, res) => {
-    const products = await Product.find().populate('category').sort({ createdAt: -1 });
+    const products = await Product.find({ user: req.user.id }).populate('category').sort({ createdAt: -1 });
     res.status(200).json(products);
 };
 
@@ -50,7 +50,7 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private
 const updateProduct = async (req, res) => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, user: req.user.id });
 
     if (!product) {
         res.status(400).json({ message: 'Product not found' });
@@ -74,7 +74,7 @@ const updateProduct = async (req, res) => {
         req.body.status = status;
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updatedProduct = await Product.findOneAndUpdate({ _id: req.params.id, user: req.user.id }, req.body, {
         new: true,
     }).populate('category');
 
@@ -100,7 +100,7 @@ const addProductStock = async (req, res) => {
             return res.status(400).json({ message: 'Valid quantity is required' });
         }
 
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findOne({ _id: req.params.id, user: req.user.id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -141,7 +141,7 @@ const addProductStock = async (req, res) => {
 // @route   DELETE /api/products/:id
 // @access  Private
 const deleteProduct = async (req, res) => {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, user: req.user.id });
 
     if (!product) {
         res.status(400).json({ message: 'Product not found' });

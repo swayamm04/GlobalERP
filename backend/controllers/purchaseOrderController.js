@@ -2,9 +2,9 @@ const PurchaseOrder = require('../models/PurchaseOrder');
 const RawMaterial = require('../models/RawMaterial');
 const logActivity = require('../utils/activityLogger');
 
-const updateInventoryStock = async (items) => {
+const updateInventoryStock = async (items, userId) => {
     for (const item of items) {
-        const material = await RawMaterial.findOne({ name: item.name });
+        const material = await RawMaterial.findOne({ name: item.name, user: userId });
         if (material) {
             material.stockQuantity += item.quantity;
             await material.save();
@@ -13,7 +13,8 @@ const updateInventoryStock = async (items) => {
             await RawMaterial.create({
                 name: item.name,
                 category: 'Others',
-                stockQuantity: item.quantity
+                stockQuantity: item.quantity,
+                user: userId
             });
         }
     }
@@ -23,7 +24,7 @@ const updateInventoryStock = async (items) => {
 // @route   GET /api/purchase-orders
 const getPurchaseOrders = async (req, res) => {
     try {
-        const pos = await PurchaseOrder.find()
+        const pos = await PurchaseOrder.find({ user: req.user.id })
             .populate('supplier', 'companyName')
             .sort({ createdAt: -1 });
         res.status(200).json(pos);
@@ -39,10 +40,11 @@ const createPurchaseOrder = async (req, res) => {
     try {
         const { supplier, items, totalAmount, deliveryDate, notes } = req.body;
 
-        const count = await PurchaseOrder.countDocuments();
+        const count = await PurchaseOrder.countDocuments({ user: req.user.id });
         const poNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(3, '0')}`;
 
         const po = await PurchaseOrder.create({
+            user: req.user.id,
             poNumber,
             supplier,
             items,
@@ -53,7 +55,7 @@ const createPurchaseOrder = async (req, res) => {
         });
 
         // Automatically update stock as it's created after delivery
-        await updateInventoryStock(items);
+        await updateInventoryStock(items, req.user.id);
 
         // Log Activity
         if (req.user) {
@@ -77,7 +79,7 @@ const createPurchaseOrder = async (req, res) => {
 const updatePOStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const po = await PurchaseOrder.findById(req.params.id);
+        const po = await PurchaseOrder.findOne({ _id: req.params.id, user: req.user.id });
 
         if (!po) {
             return res.status(404).json({ message: 'PO not found' });
@@ -89,7 +91,7 @@ const updatePOStatus = async (req, res) => {
 
         // If status changed to Delivered, update RawMaterial stock
         if (status === 'Delivered' && oldStatus !== 'Delivered') {
-            await updateInventoryStock(po.items);
+            await updateInventoryStock(po.items, req.user.id);
         }
 
         // Log Activity

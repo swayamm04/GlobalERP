@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const companySettingsSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User',
+        unique: true
+    },
     companyName: { type: String, default: 'Metal Industry' },
     gstin: { type: String, default: '' },
     address: { type: String, default: '' },

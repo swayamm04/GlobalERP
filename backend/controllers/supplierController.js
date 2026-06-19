@@ -7,7 +7,7 @@ const logActivity = require('../utils/activityLogger');
 // @access  Private/Admin
 const getSuppliers = async (req, res) => {
     try {
-        const suppliers = await Supplier.find().sort({ createdAt: -1 });
+        const suppliers = await Supplier.find({ user: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json(suppliers);
     } catch (error) {
         console.error(error);
@@ -55,6 +55,7 @@ const createSupplier = async (req, res) => {
 
         // 3. Create Supplier record
         const supplier = await Supplier.create({
+            user: req.user.id,
             supplierId,
             companyName,
             contactPerson,
@@ -83,7 +84,7 @@ const createSupplier = async (req, res) => {
 
 const deleteSupplier = async (req, res) => {
     try {
-        const supplier = await Supplier.findById(req.params.id);
+        const supplier = await Supplier.findOne({ _id: req.params.id, user: req.user.id });
 
         if (!supplier) {
             return res.status(404).json({ message: 'Supplier not found' });
@@ -126,7 +127,7 @@ const updateSupplier = async (req, res) => {
             status
         } = req.body;
 
-        const supplier = await Supplier.findById(req.params.id);
+        const supplier = await Supplier.findOne({ _id: req.params.id, user: req.user.id });
 
         if (!supplier) {
             return res.status(404).json({ message: 'Supplier not found' });

@@ -7,6 +7,9 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true
     },
+    companyName: {
+        type: String
+    },
     email: {
         type: String,
         required: true,
@@ -19,6 +22,24 @@ const userSchema = mongoose.Schema({
     role: {
         type: String,
         default: 'admin'
+    },
+    industry: {
+        type: String,
+        default: ''
+    },
+    subscriptionDuration: {
+        type: String,
+        default: ''
+    },
+    amountPaid: {
+        type: Number,
+        default: 0
+    },
+    subscriptionStartDate: {
+        type: Date
+    },
+    subscriptionEndDate: {
+        type: Date
     }
 }, {
     timestamps: true

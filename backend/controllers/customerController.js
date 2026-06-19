@@ -6,7 +6,7 @@ const Customer = require('../models/Customer');
 const getCustomers = async (req, res) => {
     try {
         const { type } = req.query;
-        let query = {};
+        let query = { user: req.user.id };
 
         if (type && type !== 'all') {
             query.customerType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
@@ -25,7 +25,7 @@ const getCustomers = async (req, res) => {
 // @access  Private
 const getCustomerById = async (req, res) => {
     try {
-        const customer = await Customer.findById(req.params.id);
+        const customer = await Customer.findOne({ _id: req.params.id, user: req.user.id });
         if (customer) {
             res.status(200).json(customer);
         } else {

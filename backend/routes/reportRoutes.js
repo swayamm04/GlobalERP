@@ -12,6 +12,9 @@ const {
     getActivityLogs,
     getAnalyticsDashboard
 } = require('../controllers/reportController');
+const { protect } = require('../middleware/authMiddleware');
+
+router.use(protect);
 
 // Sales Reports
 router.get('/sales/summary', getSalesSummary);

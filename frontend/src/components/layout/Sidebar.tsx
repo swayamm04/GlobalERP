@@ -97,6 +97,7 @@ const menuItems: MenuItem[] = [
   { icon: Settings, label: "Settings", path: "/settings" },
   { icon: History, label: "Add Past Order", path: "/past-order", roles: ["super_admin"] },
   { icon: FileText, label: "Dummy Orders", path: "/dummy-orders", roles: ["super_admin"] },
+  { icon: History, label: "Activity Logs", path: "/activity-log", roles: ["super_admin"] },
 ];
 
 const SidebarNav = ({
@@ -131,9 +132,21 @@ const SidebarNav = ({
   };
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (!item.roles) return true;
-    if (!mounted) return false;
-    return item.roles.includes(userRole || "");
+    if (mounted && userRole === "super_admin") {
+      return ["Dashboard", "Settings", "Activity Logs"].includes(item.label);
+    }
+    
+    // For non-super_admin, filter out items that are super_admin only
+    if (item.roles && item.roles.includes("super_admin") && (!userRole || userRole !== "super_admin")) {
+      return false;
+    }
+    
+    if (item.roles) {
+      if (!mounted) return false;
+      return item.roles.includes(userRole || "");
+    }
+    
+    return true;
   });
 
   return (
@@ -231,6 +244,18 @@ export const Sidebar = ({
   const clickRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [brandName, setBrandName] = useState("Nirvana ERP");
+
+  useEffect(() => {
+    const userRole = Cookies.get("user_role");
+    const companyName = Cookies.get("company_name");
+    if (userRole && userRole !== "super_admin" && companyName) {
+      setBrandName(companyName);
+    } else {
+      setBrandName("Nirvana ERP");
+    }
+  }, []);
+
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     clickRef.current += 1;
@@ -267,18 +292,12 @@ export const Sidebar = ({
       <div className="flex h-16 items-center justify-between px-4">
         {!collapsed && (
           <div
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer py-2"
             onClick={handleLogoClick}
           >
-            <div className="relative h-8 w-28 overflow-hidden">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="text-lg font-semibold text-primary">Vasantha Metal Industry</span>
+            <span className="text-xl font-bold tracking-wider text-primary truncate max-w-[220px]">
+              {brandName}
+            </span>
           </div>
         )}
       </div>
@@ -291,7 +310,7 @@ export const Sidebar = ({
       {!collapsed && (
         <div className="relative p-4 text-xs text-center text-muted-foreground bg-sidebar/50 backdrop-blur-sm">
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-sidebar-border to-transparent opacity-50" />
-          <p>© {new Date().getFullYear()} Vasantha Metal Industry</p>
+          <p>© {new Date().getFullYear()} Nirvana ERP</p>
         </div>
       )}
     </div>

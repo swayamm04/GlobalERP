@@ -5,7 +5,7 @@ const logActivity = require('../utils/activityLogger');
 // @route   GET /api/raw-materials
 const getRawMaterials = async (req, res) => {
     try {
-        const materials = await RawMaterial.find().sort({ name: 1 });
+        const materials = await RawMaterial.find({ user: req.user.id }).sort({ name: 1 });
         res.status(200).json(materials);
     } catch (error) {
         console.error(error);
@@ -24,6 +24,7 @@ const createRawMaterial = async (req, res) => {
             // Validate materials and apply category
             const materialsToCreate = materials.map(m => ({
                 ...m,
+                user: req.user.id,
                 category: category || m.category,
                 stockQuantity: m.stockQuantity || 0,
                 specifications: m.specifications || []
@@ -37,7 +38,7 @@ const createRawMaterial = async (req, res) => {
             }
 
             // Check for existing materials in DB
-            const existing = await RawMaterial.find({ name: { $in: names } });
+            const existing = await RawMaterial.find({ name: { $in: names }, user: req.user.id });
             if (existing.length > 0) {
                 return res.status(400).json({
                     message: `Materials already exist: ${existing.map(m => m.name).join(', ')}`
@@ -61,11 +62,12 @@ const createRawMaterial = async (req, res) => {
 
         // Single material creation
         const { name, unit, minStockLevel, stockQuantity, specifications } = req.body;
-        const exists = await RawMaterial.findOne({ name });
+        const exists = await RawMaterial.findOne({ name, user: req.user.id });
         if (exists) {
             return res.status(400).json({ message: 'Material already exists' });
         }
         const material = await RawMaterial.create({
+            user: req.user.id,
             name,
             category: req.body.category,
             unit,
@@ -94,7 +96,7 @@ const createRawMaterial = async (req, res) => {
 // @route   PUT /api/raw-materials/:id
 const updateRawMaterial = async (req, res) => {
     try {
-        const material = await RawMaterial.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const material = await RawMaterial.findOneAndUpdate({ _id: req.params.id, user: req.user.id }, req.body, { new: true });
         // Log Activity
         if (req.user) {
             await logActivity(
@@ -121,7 +123,7 @@ const addRawMaterialStock = async (req, res) => {
             return res.status(400).json({ message: 'Valid quantity is required' });
         }
 
-        const material = await RawMaterial.findById(req.params.id);
+        const material = await RawMaterial.findOne({ _id: req.params.id, user: req.user.id });
         if (!material) {
             return res.status(404).json({ message: 'Material not found' });
         }
@@ -150,7 +152,7 @@ const addRawMaterialStock = async (req, res) => {
 // @route   DELETE /api/raw-materials/:id
 const deleteRawMaterial = async (req, res) => {
     try {
-        const material = await RawMaterial.findByIdAndDelete(req.params.id);
+        const material = await RawMaterial.findOneAndDelete({ _id: req.params.id, user: req.user.id });
         if (!material) {
             return res.status(404).json({ message: 'Material not found' });
         }

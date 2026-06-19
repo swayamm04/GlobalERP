@@ -19,12 +19,12 @@ const seedData = async () => {
         await Category.deleteMany({});
 
         // Get or Create Admin User
-        let user = await User.findOne({ email: 'admin@metalindustries.com' });
+        let user = await User.findOne({ email: 'admin@nirvanaerp.com' });
         if (!user) {
             user = await User.create({
                 name: 'Admin User',
-                email: 'admin@metalindustries.com',
-                password: 'vasantha',
+                email: 'admin@nirvanaerp.com',
+                password: 'erpofnirvana',
                 role: 'admin'
             });
         }

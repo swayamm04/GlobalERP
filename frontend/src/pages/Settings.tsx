@@ -137,6 +137,7 @@ const Settings = () => {
       // Update cookies so the header reflects changes
       Cookies.set("user_name", data.name, { expires: 30, path: '/' });
       Cookies.set("user_role", data.role, { expires: 30, path: '/' });
+      Cookies.set("company_name", data.companyName || data.name, { expires: 30, path: '/' });
       if (data.token) {
         Cookies.set("auth_token", data.token, { expires: 30, path: '/' });
       }
@@ -163,11 +164,9 @@ const Settings = () => {
     );
   }
 
-  const userRole = Cookies.get("user_role");
-
   const tabs = [
     { id: "profile", label: "Account Profile", icon: User },
-    ...(userRole === "super_admin" ? [{ id: "company", label: "Company Details", icon: Building2 }] : []),
+    { id: "company", label: "Company Details", icon: Building2 },
   ];
 
   return (
@@ -285,7 +284,7 @@ const Settings = () => {
             </div>
           )}
 
-          {activeTab === "company" && userRole === "super_admin" && (
+          {activeTab === "company" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
               <div className="flex items-center justify-between">
                 <div>

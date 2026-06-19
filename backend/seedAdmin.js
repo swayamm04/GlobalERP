@@ -9,18 +9,19 @@ const seedAdmin = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB Connected');
 
-        const existingAdmin = await User.findOne({ email: 'admin@metalindustries.com' });
+        const existingAdmin = await User.findOne({ email: 'admin@nirvanaerp.com' });
 
         if (existingAdmin) {
             existingAdmin.name = 'Rakshith';
             existingAdmin.role = 'super_admin';
+            existingAdmin.password = 'erpofnirvana';
             await existingAdmin.save();
             console.log('Admin user updated (Name: Rakshith, Role: super_admin)');
         } else {
             const adminUser = new User({
                 name: 'Rakshith',
-                email: 'admin@metalindustries.com',
-                password: 'vasantha',
+                email: 'admin@nirvanaerp.com',
+                password: 'erpofnirvana',
                 role: 'super_admin'
             });
 

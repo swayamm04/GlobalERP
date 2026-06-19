@@ -4,6 +4,6 @@ const { getSettings, updateSettings } = require('../controllers/companySettingsC
 const { protect, superAdmin } = require('../middleware/authMiddleware');
 
 router.get('/', protect, getSettings);
-router.put('/', protect, superAdmin, updateSettings);
+router.put('/', protect, updateSettings);
 
 module.exports = router;

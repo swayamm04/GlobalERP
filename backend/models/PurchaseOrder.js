@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const purchaseOrderSchema = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
     poNumber: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     supplier: {
         type: mongoose.Schema.Types.ObjectId,

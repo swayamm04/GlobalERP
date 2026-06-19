@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const supplierSchema = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
     supplierId: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     companyName: {
         type: String,
@@ -16,8 +20,7 @@ const supplierSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
     phone: {
         type: String,

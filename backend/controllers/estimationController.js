@@ -6,7 +6,7 @@ const logActivity = require('../utils/activityLogger');
 // @access  Private
 const getEstimations = async (req, res) => {
     try {
-        const estimations = await Estimation.find().sort({ createdAt: -1 });
+        const estimations = await Estimation.find({ user: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json(estimations);
     } catch (error) {
         console.error(error);

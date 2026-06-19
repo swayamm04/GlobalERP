@@ -24,6 +24,7 @@ const globalSearch = async (req, res) => {
 
         // Search Orders
         const orderFilter = {
+            user: req.user.id,
             $or: [
                 { customerName: searchRegex }
             ]
@@ -38,10 +39,11 @@ const globalSearch = async (req, res) => {
 
         // Search Products
         // First find categories that match the search
-        const categories = await Category.find({ name: searchRegex }).select('_id');
+        const categories = await Category.find({ name: searchRegex, user: req.user.id }).select('_id');
         const categoryIds = categories.map(c => c._id);
 
         const products = await Product.find({
+            user: req.user.id,
             $or: [
                 { name: searchRegex },
                 { category: { $in: categoryIds } }
@@ -53,6 +55,7 @@ const globalSearch = async (req, res) => {
 
         // Search Customers
         const customers = await Customer.find({
+            user: req.user.id,
             $or: [
                 { name: searchRegex },
                 { companyName: searchRegex },
@@ -64,6 +67,7 @@ const globalSearch = async (req, res) => {
 
         // Search Suppliers
         const suppliers = await Supplier.find({
+            user: req.user.id,
             $or: [
                 { companyName: searchRegex },
                 { contactPerson: searchRegex },

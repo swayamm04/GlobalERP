@@ -30,6 +30,7 @@ export default function LoginPage() {
             Cookies.set("auth_token", data.token, { expires: 30, path: '/' }); // Expires in 30 days
             Cookies.set("user_role", data.role, { expires: 30, path: '/' });
             Cookies.set("user_name", data.name, { expires: 30, path: '/' });
+            Cookies.set("company_name", data.companyName || data.name, { expires: 30, path: '/' });
 
             toast.success("Login successful");
             router.push("/");
@@ -60,7 +61,7 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="admin@metalindustries.com"
+                                    placeholder="admin@nirvanaerp.com"
                                     className="pl-9"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}

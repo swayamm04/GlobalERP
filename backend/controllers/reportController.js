@@ -4,6 +4,7 @@ const RawMaterial = require('../models/RawMaterial');
 const Customer = require('../models/Customer');
 const Supplier = require('../models/Supplier');
 const ActivityLog = require('../models/ActivityLog');
+const mongoose = require('mongoose');
 
 // Helper to build date filter
 const buildDateFilter = (req) => {
@@ -27,6 +28,7 @@ const buildDateFilter = (req) => {
 const getSalesSummary = async (req, res) => {
     try {
         const filter = buildDateFilter(req);
+        filter.user = req.user._id;
         filter.status = 'Completed';
         filter.includeGST = { $ne: false };
 
@@ -56,6 +58,7 @@ const getSalesSummary = async (req, res) => {
 const getCategorySales = async (req, res) => {
     try {
         const filter = buildDateFilter(req);
+        filter.user = req.user._id;
         filter.status = 'Completed';
         filter.includeGST = { $ne: false };
 
@@ -89,7 +92,7 @@ const getCategorySales = async (req, res) => {
 // @access  Private
 const getProductStockReport = async (req, res) => {
     try {
-        const products = await Product.find().populate('category', 'name');
+        const products = await Product.find({ user: req.user.id }).populate('category', 'name');
         const stockReport = products.map(p => ({
             name: p.name,
             category: p.category?.name || 'N/A',
@@ -111,7 +114,7 @@ const getProductStockReport = async (req, res) => {
 // @access  Private
 const getRawMaterialStockReport = async (req, res) => {
     try {
-        const materials = await RawMaterial.find();
+        const materials = await RawMaterial.find({ user: req.user.id });
         const stockReport = materials.map(m => ({
             name: m.name,
             category: m.category,
@@ -132,6 +135,7 @@ const getRawMaterialStockReport = async (req, res) => {
 const getOrderHistory = async (req, res) => {
     try {
         const filter = buildDateFilter(req);
+        filter.user = req.user._id;
         filter.includeGST = { $ne: false };
         const orders = await Order.find(filter).sort({ createdAt: -1 });
         const report = orders.map(o => ({
@@ -155,6 +159,7 @@ const getOrderHistory = async (req, res) => {
 const getPendingOrders = async (req, res) => {
     try {
         const filter = buildDateFilter(req);
+        filter.user = req.user._id;
         filter.status = 'Pending';
         filter.includeGST = { $ne: false };
         const orders = await Order.find(filter).sort({ createdAt: 1 });
@@ -185,6 +190,7 @@ const getTopCustomers = async (req, res) => {
 
         const { startDate, endDate } = req.query;
         let matchStage = {
+            user: new mongoose.Types.ObjectId(req.user.id),
             status: 'Completed',
             includeGST: { $ne: false }
         };
@@ -232,7 +238,7 @@ const getTopCustomers = async (req, res) => {
 // @access  Private
 const getSupplierPerformance = async (req, res) => {
     try {
-        const suppliers = await Supplier.find();
+        const suppliers = await Supplier.find({ user: req.user.id });
         // Since we don't have detailed performance metrics yet, we'll return basic info
         const report = suppliers.map(s => ({
             name: s.companyName,
@@ -257,6 +263,9 @@ const getSupplierPerformance = async (req, res) => {
 const getActivityLogs = async (req, res) => {
     try {
         const filter = buildDateFilter(req);
+        if (req.user && req.user.role !== 'super_admin') {
+            filter.user = req.user._id;
+        }
 
         const logs = await ActivityLog.find(filter)
             .populate('user', 'name role email')
@@ -315,12 +324,14 @@ const getAnalyticsDashboard = async (req, res) => {
         }
 
         const matchStage = {
+            user: new mongoose.Types.ObjectId(req.user.id),
             status: 'Completed',
             includeGST: { $ne: false },
             createdAt: { $gte: startDate, $lte: endDate }
         };
 
         const prevMatchStage = {
+            user: new mongoose.Types.ObjectId(req.user.id),
             status: 'Completed',
             includeGST: { $ne: false },
             createdAt: { $gte: prevStartDate, $lt: prevEndDate }
@@ -399,8 +410,8 @@ const getAnalyticsDashboard = async (req, res) => {
             ])
         ]);
 
-        const customerCount = await Customer.countDocuments({ createdAt: { $gte: startDate } });
-        const prevCustomerCount = await Customer.countDocuments({ createdAt: { $gte: prevStartDate, $lt: prevEndDate } });
+        const customerCount = await Customer.countDocuments({ user: req.user.id, createdAt: { $gte: startDate } });
+        const prevCustomerCount = await Customer.countDocuments({ user: req.user.id, createdAt: { $gte: prevStartDate, $lt: prevEndDate } });
 
         // Helper to calculate percentage change
         const calculateChange = (current, previous) => {

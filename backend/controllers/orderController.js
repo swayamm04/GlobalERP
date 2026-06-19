@@ -5,12 +5,12 @@ const logActivity = require('../utils/activityLogger');
 const Counter = require('../models/Counter');
 
 // Helper to update product stock
-const updateProductStock = async (items, type = 'deduct') => {
+const updateProductStock = async (items, type = 'deduct', userId) => {
     if (!items || !Array.isArray(items)) return;
     for (const item of items) {
         try {
             if (!item.productId) continue;
-            const product = await Product.findById(item.productId);
+            const product = await Product.findOne({ _id: item.productId, user: userId });
             if (product) {
                 if (type === 'deduct') {
                     product.stock -= (item.quantity || 0);
@@ -40,8 +40,8 @@ const getOrders = async (req, res) => {
     try {
         const isSecret = req.query.secret === 'true';
         const filter = isSecret
-            ? { includeGST: false }
-            : { includeGST: { $ne: false } };
+            ? { includeGST: false, user: req.user._id }
+            : { includeGST: { $ne: false }, user: req.user._id };
 
         const orders = await Order.find(filter).sort({ createdAt: -1 });
 
@@ -185,7 +185,7 @@ const createOrder = async (req, res) => {
             try {
                 // Atomic increment
                 const counter = await Counter.findOneAndUpdate(
-                    { id: 'invoice' },
+                    { id: 'invoice', user: req.user._id },
                     { $inc: { seq: 1 } },
                     { upsert: true, new: true }
                 );
@@ -214,7 +214,7 @@ const createOrder = async (req, res) => {
         // Deduct stock
         if (!isPastOrder && !isDummy) {
             try {
-                await updateProductStock(order.items, 'deduct');
+                await updateProductStock(order.items, 'deduct', req.user._id);
             } catch (stockError) {
                 console.error('Error updating stock on order creation:', stockError);
             }
@@ -223,10 +223,11 @@ const createOrder = async (req, res) => {
         // Update/Create Customer record
         try {
             const customerType = order.customerType || 'Individual';
-            let customer = await Customer.findOne({ contact: order.contact });
+            let customer = await Customer.findOne({ contact: order.contact, user: req.user._id });
 
             if (!customer) {
                 customer = new Customer({
+                    user: req.user._id,
                     name: order.customerName,
                     contact: order.contact,
                     email: order.email,
@@ -270,7 +271,7 @@ const createOrder = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             const oldStatus = order.status;
@@ -290,9 +291,9 @@ const updateOrderStatus = async (req, res) => {
             // Handle stock refill/deduction on status change
             try {
                 if (status === 'Cancelled' && oldStatus !== 'Cancelled') {
-                    await updateProductStock(order.items, 'refill');
+                    await updateProductStock(order.items, 'refill', req.user._id);
                 } else if (oldStatus === 'Cancelled' && status !== 'Cancelled') {
-                    await updateProductStock(order.items, 'deduct');
+                    await updateProductStock(order.items, 'deduct', req.user._id);
                 }
             } catch (stockError) {
                 console.error('Stock update failed during status change:', stockError);
@@ -313,7 +314,7 @@ const updateOrderStatus = async (req, res) => {
 // @access  Private
 const getOrderById = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             res.status(200).json(order);
@@ -332,7 +333,7 @@ const getOrderById = async (req, res) => {
 const addPayment = async (req, res) => {
     try {
         const { amount, method } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             const paymentAmount = Number(amount);
@@ -372,7 +373,7 @@ const addPayment = async (req, res) => {
 // @access  Private
 const markOrderAsPaid = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             const remainingDue = order.balanceDue || 0;
@@ -412,7 +413,7 @@ const markOrderAsPaid = async (req, res) => {
 // @access  Private
 const deleteOrder = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             await Order.deleteOne({ _id: order._id });
@@ -439,7 +440,7 @@ const deleteOrder = async (req, res) => {
 
 const updateOrder = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
 
         if (order) {
             // Check if stock needs to be adjusted back before applying new items
@@ -558,7 +559,7 @@ const updateOrder = async (req, res) => {
 // @access  Private
 const clearDummyOrders = async (req, res) => {
     try {
-        const result = await Order.deleteMany({ isDummy: true, isPastOrder: { $ne: true } });
+        const result = await Order.deleteMany({ user: req.user._id, isDummy: true, isPastOrder: { $ne: true } });
 
         // Log Activity
         if (req.user) {
@@ -582,7 +583,7 @@ const clearDummyOrders = async (req, res) => {
 // @access  Private
 const clearPastOrders = async (req, res) => {
     try {
-        const result = await Order.deleteMany({ isPastOrder: true });
+        const result = await Order.deleteMany({ user: req.user._id, isPastOrder: true });
 
         // Log Activity
         if (req.user) {
@@ -606,7 +607,7 @@ const clearPastOrders = async (req, res) => {
 // @access  Private
 const getNextInvoiceNumber = async (req, res) => {
     try {
-        const counter = await Counter.findOne({ id: 'invoice' });
+        const counter = await Counter.findOne({ id: 'invoice', user: req.user._id });
         let nextNumber = 1;
         
         if (counter) {
@@ -617,6 +618,7 @@ const getNextInvoiceNumber = async (req, res) => {
             const result = await Order.aggregate([
                 { 
                     $match: { 
+                        user: req.user._id,
                         invoiceNo: { $regex: /^INV\/\d+$/ },
                         createdAt: { $gte: cutoffDate }
                     } 
