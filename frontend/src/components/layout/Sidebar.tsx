@@ -146,8 +146,11 @@ const SidebarNav = ({
       return item.roles.includes(userRole || "");
     }
     
-    return true;
   });
+
+  if (!mounted) {
+    return <nav className="mt-4 px-2 flex-1" />;
+  }
 
   return (
     <nav className="mt-4 px-2 flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-default">
